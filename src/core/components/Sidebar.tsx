@@ -15,7 +15,7 @@ export function Sidebar({ userEmail }: { userEmail?: string }) {
   }
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r bg-card">
+    <aside className="flex h-screen w-56 shrink-0 flex-col border-r bg-card">
       <div className="flex items-center gap-2 px-5 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <LayoutGrid className="h-5 w-5" />

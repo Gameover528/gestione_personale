@@ -141,6 +141,7 @@ export function BolletteList({
                 <th className="px-4 py-3 font-medium">Fornitore</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
                 <th className="px-4 py-3 font-medium">Scadenza</th>
+                <th className="px-4 py-3 font-medium">Periodo</th>
                 <th className="px-4 py-3 text-right font-medium">Importo</th>
                 <th className="px-4 py-3 font-medium">Stato</th>
                 <th className="px-4 py-3 font-medium">Divisione</th>
@@ -152,15 +153,7 @@ export function BolletteList({
                 const gg = daysUntil(b.data_scadenza);
                 return (
                   <tr key={b.id} className="border-t hover:bg-muted/50">
-                    <td className="px-4 py-3 font-medium">
-                      {b.fornitore}
-                      {(b.periodo_inizio || b.periodo_fine) && (
-                        <span className="block text-xs font-normal text-muted-foreground">
-                          {formatDate(b.periodo_inizio)} –{" "}
-                          {formatDate(b.periodo_fine)}
-                        </span>
-                      )}
-                    </td>
+                    <td className="px-4 py-3 font-medium">{b.fornitore}</td>
                     <td className="px-4 py-3">{tipoLabel(b.tipo)}</td>
                     <td className="px-4 py-3">
                       {formatDate(b.data_scadenza)}
@@ -174,6 +167,13 @@ export function BolletteList({
                           <Badge variant="warning">{gg}g</Badge>
                         </span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+                      {b.periodo_inizio || b.periodo_fine
+                        ? `${formatDate(b.periodo_inizio)} → ${formatDate(
+                            b.periodo_fine
+                          )}`
+                        : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {formatCurrency(b.importo)}
