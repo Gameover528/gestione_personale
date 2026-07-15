@@ -12,14 +12,24 @@ import {
 } from "../queries";
 import {
   type Bolletta,
+  type TipoBolletta,
   TIPI,
   DIVISIONI,
   tipoLabel,
+  divisioneLabel,
   quotaAltra,
 } from "../types";
 import { formatCurrency, formatDate, daysUntil } from "@/lib/utils";
 import { Badge } from "@/core/components/ui";
-import { FileText, Pencil, Trash2, Check, Split } from "lucide-react";
+import {
+  FileText,
+  CreditCard,
+  Pencil,
+  Trash2,
+  Check,
+  Split,
+  FileDown,
+} from "lucide-react";
 
 const selectClass =
   "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
@@ -79,6 +89,93 @@ export function BolletteList({
   async function openAllegato(path: string) {
     const url = await getAllegatoUrl(path);
     if (url) window.open(url, "_blank");
+  }
+
+  async function exportPdf() {
+    if (!items || items.length === 0) return;
+    const { jsPDF } = await import("jspdf");
+    const autoTable = (await import("jspdf-autotable")).default;
+
+    const euro = (n: number) =>
+      n.toLocaleString("it-IT", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + " \u20AC";
+    const periodo = (b: Bolletta) =>
+      b.periodo_inizio || b.periodo_fine
+        ? `${formatDate(b.periodo_inizio)} - ${formatDate(b.periodo_fine)}`
+        : "-";
+
+    const doc = new jsPDF({ orientation: "landscape" });
+    const filtri: string[] = [];
+    if (tipo) filtri.push(`Tipo: ${tipoLabel(tipo as TipoBolletta)}`);
+    if (stato)
+      filtri.push(`Stato: ${stato === "pagata" ? "Pagata" : "Da pagare"}`);
+    if (divisione) filtri.push(`Divisione: ${divisioneLabel(divisione as never)}`);
+    filtri.push(`Anno: ${anno || "tutti"}`);
+
+    doc.setFontSize(16);
+    doc.text("Bollette", 14, 16);
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text(filtri.join("   -   "), 14, 22);
+
+    const body = items.map((b) => [
+      b.fornitore,
+      tipoLabel(b.tipo),
+      periodo(b),
+      formatDate(b.data_scadenza),
+      euro(b.importo),
+      b.stato === "pagata" ? "Pagata" : "Da pagare",
+      b.divisione === "da_dividere"
+        ? `Da dividere (${euro(
+            quotaAltra(b.importo, b.persone_tue, b.persone_altre)
+          )})`
+        : b.divisione === "divisa"
+          ? "Divisa"
+          : "-",
+    ]);
+
+    const totale = items.reduce((s, b) => s + Number(b.importo), 0);
+    const totRecuperare = items
+      .filter((b) => b.divisione === "da_dividere")
+      .reduce(
+        (s, b) => s + quotaAltra(b.importo, b.persone_tue, b.persone_altre),
+        0
+      );
+
+    autoTable(doc, {
+      startY: 26,
+      head: [
+        [
+          "Fornitore",
+          "Tipo",
+          "Periodo",
+          "Scadenza",
+          "Importo",
+          "Stato",
+          "Divisione",
+        ],
+      ],
+      body,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [37, 99, 235] },
+      foot: [
+        [
+          "",
+          "",
+          "",
+          "Totale",
+          euro(totale),
+          "",
+          totRecuperare > 0 ? `Da recuperare: ${euro(totRecuperare)}` : "",
+        ],
+      ],
+      footStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: "bold" },
+    });
+
+    const oggi = new Date().toISOString().slice(0, 10);
+    doc.save(`bollette_${oggi}.pdf`);
   }
 
   return (
@@ -219,11 +316,20 @@ export function BolletteList({
                         )}
                         {b.allegato_path && (
                           <button
-                            title="Apri PDF"
+                            title="Apri PDF bolletta"
                             onClick={() => openAllegato(b.allegato_path!)}
                             className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
                           >
                             <FileText className="h-4 w-4" />
+                          </button>
+                        )}
+                        {b.pagamento_path && (
+                          <button
+                            title="Apri ricevuta pagamento"
+                            onClick={() => openAllegato(b.pagamento_path!)}
+                            className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-success"
+                          >
+                            <CreditCard className="h-4 w-4" />
                           </button>
                         )}
                         {b.stato === "da_pagare" && (
@@ -256,6 +362,18 @@ export function BolletteList({
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {items && items.length > 0 && (
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={exportPdf}
+            className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent"
+          >
+            <FileDown className="h-4 w-4" />
+            Esporta PDF ({items.length})
+          </button>
         </div>
       )}
     </div>

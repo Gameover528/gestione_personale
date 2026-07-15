@@ -59,6 +59,10 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
   const [allegatoPath, setAllegatoPath] = useState<string | null>(
     initial?.allegato_path ?? null
   );
+  const [filePagamento, setFilePagamento] = useState<File | null>(null);
+  const [pagamentoPath, setPagamentoPath] = useState<string | null>(
+    initial?.pagamento_path ?? null
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -74,6 +78,14 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
           throw new Error("L'allegato deve essere un PDF.");
         }
         path = await uploadAllegato(file);
+      }
+
+      let pagPath = pagamentoPath;
+      if (filePagamento) {
+        if (filePagamento.type !== "application/pdf") {
+          throw new Error("La ricevuta di pagamento deve essere un PDF.");
+        }
+        pagPath = await uploadAllegato(filePagamento);
       }
 
       const payload: BollettaInput = {
@@ -92,6 +104,7 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
           divisione === "non_condivisa" ? 2 : parseInt(personeAltre || "0", 10),
         note: note.trim() || null,
         allegato_path: path,
+        pagamento_path: pagPath,
       };
 
       if (editing && initial) {
@@ -111,6 +124,12 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
     if (allegatoPath) await removeAllegato(allegatoPath);
     setAllegatoPath(null);
     setFile(null);
+  }
+
+  async function handleRemovePagamento() {
+    if (pagamentoPath) await removeAllegato(pagamentoPath);
+    setPagamentoPath(null);
+    setFilePagamento(null);
   }
 
   return (
@@ -258,7 +277,7 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         />
       </Field>
 
-      <Field label="Allegato PDF">
+      <Field label="Allegato PDF (bolletta)">
         {allegatoPath ? (
           <div className="flex items-center gap-3 text-sm">
             <span className="text-muted-foreground">PDF allegato</span>
@@ -275,6 +294,28 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
             type="file"
             accept="application/pdf"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="text-sm"
+          />
+        )}
+      </Field>
+
+      <Field label="Ricevuta di pagamento (PDF)">
+        {pagamentoPath ? (
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground">Ricevuta allegata</span>
+            <button
+              type="button"
+              onClick={handleRemovePagamento}
+              className="text-destructive hover:underline"
+            >
+              Rimuovi
+            </button>
+          </div>
+        ) : (
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={(e) => setFilePagamento(e.target.files?.[0] ?? null)}
             className="text-sm"
           />
         )}

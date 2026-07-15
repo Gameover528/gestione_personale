@@ -27,6 +27,7 @@ export interface Bolletta {
   persone_altre: number;
   note: string | null;
   allegato_path: string | null;
+  pagamento_path: string | null;
   created_at: string;
 }
 
@@ -44,6 +45,7 @@ export interface BollettaInput {
   persone_altre: number;
   note: string | null;
   allegato_path: string | null;
+  pagamento_path: string | null;
 }
 
 export const TIPI: { value: TipoBolletta; label: string; color: string }[] = [
