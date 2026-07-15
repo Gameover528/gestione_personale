@@ -9,6 +9,8 @@ export type TipoBolletta =
 
 export type StatoBolletta = "da_pagare" | "pagata";
 
+export type StatoDivisione = "non_condivisa" | "da_dividere" | "divisa";
+
 export interface Bolletta {
   id: string;
   user_id: string;
@@ -18,6 +20,9 @@ export interface Bolletta {
   data_scadenza: string;
   stato: StatoBolletta;
   data_pagamento: string | null;
+  divisione: StatoDivisione;
+  persone_tue: number;
+  persone_altre: number;
   note: string | null;
   allegato_path: string | null;
   created_at: string;
@@ -30,6 +35,9 @@ export interface BollettaInput {
   data_scadenza: string;
   stato: StatoBolletta;
   data_pagamento: string | null;
+  divisione: StatoDivisione;
+  persone_tue: number;
+  persone_altre: number;
   note: string | null;
   allegato_path: string | null;
 }
@@ -44,12 +52,36 @@ export const TIPI: { value: TipoBolletta; label: string; color: string }[] = [
   { value: "altro", label: "Altro", color: "#6b7280" },
 ];
 
+export const DIVISIONI: { value: StatoDivisione; label: string }[] = [
+  { value: "non_condivisa", label: "Non condivisa" },
+  { value: "da_dividere", label: "Da dividere" },
+  { value: "divisa", label: "Divisa" },
+];
+
 export function tipoLabel(t: TipoBolletta) {
   return TIPI.find((x) => x.value === t)?.label ?? t;
 }
 
 export function tipoColor(t: TipoBolletta) {
   return TIPI.find((x) => x.value === t)?.color ?? "#6b7280";
+}
+
+export function divisioneLabel(d: StatoDivisione) {
+  return DIVISIONI.find((x) => x.value === d)?.label ?? d;
+}
+
+/**
+ * Importo che l'altra famiglia deve recuperare (paghi sempre tu).
+ * Quota altra famiglia = persone_altre / (persone_tue + persone_altre).
+ */
+export function quotaAltra(
+  importo: number,
+  personeTue: number,
+  personeAltre: number
+): number {
+  const tot = personeTue + personeAltre;
+  if (!tot || tot <= 0) return 0;
+  return (importo * personeAltre) / tot;
 }
 
 export const STORAGE_BUCKET = "bollette";

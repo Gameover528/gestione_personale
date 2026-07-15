@@ -8,6 +8,7 @@ import {
 export interface BolletteFilters {
   tipo?: string;
   stato?: string;
+  divisione?: string;
   /** anno (es. 2026) applicato a data_scadenza */
   anno?: number;
 }
@@ -23,6 +24,7 @@ export async function listBollette(
 
   if (filters.tipo) query = query.eq("tipo", filters.tipo);
   if (filters.stato) query = query.eq("stato", filters.stato);
+  if (filters.divisione) query = query.eq("divisione", filters.divisione);
   if (filters.anno) {
     query = query
       .gte("data_scadenza", `${filters.anno}-01-01`)

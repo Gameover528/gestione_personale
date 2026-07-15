@@ -13,8 +13,12 @@ import {
   type BollettaInput,
   type TipoBolletta,
   type StatoBolletta,
+  type StatoDivisione,
   TIPI,
+  DIVISIONI,
+  quotaAltra,
 } from "../types";
+import { formatCurrency } from "@/lib/utils";
 
 const inputClass =
   "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
@@ -36,6 +40,15 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
   );
   const [dataPagamento, setDataPagamento] = useState(
     initial?.data_pagamento ?? ""
+  );
+  const [divisione, setDivisione] = useState<StatoDivisione>(
+    initial?.divisione ?? "non_condivisa"
+  );
+  const [personeTue, setPersoneTue] = useState(
+    initial ? String(initial.persone_tue) : "3"
+  );
+  const [personeAltre, setPersoneAltre] = useState(
+    initial ? String(initial.persone_altre) : "2"
   );
   const [note, setNote] = useState(initial?.note ?? "");
   const [file, setFile] = useState<File | null>(null);
@@ -66,6 +79,11 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         data_scadenza: dataScadenza,
         stato,
         data_pagamento: stato === "pagata" ? dataPagamento || null : null,
+        divisione,
+        persone_tue:
+          divisione === "non_condivisa" ? 3 : parseInt(personeTue || "0", 10),
+        persone_altre:
+          divisione === "non_condivisa" ? 2 : parseInt(personeAltre || "0", 10),
         note: note.trim() || null,
         allegato_path: path,
       };
@@ -154,7 +172,60 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
             />
           </Field>
         )}
+        <Field label="Divisione spesa">
+          <select
+            value={divisione}
+            onChange={(e) => setDivisione(e.target.value as StatoDivisione)}
+            className={inputClass}
+          >
+            {DIVISIONI.map((d) => (
+              <option key={d.value} value={d.value}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+        </Field>
       </div>
+
+      {divisione !== "non_condivisa" && (
+        <div className="rounded-md border bg-muted/40 p-4">
+          <p className="mb-3 text-sm font-medium">
+            Ripartizione quota (paghi tu, recuperi la quota altrui)
+          </p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Persone tue">
+              <input
+                type="number"
+                min="0"
+                value={personeTue}
+                onChange={(e) => setPersoneTue(e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Persone altra famiglia">
+              <input
+                type="number"
+                min="0"
+                value={personeAltre}
+                onChange={(e) => setPersoneAltre(e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Da recuperare dall&apos;altra famiglia:{" "}
+            <span className="font-semibold text-foreground">
+              {formatCurrency(
+                quotaAltra(
+                  parseFloat(importo || "0"),
+                  parseInt(personeTue || "0", 10),
+                  parseInt(personeAltre || "0", 10)
+                )
+              )}
+            </span>
+          </p>
+        </div>
+      )}
 
       <Field label="Note">
         <textarea

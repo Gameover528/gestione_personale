@@ -10,32 +10,42 @@ import {
   getAllegatoUrl,
   removeAllegato,
 } from "../queries";
-import { type Bolletta, TIPI, tipoLabel } from "../types";
+import {
+  type Bolletta,
+  TIPI,
+  DIVISIONI,
+  tipoLabel,
+  quotaAltra,
+} from "../types";
 import { formatCurrency, formatDate, daysUntil } from "@/lib/utils";
 import { Badge } from "@/core/components/ui";
-import { FileText, Pencil, Trash2, Check } from "lucide-react";
+import { FileText, Pencil, Trash2, Check, Split } from "lucide-react";
 
 const selectClass =
   "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
 
 export function BolletteList({
   initialStato,
+  initialDivisione,
 }: {
   initialStato?: string;
+  initialDivisione?: string;
 }) {
   const router = useRouter();
   const [items, setItems] = useState<Bolletta[] | null>(null);
   const [tipo, setTipo] = useState("");
   const [stato, setStato] = useState(initialStato ?? "");
+  const [divisione, setDivisione] = useState(initialDivisione ?? "");
   const [anno, setAnno] = useState<string>(String(new Date().getFullYear()));
 
   const load = useCallback(() => {
     listBollette({
       tipo: tipo || undefined,
       stato: stato || undefined,
+      divisione: divisione || undefined,
       anno: anno ? Number(anno) : undefined,
     }).then(setItems);
-  }, [tipo, stato, anno]);
+  }, [tipo, stato, divisione, anno]);
 
   useEffect(() => {
     load();
@@ -61,6 +71,11 @@ export function BolletteList({
     load();
   }
 
+  async function handleDivisa(b: Bolletta) {
+    await updateBolletta(b.id, { divisione: "divisa" });
+    load();
+  }
+
   async function openAllegato(path: string) {
     const url = await getAllegatoUrl(path);
     if (url) window.open(url, "_blank");
@@ -81,6 +96,18 @@ export function BolletteList({
           <option value="">Tutti gli stati</option>
           <option value="da_pagare">Da pagare</option>
           <option value="pagata">Pagata</option>
+        </select>
+        <select
+          value={divisione}
+          onChange={(e) => setDivisione(e.target.value)}
+          className={selectClass}
+        >
+          <option value="">Tutte le divisioni</option>
+          {DIVISIONI.map((d) => (
+            <option key={d.value} value={d.value}>
+              {d.label}
+            </option>
+          ))}
         </select>
         <select value={anno} onChange={(e) => setAnno(e.target.value)} className={selectClass}>
           <option value="">Tutti gli anni</option>
@@ -116,6 +143,7 @@ export function BolletteList({
                 <th className="px-4 py-3 font-medium">Scadenza</th>
                 <th className="px-4 py-3 text-right font-medium">Importo</th>
                 <th className="px-4 py-3 font-medium">Stato</th>
+                <th className="px-4 py-3 font-medium">Divisione</th>
                 <th className="px-4 py-3 text-right font-medium">Azioni</th>
               </tr>
             </thead>
@@ -150,7 +178,37 @@ export function BolletteList({
                       )}
                     </td>
                     <td className="px-4 py-3">
+                      {b.divisione === "da_dividere" ? (
+                        <div className="flex flex-col gap-0.5">
+                          <Badge variant="warning">Da dividere</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            recuperi{" "}
+                            {formatCurrency(
+                              quotaAltra(
+                                b.importo,
+                                b.persone_tue,
+                                b.persone_altre
+                              )
+                            )}
+                          </span>
+                        </div>
+                      ) : b.divisione === "divisa" ? (
+                        <Badge variant="success">Divisa</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        {b.divisione === "da_dividere" && (
+                          <button
+                            title="Segna come divisa"
+                            onClick={() => handleDivisa(b)}
+                            className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-success"
+                          >
+                            <Split className="h-4 w-4" />
+                          </button>
+                        )}
                         {b.allegato_path && (
                           <button
                             title="Apri PDF"

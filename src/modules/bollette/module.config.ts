@@ -4,6 +4,7 @@ import TotaleDaPagare from "./widgets/TotaleDaPagare";
 import ProssimeScadenze from "./widgets/ProssimeScadenze";
 import SpesaPerTipo from "./widgets/SpesaPerTipo";
 import AndamentoMensile from "./widgets/AndamentoMensile";
+import DaRecuperare from "./widgets/DaRecuperare";
 
 export const bolletteModule: ModuleConfig = {
   id: "bollette",
@@ -22,6 +23,12 @@ export const bolletteModule: ModuleConfig = {
       title: "Prossime scadenze",
       defaultSpan: 1,
       component: ProssimeScadenze,
+    },
+    {
+      id: "bollette.da-recuperare",
+      title: "Da recuperare (altra famiglia)",
+      defaultSpan: 1,
+      component: DaRecuperare,
     },
     {
       id: "bollette.spesa-per-tipo",

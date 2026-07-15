@@ -6,9 +6,9 @@ import { BolletteList } from "@/modules/bollette/components/BolletteList";
 export default async function BollettePage({
   searchParams,
 }: {
-  searchParams: Promise<{ stato?: string }>;
+  searchParams: Promise<{ stato?: string; divisione?: string }>;
 }) {
-  const { stato } = await searchParams;
+  const { stato, divisione } = await searchParams;
 
   return (
     <div>
@@ -25,7 +25,7 @@ export default async function BollettePage({
           </Link>
         }
       />
-      <BolletteList initialStato={stato} />
+      <BolletteList initialStato={stato} initialDivisione={divisione} />
     </div>
   );
 }
