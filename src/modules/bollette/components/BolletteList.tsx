@@ -36,7 +36,7 @@ export function BolletteList({
   const [tipo, setTipo] = useState("");
   const [stato, setStato] = useState(initialStato ?? "");
   const [divisione, setDivisione] = useState(initialDivisione ?? "");
-  const [anno, setAnno] = useState<string>(String(new Date().getFullYear()));
+  const [anno, setAnno] = useState<string>("");
 
   const load = useCallback(() => {
     listBollette({
