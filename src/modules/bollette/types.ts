@@ -20,6 +20,8 @@ export interface Bolletta {
   data_scadenza: string;
   stato: StatoBolletta;
   data_pagamento: string | null;
+  periodo_inizio: string | null;
+  periodo_fine: string | null;
   divisione: StatoDivisione;
   persone_tue: number;
   persone_altre: number;
@@ -35,6 +37,8 @@ export interface BollettaInput {
   data_scadenza: string;
   stato: StatoBolletta;
   data_pagamento: string | null;
+  periodo_inizio: string | null;
+  periodo_fine: string | null;
   divisione: StatoDivisione;
   persone_tue: number;
   persone_altre: number;

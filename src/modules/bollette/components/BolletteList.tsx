@@ -152,7 +152,15 @@ export function BolletteList({
                 const gg = daysUntil(b.data_scadenza);
                 return (
                   <tr key={b.id} className="border-t hover:bg-muted/50">
-                    <td className="px-4 py-3 font-medium">{b.fornitore}</td>
+                    <td className="px-4 py-3 font-medium">
+                      {b.fornitore}
+                      {(b.periodo_inizio || b.periodo_fine) && (
+                        <span className="block text-xs font-normal text-muted-foreground">
+                          {formatDate(b.periodo_inizio)} –{" "}
+                          {formatDate(b.periodo_fine)}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">{tipoLabel(b.tipo)}</td>
                     <td className="px-4 py-3">
                       {formatDate(b.data_scadenza)}

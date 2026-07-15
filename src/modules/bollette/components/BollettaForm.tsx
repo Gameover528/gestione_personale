@@ -41,6 +41,10 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
   const [dataPagamento, setDataPagamento] = useState(
     initial?.data_pagamento ?? ""
   );
+  const [periodoInizio, setPeriodoInizio] = useState(
+    initial?.periodo_inizio ?? ""
+  );
+  const [periodoFine, setPeriodoFine] = useState(initial?.periodo_fine ?? "");
   const [divisione, setDivisione] = useState<StatoDivisione>(
     initial?.divisione ?? "non_condivisa"
   );
@@ -79,6 +83,8 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         data_scadenza: dataScadenza,
         stato,
         data_pagamento: stato === "pagata" ? dataPagamento || null : null,
+        periodo_inizio: periodoInizio || null,
+        periodo_fine: periodoFine || null,
         divisione,
         persone_tue:
           divisione === "non_condivisa" ? 3 : parseInt(personeTue || "0", 10),
@@ -149,6 +155,22 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
             type="date"
             value={dataScadenza}
             onChange={(e) => setDataScadenza(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Periodo dal">
+          <input
+            type="date"
+            value={periodoInizio}
+            onChange={(e) => setPeriodoInizio(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Periodo al">
+          <input
+            type="date"
+            value={periodoFine}
+            onChange={(e) => setPeriodoFine(e.target.value)}
             className={inputClass}
           />
         </Field>
