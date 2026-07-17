@@ -18,6 +18,7 @@ import {
   tipoLabel,
   divisioneLabel,
   quotaAltra,
+  periodoRicadeInAnno,
 } from "../types";
 import { formatCurrency, formatDate, daysUntil } from "@/lib/utils";
 import { Badge } from "@/core/components/ui";
@@ -53,8 +54,21 @@ export function BolletteList({
       tipo: tipo || undefined,
       stato: stato || undefined,
       divisione: divisione || undefined,
-      anno: anno ? Number(anno) : undefined,
-    }).then(setItems);
+    }).then((all) => {
+      const y = anno ? Number(anno) : null;
+      setItems(
+        y === null
+          ? all
+          : all.filter((b) =>
+              periodoRicadeInAnno(
+                b.periodo_inizio,
+                b.periodo_fine,
+                b.data_scadenza,
+                y
+              )
+            )
+      );
+    });
   }, [tipo, stato, divisione, anno]);
 
   useEffect(() => {

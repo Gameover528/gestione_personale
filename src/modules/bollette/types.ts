@@ -90,4 +90,44 @@ export function quotaAltra(
   return (importo * personeAltre) / tot;
 }
 
+/** Da una stringa "YYYY-MM-DD" ricava anno e mese (0-11), senza problemi di fuso. */
+function annoMese(s: string): { anno: number; mese: number } {
+  const [y, m] = s.split("-").map(Number);
+  return { anno: y, mese: (m || 1) - 1 };
+}
+
+/**
+ * Elenco dei mesi coperti dal periodo di riferimento (inizio-fine inclusi).
+ * Se il periodo non e' compilato, usa il mese della scadenza come fallback.
+ */
+export function mesiPeriodo(
+  inizio: string | null,
+  fine: string | null,
+  fallback: string
+): { anno: number; mese: number }[] {
+  const startS = inizio || fallback;
+  const endS = fine || inizio || fallback;
+  let { anno: y, mese: m } = annoMese(startS);
+  const { anno: ey, mese: em } = annoMese(endS);
+  if (ey < y || (ey === y && em < m)) return [{ anno: y, mese: m }];
+  const out: { anno: number; mese: number }[] = [];
+  while (y < ey || (y === ey && m <= em)) {
+    out.push({ anno: y, mese: m });
+    m++;
+    if (m > 11) { m = 0; y++; }
+    if (out.length > 120) break;
+  }
+  return out;
+}
+
+/** True se il periodo di riferimento ricade (anche parzialmente) nell'anno dato. */
+export function periodoRicadeInAnno(
+  inizio: string | null,
+  fine: string | null,
+  fallback: string,
+  anno: number
+): boolean {
+  return mesiPeriodo(inizio, fine, fallback).some((x) => x.anno === anno);
+}
+
 export const STORAGE_BUCKET = "bollette";

@@ -11,6 +11,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { listBollette } from "../queries";
+import { mesiPeriodo } from "../types";
 import { formatCurrency } from "@/lib/utils";
 
 const MESI = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
@@ -22,11 +23,16 @@ export default function AndamentoMensile() {
 
   useEffect(() => {
     const anno = new Date().getFullYear();
-    listBollette({ anno }).then((b) => {
+    listBollette().then((b) => {
       const totals = new Array(12).fill(0);
       for (const x of b) {
-        const m = new Date(x.data_scadenza).getMonth();
-        totals[m] += Number(x.importo);
+        const mesi = mesiPeriodo(
+          x.periodo_inizio,
+          x.periodo_fine,
+          x.data_scadenza
+        );
+        const quota = Number(x.importo) / mesi.length;
+        for (const m of mesi) if (m.anno === anno) totals[m.mese] += quota;
       }
       setData(MESI.map((mese, i) => ({ mese, totale: totals[i] })));
     });

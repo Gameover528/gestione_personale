@@ -72,6 +72,13 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
     setError(null);
     setSaving(true);
     try {
+      if (!periodoInizio || !periodoFine) {
+        throw new Error("Indica il periodo di riferimento (dal e al).");
+      }
+      if (periodoFine < periodoInizio) {
+        throw new Error("Il periodo 'al' non puo' precedere il 'dal'.");
+      }
+
       let path = allegatoPath;
       if (file) {
         if (file.type !== "application/pdf") {
@@ -95,8 +102,8 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         data_scadenza: dataScadenza,
         stato,
         data_pagamento: stato === "pagata" ? dataPagamento || null : null,
-        periodo_inizio: periodoInizio || null,
-        periodo_fine: periodoFine || null,
+        periodo_inizio: periodoInizio,
+        periodo_fine: periodoFine,
         divisione,
         persone_tue:
           divisione === "non_condivisa" ? 3 : parseInt(personeTue || "0", 10),
@@ -179,6 +186,7 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         </Field>
         <Field label="Periodo dal">
           <input
+            required
             type="date"
             value={periodoInizio}
             onChange={(e) => setPeriodoInizio(e.target.value)}
@@ -187,6 +195,7 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         </Field>
         <Field label="Periodo al">
           <input
+            required
             type="date"
             value={periodoFine}
             onChange={(e) => setPeriodoFine(e.target.value)}
