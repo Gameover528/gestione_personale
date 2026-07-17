@@ -34,9 +34,18 @@ export default function SpesaPerTipo() {
       </p>
     );
 
+  const totale = data.reduce((s, d) => s + d.value, 0);
+
   return (
-    <div className="h-56 w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div>
+      <div className="mb-3 border-b pb-3">
+        <p className="text-2xl font-semibold">{formatCurrency(totale)}</p>
+        <p className="text-xs text-muted-foreground">
+          Totale spese anno corrente
+        </p>
+      </div>
+      <div className="h-52 w-full">
+        <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={data}
@@ -55,6 +64,7 @@ export default function SpesaPerTipo() {
           />
         </PieChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
