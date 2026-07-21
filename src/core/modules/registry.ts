@@ -1,5 +1,6 @@
 import type { ModuleConfig, DashboardWidgetDef, NavItem } from "./types";
 import { bolletteModule } from "@/modules/bollette/module.config";
+import { alimentazioneModule } from "@/modules/alimentazione/module.config";
 
 /**
  * Registro centrale dei moduli.
@@ -9,7 +10,7 @@ import { bolletteModule } from "@/modules/bollette/module.config";
  * 2. Importalo qui e aggiungilo all'array `modules`.
  * Sidebar e dashboard si aggiornano da sole.
  */
-export const modules: ModuleConfig[] = [bolletteModule];
+export const modules: ModuleConfig[] = [bolletteModule, alimentazioneModule];
 
 /** Tutte le voci di navigazione, raccolte dai moduli. */
 export const allNavItems: NavItem[] = modules.flatMap((m) => m.nav);
