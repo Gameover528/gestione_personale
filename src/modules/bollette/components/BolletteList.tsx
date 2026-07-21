@@ -249,13 +249,13 @@ export function BolletteList({
           <table className="w-full text-sm">
             <thead className="bg-muted text-left text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 font-medium">Fornitore</th>
+                <th className="px-4 py-3 font-medium hidden sm:table-cell">Fornitore</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
                 <th className="px-4 py-3 font-medium">Scadenza</th>
-                <th className="px-4 py-3 font-medium">Periodo</th>
+                <th className="px-4 py-3 font-medium hidden sm:table-cell">Periodo</th>
                 <th className="px-4 py-3 text-right font-medium">Importo</th>
                 <th className="px-4 py-3 font-medium">Stato</th>
-                <th className="px-4 py-3 font-medium">Divisione</th>
+                <th className="px-4 py-3 font-medium hidden sm:table-cell">Divisione</th>
                 <th className="px-4 py-3 text-right font-medium">Azioni</th>
               </tr>
             </thead>
@@ -264,7 +264,7 @@ export function BolletteList({
                 const gg = daysUntil(b.data_scadenza);
                 return (
                   <tr key={b.id} className="border-t hover:bg-muted/50">
-                    <td className="px-4 py-3 font-medium">{b.fornitore}</td>
+                    <td className="px-4 py-3 font-medium hidden sm:table-cell">{b.fornitore}</td>
                     <td className="px-4 py-3">{tipoLabel(b.tipo)}</td>
                     <td className="px-4 py-3">
                       {formatDate(b.data_scadenza)}
@@ -279,7 +279,7 @@ export function BolletteList({
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground hidden sm:table-cell">
                       {b.periodo_inizio || b.periodo_fine
                         ? `${formatDate(b.periodo_inizio)} → ${formatDate(
                             b.periodo_fine
@@ -296,7 +296,7 @@ export function BolletteList({
                         <Badge>Da pagare</Badge>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 hidden sm:table-cell">
                       {b.divisione === "da_dividere" ? (
                         <div className="flex flex-col gap-0.5">
                           <Badge variant="warning">Da dividere</Badge>

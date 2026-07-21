@@ -20,7 +20,7 @@ export const alimentazioneModule: ModuleConfig = {
     },
     {
       id: "alimentazione.macro-oggi",
-      title: "Macronutrienti di oggi",
+      title: "Valori di oggi vs obiettivi",
       defaultSpan: 2,
       component: MacroOggi,
     },
