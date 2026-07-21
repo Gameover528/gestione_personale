@@ -2,17 +2,18 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { listPasti, deletePasto, getObiettivi } from "../queries";
+import { listPasti, deletePasto, updatePasto, getObiettivi } from "../queries";
 import {
   PASTI,
   NUTRIENTI,
   type PastoDiario,
+  type Pasto,
   type Obiettivo,
   type Nutriente,
   valoriPorzione,
   sommaValori,
 } from "../types";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Pencil, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function fmt(nutriente: Nutriente, v: number) {
@@ -40,6 +41,25 @@ export function DiarioGiorno() {
 
   async function handleDelete(id: string) {
     await deletePasto(id);
+    load();
+  }
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editG, setEditG] = useState("");
+  const [editPasto, setEditPasto] = useState<Pasto>("pranzo");
+
+  function startEdit(r: PastoDiario) {
+    setEditingId(r.id);
+    setEditG(String(r.quantita_g));
+    setEditPasto(r.pasto);
+  }
+  async function saveEdit() {
+    if (!editingId) return;
+    await updatePasto(editingId, {
+      quantita_g: parseFloat(editG || "0"),
+      pasto: editPasto,
+    });
+    setEditingId(null);
     load();
   }
 
@@ -148,12 +168,13 @@ export function DiarioGiorno() {
                 <ul>
                   {righe.map((r) => {
                     const v = valoriPorzione(r);
+                    const inEdit = editingId === r.id;
                     return (
                       <li
                         key={r.id}
                         className="flex items-center justify-between gap-3 border-t px-4 py-2 text-sm first:border-t-0"
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="truncate font-medium">
                             {r.nome_alimento}
                             {r.marca ? (
@@ -163,19 +184,73 @@ export function DiarioGiorno() {
                               </span>
                             ) : null}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {r.quantita_g} g · {Math.round(v.kcal)} kcal · P{" "}
-                            {v.proteine.toFixed(1)} · C {v.carboidrati.toFixed(1)}{" "}
-                            · G {v.grassi.toFixed(1)}
-                          </p>
+                          {inEdit ? (
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              <input
+                                type="number"
+                                min="0"
+                                value={editG}
+                                onChange={(e) => setEditG(e.target.value)}
+                                className="w-24 rounded-md border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary"
+                              />
+                              <span className="text-xs text-muted-foreground">g</span>
+                              <select
+                                value={editPasto}
+                                onChange={(e) => setEditPasto(e.target.value as Pasto)}
+                                className="rounded-md border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary"
+                              >
+                                {PASTI.map((pp) => (
+                                  <option key={pp.value} value={pp.value}>
+                                    {pp.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              {r.quantita_g} g · {Math.round(v.kcal)} kcal · P{" "}
+                              {v.proteine.toFixed(1)} · C {v.carboidrati.toFixed(1)}{" "}
+                              · G {v.grassi.toFixed(1)}
+                            </p>
+                          )}
                         </div>
-                        <button
-                          title="Elimina"
-                          onClick={() => handleDelete(r.id)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex shrink-0 items-center gap-1">
+                          {inEdit ? (
+                            <>
+                              <button
+                                title="Salva"
+                                onClick={saveEdit}
+                                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-success"
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                              <button
+                                title="Annulla"
+                                onClick={() => setEditingId(null)}
+                                className="rounded p-1.5 text-muted-foreground hover:bg-accent"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                title="Modifica"
+                                onClick={() => startEdit(r)}
+                                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                title="Elimina"
+                                onClick={() => handleDelete(r.id)}
+                                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </li>
                     );
                   })}

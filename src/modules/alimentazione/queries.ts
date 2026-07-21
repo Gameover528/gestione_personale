@@ -39,6 +39,18 @@ export async function deletePasto(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function updatePasto(
+  id: string,
+  patch: { quantita_g?: number; pasto?: string }
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("diario_pasti")
+    .update(patch)
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function getObiettivi(): Promise<Obiettivo[]> {
   const supabase = createClient();
   const { data, error } = await supabase
