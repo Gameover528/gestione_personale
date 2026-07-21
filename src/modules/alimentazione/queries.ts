@@ -5,6 +5,9 @@ import type {
   Obiettivo,
   Nutriente,
   AlimentoRicerca,
+  Piatto,
+  PiattoIngrediente,
+  PiattoConIngredienti,
 } from "./types";
 
 export async function listPasti(data: string): Promise<PastoDiario[]> {
@@ -72,4 +75,106 @@ export async function cercaAlimenti(q: string): Promise<AlimentoRicerca[]> {
   if (!res.ok) throw new Error("Errore nella ricerca");
   const data = await res.json();
   return (data.risultati ?? []) as AlimentoRicerca[];
+}
+
+// ----------------------- Piatti (ricette) -----------------------
+export type IngredienteInput = Omit<
+  PiattoIngrediente,
+  "id" | "piatto_id" | "user_id"
+>;
+
+export async function listPiatti(): Promise<Piatto[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("piatti")
+    .select("*")
+    .order("nome", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Piatto[];
+}
+
+export async function getPiatto(id: string): Promise<PiattoConIngredienti> {
+  const supabase = createClient();
+  const { data: piatto, error: e1 } = await supabase
+    .from("piatti")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (e1) throw e1;
+  const { data: ings, error: e2 } = await supabase
+    .from("piatto_ingredienti")
+    .select("*")
+    .eq("piatto_id", id);
+  if (e2) throw e2;
+  return {
+    ...(piatto as Piatto),
+    ingredienti: (ings ?? []) as PiattoIngrediente[],
+  };
+}
+
+export async function createPiatto(
+  nome: string,
+  ingredienti: IngredienteInput[]
+): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Non autenticato");
+
+  const { data: piatto, error } = await supabase
+    .from("piatti")
+    .insert({ nome, user_id: user.id })
+    .select()
+    .single();
+  if (error) throw error;
+
+  if (ingredienti.length > 0) {
+    const rows = ingredienti.map((i) => ({
+      ...i,
+      piatto_id: (piatto as Piatto).id,
+      user_id: user.id,
+    }));
+    const { error: e2 } = await supabase
+      .from("piatto_ingredienti")
+      .insert(rows);
+    if (e2) throw e2;
+  }
+}
+
+export async function updatePiatto(
+  id: string,
+  nome: string,
+  ingredienti: IngredienteInput[]
+): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Non autenticato");
+
+  const { error } = await supabase
+    .from("piatti")
+    .update({ nome })
+    .eq("id", id);
+  if (error) throw error;
+
+  await supabase.from("piatto_ingredienti").delete().eq("piatto_id", id);
+  if (ingredienti.length > 0) {
+    const rows = ingredienti.map((i) => ({
+      ...i,
+      piatto_id: id,
+      user_id: user.id,
+    }));
+    const { error: e2 } = await supabase
+      .from("piatto_ingredienti")
+      .insert(rows);
+    if (e2) throw e2;
+  }
+}
+
+export async function deletePiatto(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("piatti").delete().eq("id", id);
+  if (error) throw error;
 }

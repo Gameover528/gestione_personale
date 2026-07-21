@@ -1,26 +1,35 @@
 import { NextResponse } from "next/server";
 import type { AlimentoRicerca, ValoriNutrizionali } from "@/modules/alimentazione/types";
 
+// Scarta nomi con alfabeti non latini (arabo, ebraico, cirillico, CJK, ecc.)
+const NON_LATINO =
+  /[֐-׿؀-ۿЀ-ӿ一-鿿぀-ヿ가-힯]/;
+
 function n(v: unknown): number {
   const x = typeof v === "string" ? parseFloat(v) : (v as number);
   return Number.isFinite(x) ? Number(x) : 0;
 }
 
 async function cercaOFF(q: string): Promise<AlimentoRicerca[]> {
+  // Edizione italiana: prodotti venduti in Italia, nomi in italiano.
   const url =
-    "https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=15" +
-    "&fields=product_name,brands,nutriments&search_terms=" +
+    "https://it.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1" +
+    "&page_size=20&sort_by=unique_scans_n&lc=it" +
+    "&fields=product_name_it,product_name,brands,nutriments&search_terms=" +
     encodeURIComponent(q);
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "GestionePersonale/1.0" },
+      headers: {
+        "User-Agent": "GestionePersonale/1.0",
+        "Accept-Language": "it",
+      },
     });
     if (!res.ok) return [];
     const data = await res.json();
     const prodotti: any[] = data.products ?? [];
     return prodotti
-      .filter((p) => p.product_name)
       .map((p) => {
+        const nome = String(p.product_name_it || p.product_name || "").trim();
         const nu = p.nutriments ?? {};
         const per100: ValoriNutrizionali = {
           kcal: n(nu["energy-kcal_100g"]),
@@ -32,13 +41,13 @@ async function cercaOFF(q: string): Promise<AlimentoRicerca[]> {
           sale: n(nu["salt_100g"]),
         };
         return {
-          nome: String(p.product_name),
+          nome,
           marca: p.brands ? String(p.brands).split(",")[0].trim() : "",
           fonte: "off" as const,
           per100,
         };
       })
-      .filter((a) => a.per100.kcal > 0);
+      .filter((a) => a.nome && a.per100.kcal > 0 && !NON_LATINO.test(a.nome));
   } catch {
     return [];
   }
@@ -97,5 +106,4 @@ export async function GET(request: Request) {
   return NextResponse.json({ risultati });
 }
 
-// evita cache: ogni ricerca e' dinamica
 export const dynamic = "force-dynamic";

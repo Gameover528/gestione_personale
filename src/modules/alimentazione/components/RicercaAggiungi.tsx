@@ -2,8 +2,20 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { cercaAlimenti, addPasto } from "../queries";
-import { PASTI, type AlimentoRicerca, type Pasto } from "../types";
+import {
+  cercaAlimenti,
+  addPasto,
+  listPiatti,
+  getPiatto,
+} from "../queries";
+import {
+  PASTI,
+  type AlimentoRicerca,
+  type Pasto,
+  type Piatto,
+  per100Piatto,
+  pesoPiatto,
+} from "../types";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,9 +27,11 @@ export function RicercaAggiungi() {
   const params = useSearchParams();
   const oggi = new Date().toISOString().slice(0, 10);
 
+  const [mode, setMode] = useState<"cerca" | "piatti">("cerca");
   const [q, setQ] = useState("");
   const [risultati, setRisultati] = useState<AlimentoRicerca[] | null>(null);
   const [cercando, setCercando] = useState(false);
+  const [piatti, setPiatti] = useState<Piatto[] | null>(null);
   const [sel, setSel] = useState<AlimentoRicerca | null>(null);
 
   const [data, setData] = useState(params.get("data") || oggi);
@@ -25,6 +39,12 @@ export function RicercaAggiungi() {
   const [quantita, setQuantita] = useState("100");
   const [salvando, setSalvando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function cambiaTab(m: "cerca" | "piatti") {
+    setMode(m);
+    setSel(null);
+    if (m === "piatti" && piatti === null) listPiatti().then(setPiatti);
+  }
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +58,17 @@ export function RicercaAggiungi() {
     } finally {
       setCercando(false);
     }
+  }
+
+  async function selezionaPiatto(p: Piatto) {
+    const full = await getPiatto(p.id);
+    setSel({
+      nome: full.nome,
+      marca: "",
+      fonte: "piatto",
+      per100: per100Piatto(full.ingredienti),
+    });
+    setQuantita(String(Math.round(pesoPiatto(full.ingredienti))));
   }
 
   const grammi = parseFloat(quantita || "0");
@@ -73,60 +104,108 @@ export function RicercaAggiungi() {
 
   return (
     <div className="max-w-2xl space-y-5">
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <input
-          autoFocus
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Cerca un alimento (es. yogurt, pasta, pollo)…"
-          className={cn(inputClass, "flex-1")}
-        />
+      <div className="flex gap-2">
         <button
-          type="submit"
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+          onClick={() => cambiaTab("cerca")}
+          className={cn(
+            "rounded-md px-3 py-1.5 text-sm font-medium",
+            mode === "cerca" ? "bg-primary text-primary-foreground" : "border"
+          )}
         >
-          <Search className="h-4 w-4" />
-          Cerca
+          Cerca alimento
         </button>
-      </form>
+        <button
+          onClick={() => cambiaTab("piatti")}
+          className={cn(
+            "rounded-md px-3 py-1.5 text-sm font-medium",
+            mode === "piatti" ? "bg-primary text-primary-foreground" : "border"
+          )}
+        >
+          I miei piatti
+        </button>
+      </div>
 
-      {cercando && (
-        <p className="text-sm text-muted-foreground">Ricerca in corso…</p>
-      )}
+      {mode === "cerca" && !sel && (
+        <>
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Cerca un alimento (es. latte, pasta, pollo)…"
+              className={cn(inputClass, "flex-1")}
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+            >
+              <Search className="h-4 w-4" />
+              Cerca
+            </button>
+          </form>
 
-      {risultati && !cercando && risultati.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Nessun risultato. Prova con un nome piu' generico (anche in inglese).
-        </p>
-      )}
-
-      {risultati && risultati.length > 0 && !sel && (
-        <ul className="divide-y rounded-lg border">
-          {risultati.map((r, i) => (
-            <li key={i}>
-              <button
-                onClick={() => setSel(r)}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-accent"
-              >
-                <span className="min-w-0">
-                  <span className="block truncate font-medium capitalize">
-                    {r.nome}
-                    {r.marca ? (
-                      <span className="font-normal text-muted-foreground">
-                        {" "}
-                        · {r.marca}
+          {cercando && (
+            <p className="text-sm text-muted-foreground">Ricerca in corso…</p>
+          )}
+          {risultati && !cercando && risultati.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              Nessun risultato. Prova con un nome piu' generico.
+            </p>
+          )}
+          {risultati && risultati.length > 0 && (
+            <ul className="divide-y rounded-lg border">
+              {risultati.map((r, i) => (
+                <li key={i}>
+                  <button
+                    onClick={() => setSel(r)}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-accent"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium capitalize">
+                        {r.nome}
+                        {r.marca ? (
+                          <span className="font-normal text-muted-foreground">
+                            {" "}
+                            · {r.marca}
+                          </span>
+                        ) : null}
                       </span>
-                    ) : null}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {Math.round(r.per100.kcal)} kcal / 100 g · fonte{" "}
-                    {r.fonte === "off" ? "Open Food Facts" : "USDA"}
-                  </span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+                      <span className="text-xs text-muted-foreground">
+                        {Math.round(r.per100.kcal)} kcal / 100 g · fonte{" "}
+                        {r.fonte === "off" ? "Open Food Facts" : "USDA"}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+
+      {mode === "piatti" && !sel && (
+        <>
+          {piatti === null ? (
+            <p className="text-sm text-muted-foreground">Caricamento…</p>
+          ) : piatti.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nessun piatto salvato. Creane uno nella sezione Piatti.
+            </p>
+          ) : (
+            <ul className="divide-y rounded-lg border">
+              {piatti.map((p) => (
+                <li key={p.id}>
+                  <button
+                    onClick={() => selezionaPiatto(p)}
+                    className="w-full px-4 py-3 text-left text-sm font-medium hover:bg-accent"
+                  >
+                    {p.nome}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
 
       {sel && (
@@ -140,12 +219,18 @@ export function RicercaAggiungi() {
                   · {sel.marca}
                 </span>
               ) : null}
+              {sel.fonte === "piatto" ? (
+                <span className="font-normal text-muted-foreground">
+                  {" "}
+                  · piatto
+                </span>
+              ) : null}
             </p>
             <button
               onClick={() => setSel(null)}
               className="text-sm text-primary hover:underline"
             >
-              ← cambia alimento
+              ← indietro
             </button>
           </div>
 
@@ -216,8 +301,6 @@ export function RicercaAggiungi() {
           </div>
         </div>
       )}
-
-      {error && !sel && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }
