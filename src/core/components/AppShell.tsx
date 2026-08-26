@@ -21,7 +21,7 @@ export function AppShell({
   const areaAttiva = getMacroAreaForPath(pathname) ?? macroAree[0];
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       {open && (
         <div
           className="fixed inset-0 z-30 bg-black/40 lg:hidden"
@@ -37,7 +37,7 @@ export function AppShell({
         onClose={() => setOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b bg-card px-4 py-3 lg:hidden">
           <button
             onClick={() => setOpen(true)}

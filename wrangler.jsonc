@@ -13,6 +13,7 @@
 	"observability": {
 		"enabled": true
 	},
+	// Ambiente di default (nessun --env): PRODUZIONE.
 	"d1_databases": [
 		{
 			"binding": "DB",
@@ -25,5 +26,25 @@
 			"binding": "ALLEGATI",
 			"id": "5d0ad940fa5a46d28fc4894be19d37ab"
 		}
-	]
+	],
+	// Ambiente di sviluppo: `wrangler deploy --env dev`. Worker, database e
+	// KV separati da quelli di produzione, così i test non toccano i dati veri.
+	"env": {
+		"dev": {
+			"name": "gestione-personale-dev",
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "gestione-personale-db-dev",
+					"database_id": "779221e5-1b67-46a7-8657-4c617303deb6"
+				}
+			],
+			"kv_namespaces": [
+				{
+					"binding": "ALLEGATI",
+					"id": "2dfd2d62073b4849a31902d546eb5ce1"
+				}
+			]
+		}
+	}
 }
