@@ -7,6 +7,7 @@ export const alimentazioneModule: ModuleConfig = {
   id: "alimentazione",
   label: "Alimentazione",
   icon: Utensils,
+  basePath: "/alimentazione",
   nav: [
     { label: "Diario", href: "/alimentazione", icon: Utensils },
     { label: "Piatti", href: "/alimentazione/piatti", icon: ChefHat },

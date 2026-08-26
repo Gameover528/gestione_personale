@@ -17,7 +17,9 @@ export async function middleware(request: NextRequest) {
   if (sessionId) {
     const { env } = await getCloudflareContext({ async: true });
     const row = await env.DB.prepare(
-      "select 1 from sessions where id = ? and expires_at > datetime('now')"
+      `select 1 from sessions s
+       join users u on u.id = s.user_id
+       where s.id = ? and s.expires_at > datetime('now') and u.stato = 'attivo'`
     )
       .bind(sessionId)
       .first();
@@ -32,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
   if (authenticated && pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/consumi-costi"; // tenuto in sync a mano con DEFAULT_AREA_HREF in registry.ts (evitiamo di importare la registry, pesante, nel middleware)
     return NextResponse.redirect(url);
   }
 

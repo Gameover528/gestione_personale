@@ -1,17 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
+import { macroAree, getMacroAreaForPath } from "@/core/modules/registry";
+import type { Ruolo } from "@/lib/auth/roles";
 
 export function AppShell({
   userEmail,
+  ruolo,
   children,
 }: {
   userEmail?: string;
+  ruolo?: Ruolo;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const areaAttiva = getMacroAreaForPath(pathname) ?? macroAree[0];
 
   return (
     <div className="flex min-h-screen">
@@ -25,6 +32,7 @@ export function AppShell({
 
       <Sidebar
         userEmail={userEmail}
+        ruolo={ruolo}
         mobileOpen={open}
         onClose={() => setOpen(false)}
       />
@@ -38,7 +46,7 @@ export function AppShell({
           >
             <Menu className="h-6 w-6" />
           </button>
-          <span className="font-semibold">Gestione Personale</span>
+          <span className="font-semibold">{areaAttiva.label}</span>
         </header>
 
         <main className="flex-1 overflow-y-auto">

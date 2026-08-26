@@ -111,6 +111,34 @@ export async function saveObiettivi(list: Obiettivo[]): Promise<void> {
 const NON_LATINO =
   /[֐-׿؀-ۿЀ-ӿ一-鿿぀-ヿ가-힯]/;
 
+/**
+ * Fetch con retry: Open Food Facts in particolare risponde in modo
+ * incostante, quindi ritentiamo un paio di volte con una breve attesa
+ * prima di arrendersi (il risultato, una volta ottenuto, finisce in
+ * cache e non richiede più questa chiamata per lo stesso termine).
+ */
+async function fetchConRetry(
+  url: string,
+  options?: RequestInit,
+  tentativi = 3,
+  attesaMs = 400
+): Promise<Response> {
+  let ultimoErrore: unknown;
+  for (let i = 0; i < tentativi; i++) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok) return res;
+      ultimoErrore = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      ultimoErrore = err;
+    }
+    if (i < tentativi - 1) {
+      await new Promise((r) => setTimeout(r, attesaMs));
+    }
+  }
+  throw ultimoErrore;
+}
+
 function n(v: unknown): number {
   const x = typeof v === "string" ? parseFloat(v) : (v as number);
   return Number.isFinite(x) ? Number(x) : 0;
@@ -123,10 +151,9 @@ async function cercaOFF(q: string): Promise<AlimentoRicerca[]> {
     "&fields=product_name_it,product_name,brands,nutriments&search_terms=" +
     encodeURIComponent(q);
   try {
-    const res = await fetch(url, {
+    const res = await fetchConRetry(url, {
       headers: { "User-Agent": "GestionePersonale/1.0", "Accept-Language": "it" },
     });
-    if (!res.ok) return [];
     const data = (await res.json()) as any;
     const prodotti: any[] = data.products ?? [];
     return prodotti
@@ -165,8 +192,7 @@ async function cercaUSDA(q: string): Promise<AlimentoRicerca[]> {
     "&query=" +
     encodeURIComponent(q);
   try {
-    const res = await fetch(url);
-    if (!res.ok) return [];
+    const res = await fetchConRetry(url);
     const data = (await res.json()) as any;
     const foods: any[] = data.foods ?? [];
     return foods.map((f) => {

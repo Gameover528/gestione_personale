@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   createBolletta,
@@ -8,6 +8,7 @@ import {
   uploadAllegato,
   removeAllegato,
 } from "../queries";
+import { getBollettePreferenze } from "@/modules/impostazioni/queries";
 import {
   type Bolletta,
   type BollettaInput,
@@ -54,6 +55,18 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
   const [personeAltre, setPersoneAltre] = useState(
     initial ? String(initial.persone_altre) : "2"
   );
+
+  // Per una nuova bolletta, precompila la divisione con i valori di default
+  // impostati in Impostazioni → Preferenze moduli.
+  useEffect(() => {
+    if (editing) return;
+    getBollettePreferenze().then((p) => {
+      setPersoneTue(String(p.persone_tue));
+      setPersoneAltre(String(p.persone_altre));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [note, setNote] = useState(initial?.note ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [allegatoPath, setAllegatoPath] = useState<string | null>(

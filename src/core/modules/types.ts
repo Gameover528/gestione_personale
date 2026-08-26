@@ -5,6 +5,8 @@ export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Se true, la voce è visibile solo per ruolo admin/superadmin. */
+  adminOnly?: boolean;
 }
 
 export interface DashboardWidgetDef {
@@ -22,8 +24,24 @@ export interface ModuleConfig {
   id: string;
   label: string;
   icon: LucideIcon;
+  /** Radice delle rotte del modulo, es. "/bollette". Usata per capire in che macro-area ci si trova. */
+  basePath: string;
   /** Voci mostrate nella sidebar. */
   nav: NavItem[];
   /** Widget che il modulo mette a disposizione della dashboard. */
   widgets?: DashboardWidgetDef[];
+}
+
+export interface MacroAreaConfig {
+  /** ID macro-area, es. "consumi-costi". Usato anche come chiave delle preferenze dashboard. */
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  /**
+   * Rotta della dashboard dedicata a questa macro-area (widget riordinabili).
+   * Se assente (es. Impostazioni), l'area non ha una dashboard: selezionandola
+   * si va alla prima voce di navigazione del primo modulo.
+   */
+  dashboardHref?: string;
+  moduli: ModuleConfig[];
 }

@@ -10,6 +10,7 @@ export const bolletteModule: ModuleConfig = {
   id: "bollette",
   label: "Bollette",
   icon: Receipt,
+  basePath: "/bollette",
   nav: [{ label: "Bollette", href: "/bollette", icon: Receipt }],
   widgets: [
     {

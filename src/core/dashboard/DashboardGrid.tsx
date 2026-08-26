@@ -16,7 +16,8 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { allWidgets, getWidget } from "@/core/modules/registry";
+import { getWidget } from "@/core/modules/registry";
+import type { DashboardWidgetDef } from "@/core/modules/types";
 import { getDashboardLayout, saveDashboardLayout } from "./preferences";
 import { Card, CardTitle } from "@/core/components/ui";
 import { GripVertical, X, Plus, Settings2, Check } from "lucide-react";
@@ -28,7 +29,13 @@ function spanClass(span?: 1 | 2 | 3) {
   return "lg:col-span-1";
 }
 
-export function DashboardGrid() {
+export function DashboardGrid({
+  macroAreaId,
+  widgets,
+}: {
+  macroAreaId: string;
+  widgets: DashboardWidgetDef[];
+}) {
   const [order, setOrder] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -39,18 +46,19 @@ export function DashboardGrid() {
   );
 
   useEffect(() => {
-    getDashboardLayout().then((saved) => {
-      const valid = (saved ?? allWidgets.map((w) => w.id)).filter((id) =>
+    getDashboardLayout(macroAreaId).then((saved) => {
+      const valid = (saved ?? widgets.map((w) => w.id)).filter((id) =>
         getWidget(id)
       );
       setOrder(valid);
       setLoaded(true);
     });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [macroAreaId]);
 
   const hidden = useMemo(
-    () => allWidgets.filter((w) => !order.includes(w.id)),
-    [order]
+    () => widgets.filter((w) => !order.includes(w.id)),
+    [order, widgets]
   );
 
   function handleDragEnd(event: DragEndEvent) {
@@ -68,7 +76,7 @@ export function DashboardGrid() {
     setOrder(next);
     setSaving(true);
     try {
-      await saveDashboardLayout(next);
+      await saveDashboardLayout(macroAreaId, next);
     } finally {
       setSaving(false);
     }
@@ -84,7 +92,7 @@ export function DashboardGrid() {
 
   async function toggleEdit() {
     if (editMode) {
-      await saveDashboardLayout(order);
+      await saveDashboardLayout(macroAreaId, order);
     }
     setEditMode(!editMode);
   }

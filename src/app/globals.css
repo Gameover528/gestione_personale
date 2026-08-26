@@ -17,6 +17,21 @@
   --warning: 38 92% 50%;
 }
 
+.dark {
+  --background: 222 47% 8%;
+  --foreground: 210 40% 96%;
+  --card: 222 40% 12%;
+  --muted: 222 30% 16%;
+  --muted-foreground: 215 20% 65%;
+  --border: 222 25% 20%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 11%;
+  --accent: 222 30% 18%;
+  --destructive: 0 63% 55%;
+  --success: 142 60% 50%;
+  --warning: 38 92% 55%;
+}
+
 * {
   border-color: hsl(var(--border));
 }
@@ -25,4 +40,5 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }

@@ -3,16 +3,20 @@
 import { getDb } from "@/lib/cf";
 import { getSessionUser } from "@/lib/auth/session";
 
-const KEY = "dashboard";
+function chiave(macroAreaId: string) {
+  return `dashboard:${macroAreaId}`;
+}
 
-/** Ritorna l'ordine dei widget visibili salvato, oppure null se non impostato. */
-export async function getDashboardLayout(): Promise<string[] | null> {
+/** Ritorna l'ordine dei widget visibili salvato per una macro-area, oppure null se non impostato. */
+export async function getDashboardLayout(
+  macroAreaId: string
+): Promise<string[] | null> {
   const user = await getSessionUser();
   if (!user) return null;
 
   const row = await getDb()
     .prepare("select value from user_preferences where user_id = ? and key = ?")
-    .bind(user.id, KEY)
+    .bind(user.id, chiave(macroAreaId))
     .first<{ value: string }>();
 
   if (!row) return null;
@@ -24,7 +28,10 @@ export async function getDashboardLayout(): Promise<string[] | null> {
   }
 }
 
-export async function saveDashboardLayout(widgetIds: string[]): Promise<void> {
+export async function saveDashboardLayout(
+  macroAreaId: string,
+  widgetIds: string[]
+): Promise<void> {
   const user = await getSessionUser();
   if (!user) throw new Error("Non autenticato");
 
@@ -34,6 +41,6 @@ export async function saveDashboardLayout(widgetIds: string[]): Promise<void> {
        values (?, ?, ?, datetime('now'))
        on conflict (user_id, key) do update set value = excluded.value, updated_at = excluded.updated_at`
     )
-    .bind(user.id, KEY, JSON.stringify({ widgets: widgetIds }))
+    .bind(user.id, chiave(macroAreaId), JSON.stringify({ widgets: widgetIds }))
     .run();
 }

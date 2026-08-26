@@ -10,7 +10,7 @@ const inputClass =
 
 type Riga = { valore: string; tipo: "min" | "max" };
 
-export function ObiettiviForm() {
+export function ObiettiviForm({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const [righe, setRighe] = useState<Record<Nutriente, Riga>>(() => {
     const init = {} as Record<Nutriente, Riga>;
@@ -108,12 +108,14 @@ export function ObiettiviForm() {
         >
           {salvando ? "Salvataggio…" : "Salva obiettivi"}
         </button>
-        <button
-          onClick={() => router.push("/alimentazione")}
-          className="rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent"
-        >
-          Indietro
-        </button>
+        {!embedded && (
+          <button
+            onClick={() => router.back()}
+            className="rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent"
+          >
+            Indietro
+          </button>
+        )}
       </div>
     </div>
   );
