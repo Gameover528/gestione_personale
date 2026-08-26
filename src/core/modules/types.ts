@@ -44,4 +44,6 @@ export interface MacroAreaConfig {
    */
   dashboardHref?: string;
   moduli: ModuleConfig[];
+  /** Widget "trasversali" della macro-area, non legati a un singolo modulo (es. un totale che somma più moduli). */
+  widgets?: DashboardWidgetDef[];
 }

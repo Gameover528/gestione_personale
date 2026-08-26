@@ -6,8 +6,10 @@ import type {
   NavItem,
 } from "./types";
 import { bolletteModule } from "@/modules/bollette/module.config";
+import { abbonamentiModule } from "@/modules/abbonamenti/module.config";
 import { alimentazioneModule } from "@/modules/alimentazione/module.config";
 import { impostazioniModule } from "@/modules/impostazioni/module.config";
+import TotaleGenerale from "@/core/dashboard/widgets/TotaleGenerale";
 
 /**
  * Registro centrale delle macro-aree.
@@ -28,7 +30,15 @@ export const macroAree: MacroAreaConfig[] = [
     label: "Consumi e Costi",
     icon: Wallet,
     dashboardHref: "/consumi-costi",
-    moduli: [bolletteModule],
+    moduli: [bolletteModule, abbonamentiModule],
+    widgets: [
+      {
+        id: "consumi-costi.totale-generale",
+        title: "Totale generale già pagato",
+        defaultSpan: 1,
+        component: TotaleGenerale,
+      },
+    ],
   },
   {
     id: "alimentazione",
@@ -55,9 +65,10 @@ export const modules: ModuleConfig[] = macroAree.flatMap((a) => a.moduli);
 export const allNavItems: NavItem[] = modules.flatMap((m) => m.nav);
 
 /** Tutti i widget dashboard disponibili, raccolti dai moduli. */
-export const allWidgets: DashboardWidgetDef[] = modules.flatMap(
-  (m) => m.widgets ?? []
-);
+export const allWidgets: DashboardWidgetDef[] = [
+  ...macroAree.flatMap((a) => a.widgets ?? []),
+  ...modules.flatMap((m) => m.widgets ?? []),
+];
 
 export function getWidget(id: string): DashboardWidgetDef | undefined {
   return allWidgets.find((w) => w.id === id);
@@ -65,7 +76,7 @@ export function getWidget(id: string): DashboardWidgetDef | undefined {
 
 /** Widget disponibili per la dashboard di una specifica macro-area. */
 export function widgetsForMacroArea(area: MacroAreaConfig): DashboardWidgetDef[] {
-  return area.moduli.flatMap((m) => m.widgets ?? []);
+  return [...(area.widgets ?? []), ...area.moduli.flatMap((m) => m.widgets ?? [])];
 }
 
 /** Determina la macro-area corrente in base al percorso, per la sidebar. */

@@ -37,6 +37,14 @@
 					"binding": "DB",
 					"database_name": "gestione-personale-db-dev",
 					"database_id": "779221e5-1b67-46a7-8657-4c617303deb6"
+				},
+				{
+					// Accesso di sola lettura (per convenzione: nel codice non ci si scrive mai)
+					// al database di produzione, usato solo dalla sincronizzazione dati riservata
+					// al superadmin. Esiste solo qui: il Worker di produzione non ha questo binding.
+					"binding": "DB_PROD",
+					"database_name": "gestione-personale-db",
+					"database_id": "7399c2ba-7a4b-4c45-8c6e-b4c6122cc241"
 				}
 			],
 			"kv_namespaces": [
