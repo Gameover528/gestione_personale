@@ -1,9 +1,8 @@
-import { createClient } from "@/lib/supabase/client";
-import {
-  type Bolletta,
-  type BollettaInput,
-  STORAGE_BUCKET,
-} from "./types";
+"use server";
+
+import { getDb, getAllegatiKv } from "@/lib/cf";
+import { requireSessionUser } from "@/lib/auth/session";
+import { type Bolletta, type BollettaInput } from "./types";
 
 export interface BolletteFilters {
   tipo?: string;
@@ -14,97 +13,127 @@ export interface BolletteFilters {
 export async function listBollette(
   filters: BolletteFilters = {}
 ): Promise<Bolletta[]> {
-  const supabase = createClient();
-  let query = supabase
-    .from("bollette")
-    .select("*")
-    .order("data_scadenza", { ascending: false });
+  const user = await requireSessionUser();
 
-  if (filters.tipo) query = query.eq("tipo", filters.tipo);
-  if (filters.stato) query = query.eq("stato", filters.stato);
-  if (filters.divisione) query = query.eq("divisione", filters.divisione);
+  const clauses = ["user_id = ?"];
+  const params: unknown[] = [user.id];
+  if (filters.tipo) { clauses.push("tipo = ?"); params.push(filters.tipo); }
+  if (filters.stato) { clauses.push("stato = ?"); params.push(filters.stato); }
+  if (filters.divisione) { clauses.push("divisione = ?"); params.push(filters.divisione); }
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []) as Bolletta[];
+  const { results } = await getDb()
+    .prepare(
+      `select * from bollette where ${clauses.join(" and ")} order by data_scadenza desc`
+    )
+    .bind(...params)
+    .all<Bolletta>();
+
+  return results ?? [];
 }
 
 export async function getBolletta(id: string): Promise<Bolletta | null> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("bollette")
-    .select("*")
-    .eq("id", id)
-    .single();
-  if (error) throw error;
-  return data as Bolletta;
+  const user = await requireSessionUser();
+  const row = await getDb()
+    .prepare("select * from bollette where id = ? and user_id = ?")
+    .bind(id, user.id)
+    .first<Bolletta>();
+  return row ?? null;
 }
 
 export async function createBolletta(input: BollettaInput): Promise<Bolletta> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non autenticato");
+  const user = await requireSessionUser();
+  const id = crypto.randomUUID();
 
-  const { data, error } = await supabase
-    .from("bollette")
-    .insert({ ...input, user_id: user.id })
-    .select()
-    .single();
-  if (error) throw error;
-  return data as Bolletta;
+  await getDb()
+    .prepare(
+      `insert into bollette
+        (id, user_id, fornitore, tipo, importo, data_scadenza, stato, data_pagamento,
+         periodo_inizio, periodo_fine, divisione, persone_tue, persone_altre,
+         note, allegato_path, pagamento_path)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(
+      id,
+      user.id,
+      input.fornitore,
+      input.tipo,
+      input.importo,
+      input.data_scadenza,
+      input.stato,
+      input.data_pagamento,
+      input.periodo_inizio,
+      input.periodo_fine,
+      input.divisione,
+      input.persone_tue,
+      input.persone_altre,
+      input.note,
+      input.allegato_path,
+      input.pagamento_path
+    )
+    .run();
+
+  const created = await getBolletta(id);
+  if (!created) throw new Error("Creazione bolletta non riuscita");
+  return created;
 }
 
 export async function updateBolletta(
   id: string,
   input: Partial<BollettaInput>
 ): Promise<Bolletta> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("bollette")
-    .update(input)
-    .eq("id", id)
-    .select()
-    .single();
-  if (error) throw error;
-  return data as Bolletta;
+  const user = await requireSessionUser();
+
+  const fields = Object.keys(input);
+  if (fields.length > 0) {
+    const setClause = fields.map((f) => `${f} = ?`).join(", ");
+    const values = fields.map((f) => (input as Record<string, unknown>)[f]);
+
+    const res = await getDb()
+      .prepare(
+        `update bollette set ${setClause} where id = ? and user_id = ?`
+      )
+      .bind(...values, id, user.id)
+      .run();
+
+    if (res.meta.changes === 0) throw new Error("Bolletta non trovata");
+  }
+
+  const updated = await getBolletta(id);
+  if (!updated) throw new Error("Bolletta non trovata");
+  return updated;
 }
 
 export async function deleteBolletta(id: string): Promise<void> {
-  const supabase = createClient();
-  const { error } = await supabase.from("bollette").delete().eq("id", id);
-  if (error) throw error;
+  const user = await requireSessionUser();
+  await getDb()
+    .prepare("delete from bollette where id = ? and user_id = ?")
+    .bind(id, user.id)
+    .run();
 }
 
-/** Carica un PDF nello storage e ritorna il path salvato. */
+/** Carica un PDF su Workers KV e ritorna il path salvato (prefissato con l'id utente). */
 export async function uploadAllegato(file: File): Promise<string> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non autenticato");
+  const user = await requireSessionUser();
 
   const ext = file.name.split(".").pop() || "pdf";
   const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(path, file, { upsert: false });
-  if (error) throw error;
+
+  await getAllegatiKv().put(path, await file.arrayBuffer(), {
+    metadata: { contentType: file.type || "application/pdf" },
+  });
+
   return path;
 }
 
-/** URL firmato temporaneo per aprire/scaricare l'allegato. */
+/** URL (relativo, protetto da sessione) per aprire/scaricare l'allegato. */
 export async function getAllegatoUrl(path: string): Promise<string | null> {
-  const supabase = createClient();
-  const { data, error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .createSignedUrl(path, 60 * 60);
-  if (error) return null;
-  return data.signedUrl;
+  const user = await requireSessionUser();
+  if (!path.startsWith(`${user.id}/`)) return null;
+  return `/api/allegati/${path}`;
 }
 
 export async function removeAllegato(path: string): Promise<void> {
-  const supabase = createClient();
-  await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+  const user = await requireSessionUser();
+  if (!path.startsWith(`${user.id}/`)) return;
+  await getAllegatiKv().delete(path);
 }

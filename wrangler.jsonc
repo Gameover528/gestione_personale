@@ -1,0 +1,29 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "gestione-personale",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2026-08-26",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".open-next/assets"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "gestione-personale-db",
+			"database_id": "7399c2ba-7a4b-4c45-8c6e-b4c6122cc241"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "ALLEGATI",
+			"id": "5d0ad940fa5a46d28fc4894be19d37ab"
+		}
+	]
+}

@@ -30,3 +30,14 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# cloudflare (opennext)
+/.open-next/
+/.wrangler/
+cloudflare-env.d.ts
+
+# dati generati dagli script di migrazione (contengono segreti/dati reali)
+/d1/seed-users.sql
+/d1/migrate-data.sql
+/d1/upload-allegati.sh
+/allegati-migrati/

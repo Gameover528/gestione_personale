@@ -130,4 +130,3 @@ export function periodoRicadeInAnno(
   return mesiPeriodo(inizio, fine, fallback).some((x) => x.anno === anno);
 }
 
-export const STORAGE_BUCKET = "bollette";
