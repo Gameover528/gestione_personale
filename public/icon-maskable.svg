@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Gestione Personale">
+  <!-- Versione "maskable": il disegno sta nel 60% centrale, così qualunque
+       forma applichi il sistema operativo non taglia nulla di importante. -->
+  <rect width="512" height="512" fill="#2563eb"/>
+  <g fill="#f8fafc">
+    <rect x="160" y="160" width="86" height="86" rx="22"/>
+    <rect x="266" y="160" width="86" height="86" rx="22"/>
+    <rect x="160" y="266" width="86" height="86" rx="22"/>
+    <rect x="266" y="266" width="86" height="86" rx="22"/>
+  </g>
+</svg>

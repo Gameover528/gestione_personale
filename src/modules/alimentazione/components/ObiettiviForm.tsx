@@ -2,55 +2,90 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getObiettivi, saveObiettivi } from "../queries";
-import { NUTRIENTI, type Obiettivo, type Nutriente } from "../types";
-
-const inputClass =
-  "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
+import { getDatiCorporei, getObiettivi, saveObiettivi } from "../queries";
+import {
+  NUTRIENTI,
+  type DatiCorporei,
+  type Obiettivo,
+  type Nutriente,
+} from "../types";
+import { CalcolaObiettivi } from "./CalcolaObiettivi";
+import { NumberInput, inputClass } from "@/core/components/controls";
+import { useToast } from "@/core/components/Toast";
+import { parseNumero } from "@/lib/utils";
 
 type Riga = { valore: string; tipo: "min" | "max" };
 
-export function ObiettiviForm({ embedded = false }: { embedded?: boolean } = {}) {
+function righeDaObiettivi(list: Obiettivo[]): Record<Nutriente, Riga> {
+  const righe = {} as Record<Nutriente, Riga>;
+  for (const n of NUTRIENTI) righe[n.value] = { valore: "", tipo: n.defaultTipo };
+  for (const o of list) righe[o.nutriente] = { valore: String(o.valore), tipo: o.tipo };
+  return righe;
+}
+
+export function ObiettiviForm({
+  embedded = false,
+  iniziali,
+  datiCorporeiIniziali,
+}: {
+  embedded?: boolean;
+  /** Se assenti, vengono caricati dal client (uso incorporato nelle preferenze). */
+  iniziali?: Obiettivo[];
+  datiCorporeiIniziali?: DatiCorporei | null;
+} = {}) {
   const router = useRouter();
-  const [righe, setRighe] = useState<Record<Nutriente, Riga>>(() => {
-    const init = {} as Record<Nutriente, Riga>;
-    for (const n of NUTRIENTI) init[n.value] = { valore: "", tipo: n.defaultTipo };
-    return init;
-  });
+  const toast = useToast();
+  const [righe, setRighe] = useState<Record<Nutriente, Riga>>(() =>
+    righeDaObiettivi(iniziali ?? [])
+  );
+  const [corpo, setCorpo] = useState<DatiCorporei | null>(
+    datiCorporeiIniziali ?? null
+  );
   const [salvando, setSalvando] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    getObiettivi().then((list) => {
-      setRighe((prev) => {
-        const next = { ...prev };
-        for (const o of list)
-          next[o.nutriente] = { valore: String(o.valore), tipo: o.tipo };
-        return next;
-      });
-    });
+    if (iniziali === undefined) getObiettivi().then((l) => setRighe(righeDaObiettivi(l)));
+    if (datiCorporeiIniziali === undefined) getDatiCorporei().then(setCorpo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function set(n: Nutriente, patch: Partial<Riga>) {
     setRighe((prev) => ({ ...prev, [n]: { ...prev[n], ...patch } }));
   }
 
+  /** Riempie i campi con la proposta del calcolatore, senza salvare. */
+  function applicaProposta(p: {
+    kcal: number;
+    proteine: number;
+    grassi: number;
+    carboidrati: number;
+    fibre: number;
+  }) {
+    setRighe((prev) => ({
+      ...prev,
+      kcal: { valore: String(p.kcal), tipo: "max" },
+      proteine: { valore: String(p.proteine), tipo: "min" },
+      carboidrati: { valore: String(p.carboidrati), tipo: "max" },
+      grassi: { valore: String(p.grassi), tipo: "max" },
+      fibre: { valore: String(p.fibre), tipo: "min" },
+    }));
+  }
+
   async function handleSave() {
     setSalvando(true);
-    setMsg(null);
     const list: Obiettivo[] = NUTRIENTI.filter(
-      (n) => parseFloat(righe[n.value].valore || "0") > 0
+      (n) => parseNumero(righe[n.value].valore) > 0
     ).map((n) => ({
       nutriente: n.value,
-      valore: parseFloat(righe[n.value].valore),
+      valore: parseNumero(righe[n.value].valore),
       tipo: righe[n.value].tipo,
     }));
     try {
       await saveObiettivi(list);
-      setMsg("Obiettivi salvati.");
+      toast({ messaggio: "Obiettivi salvati." });
       router.refresh();
     } catch {
-      setMsg("Errore durante il salvataggio.");
+      toast({ messaggio: "Errore durante il salvataggio.", tono: "errore" });
     } finally {
       setSalvando(false);
     }
@@ -65,6 +100,8 @@ export function ObiettiviForm({ embedded = false }: { embedded?: boolean } = {})
         tracciarlo.
       </p>
 
+      <CalcolaObiettivi iniziali={corpo} onProposta={applicaProposta} />
+
       <div className="space-y-2">
         {NUTRIENTI.map((n) => (
           <div
@@ -75,20 +112,19 @@ export function ObiettiviForm({ embedded = false }: { embedded?: boolean } = {})
               {n.label}{" "}
               <span className="text-xs text-muted-foreground">({n.unita})</span>
             </span>
-            <input
-              type="number"
-              min="0"
-              step="0.1"
+            <NumberInput
               value={righe[n.value].valore}
-              onChange={(e) => set(n.value, { valore: e.target.value })}
-              className={`${inputClass} w-28`}
+              onChange={(v) => set(n.value, { valore: v })}
+              aria-label={`Obiettivo per ${n.label} in ${n.unita}`}
               placeholder="0"
+              className="w-28"
             />
             <select
               value={righe[n.value].tipo}
               onChange={(e) =>
                 set(n.value, { tipo: e.target.value as "min" | "max" })
               }
+              aria-label={`Tipo di obiettivo per ${n.label}`}
               className={inputClass}
             >
               <option value="min">minimo</option>
@@ -97,8 +133,6 @@ export function ObiettiviForm({ embedded = false }: { embedded?: boolean } = {})
           </div>
         ))}
       </div>
-
-      {msg && <p className="text-sm text-muted-foreground">{msg}</p>}
 
       <div className="flex gap-3">
         <button

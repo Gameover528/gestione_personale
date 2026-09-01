@@ -1,9 +1,28 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Gestione Personale",
   description: "Il mio spazio personale modulare",
+  manifest: "/manifest.webmanifest",
+  applicationName: "Gestione Personale",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Gestione",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  // Il colore della barra di sistema segue il tema scelto.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#2563eb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1220" },
+  ],
 };
 
 const THEME_SCRIPT = `

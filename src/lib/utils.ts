@@ -32,3 +32,15 @@ export function daysUntil(value: string | Date): number {
   d.setHours(0, 0, 0, 0);
   return Math.round((d.getTime() - today.getTime()) / 86_400_000);
 }
+
+/**
+ * Converte in numero il testo di un campo numerico, accettando la virgola
+ * come separatore decimale (su tastiera italiana e' quello che si digita).
+ * Ritorna 0 se il testo non e' un numero.
+ */
+export function parseNumero(value: string | number | null | undefined): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (!value) return 0;
+  const x = parseFloat(String(value).replace(",", "."));
+  return Number.isFinite(x) ? x : 0;
+}

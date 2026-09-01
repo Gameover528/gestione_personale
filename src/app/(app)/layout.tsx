@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/session";
 import { AppShell } from "@/core/components/AppShell";
+import { ToastProvider } from "@/core/components/Toast";
 
 export default async function AppLayout({
   children,
@@ -12,8 +13,10 @@ export default async function AppLayout({
   if (!user) redirect("/login");
 
   return (
-    <AppShell userEmail={user.email} ruolo={user.ruolo}>
-      {children}
-    </AppShell>
+    <ToastProvider>
+      <AppShell userEmail={user.email} ruolo={user.ruolo}>
+        {children}
+      </AppShell>
+    </ToastProvider>
   );
 }

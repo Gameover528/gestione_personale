@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { listPasti, deletePasto, updatePasto, getObiettivi } from "../queries";
+import {
+  listPasti,
+  deletePasto,
+  deletePasti,
+  ripristinaPasto,
+  updatePasto,
+  copiaGiorno,
+} from "../queries";
 import {
   PASTI,
   NUTRIENTI,
@@ -10,38 +17,101 @@ import {
   type Pasto,
   type Obiettivo,
   type Nutriente,
+  fmtQuantita,
+  numeroPorzioni,
   valoriPorzione,
   sommaValori,
 } from "../types";
-import { Trash2, Plus, Pencil, Check, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useToast } from "@/core/components/Toast";
+import { IconButton, NumberInput, ToggleChip } from "@/core/components/controls";
+import {
+  Trash2,
+  Plus,
+  Pencil,
+  Check,
+  X,
+  CopyPlus,
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  ChefHat,
+  PencilLine,
+} from "lucide-react";
+import { cn, parseNumero } from "@/lib/utils";
 
 function fmt(nutriente: Nutriente, v: number) {
   return nutriente === "kcal" ? String(Math.round(v)) : v.toFixed(1);
 }
 
-export function DiarioGiorno() {
-  const oggi = new Date().toISOString().slice(0, 10);
-  const [data, setData] = useState(oggi);
-  const [pasti, setPasti] = useState<PastoDiario[] | null>(null);
-  const [obiettivi, setObiettivi] = useState<Obiettivo[]>([]);
+/** Sposta una data (YYYY-MM-DD) di N giorni. */
+function spostaGiorno(giorno: string, delta: number): string {
+  const d = new Date(`${giorno}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
 
-  const load = useCallback(() => {
+const giornoFmt = new Intl.DateTimeFormat("it-IT", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
+function etichettaGiorno(giorno: string, oggi: string): string {
+  if (giorno === oggi) return "Oggi";
+  if (giorno === spostaGiorno(oggi, -1)) return "Ieri";
+  if (giorno === spostaGiorno(oggi, 1)) return "Domani";
+  return giornoFmt.format(new Date(`${giorno}T00:00:00Z`));
+}
+
+export function DiarioGiorno({
+  dataIniziale,
+  pastiIniziali,
+  obiettiviIniziali,
+}: {
+  dataIniziale: string;
+  pastiIniziali: PastoDiario[];
+  obiettiviIniziali: Obiettivo[];
+}) {
+  const toast = useToast();
+  const oggi = dataIniziale;
+  const [data, setData] = useState(dataIniziale);
+  const [pasti, setPasti] = useState<PastoDiario[] | null>(pastiIniziali);
+  const [obiettivi] = useState<Obiettivo[]>(obiettiviIniziali);
+
+  const ricarica = useCallback(async () => {
+    setPasti(await listPasti(data));
+  }, [data]);
+
+  // Il primo giorno arriva già pronto dal server: si ricarica solo cambiando data.
+  const giornoMostrato = useRef(dataIniziale);
+  useEffect(() => {
+    if (giornoMostrato.current === data) return;
+    giornoMostrato.current = data;
+    setPasti(null);
     listPasti(data).then(setPasti);
   }, [data]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-  useEffect(() => {
-    getObiettivi().then(setObiettivi);
-  }, []);
-
   const totali = sommaValori((pasti ?? []).map(valoriPorzione));
 
-  async function handleDelete(id: string) {
-    await deletePasto(id);
-    load();
+  async function handleDelete(r: PastoDiario) {
+    setPasti((prev) => prev?.filter((x) => x.id !== r.id) ?? null);
+    try {
+      await deletePasto(r.id);
+      toast({
+        messaggio: `"${r.nome_alimento}" eliminato`,
+        azione: {
+          label: "Annulla",
+          onClick: async () => {
+            await ripristinaPasto(r);
+            ricarica();
+          },
+        },
+      });
+    } catch {
+      toast({ messaggio: "Errore durante l'eliminazione.", tono: "errore" });
+      ricarica();
+    }
   }
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -56,32 +126,120 @@ export function DiarioGiorno() {
   async function saveEdit() {
     if (!editingId) return;
     await updatePasto(editingId, {
-      quantita_g: parseFloat(editG || "0"),
+      quantita_g: parseNumero(editG),
       pasto: editPasto,
     });
     setEditingId(null);
-    load();
+    ricarica();
   }
 
   function obiettivo(n: Nutriente) {
     return obiettivi.find((o) => o.nutriente === n);
   }
 
+  // ---- Copia da un altro giorno ----
+  const [copiaAperta, setCopiaAperta] = useState(false);
+  const [copiaDa, setCopiaDa] = useState(spostaGiorno(dataIniziale, -1));
+  const [copiaPasti, setCopiaPasti] = useState<Pasto[]>(PASTI.map((p) => p.value));
+  const [copiando, setCopiando] = useState(false);
+
+  function apriCopia() {
+    setCopiaDa(spostaGiorno(data, -1));
+    setCopiaPasti(PASTI.map((p) => p.value));
+    setCopiaAperta((v) => !v);
+  }
+
+  function togglePastoCopia(p: Pasto) {
+    setCopiaPasti((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+    );
+  }
+
+  async function eseguiCopia() {
+    setCopiando(true);
+    try {
+      const ids = await copiaGiorno(copiaDa, data, copiaPasti);
+      if (ids.length === 0) {
+        toast({
+          messaggio: "Nessuna riga da copiare per i pasti scelti.",
+          tono: "errore",
+        });
+        return;
+      }
+      setCopiaAperta(false);
+      ricarica();
+      toast({
+        messaggio:
+          ids.length === 1 ? "Copiata 1 riga." : `Copiate ${ids.length} righe.`,
+        azione: {
+          label: "Annulla",
+          onClick: async () => {
+            await deletePasti(ids);
+            ricarica();
+          },
+        },
+      });
+    } catch {
+      toast({ messaggio: "Errore durante la copia.", tono: "errore" });
+    } finally {
+      setCopiando(false);
+    }
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 sm:pb-0">
+      {/* Giorno mostrato: frecce e "Oggi" evitano di aprire il calendario */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <input
-          type="date"
-          value={data}
-          onChange={(e) => setData(e.target.value)}
-          className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-        />
-        <div className="flex gap-2">
-          <Link
-            href="/alimentazione/piatti"
-            className="rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+        <div className="flex items-center gap-2">
+          <IconButton
+            label="Giorno precedente"
+            onClick={() => setData(spostaGiorno(data, -1))}
           >
-            Piatti
+            <ChevronLeft className="h-5 w-5" />
+          </IconButton>
+          <div className="text-center">
+            <p className="text-sm font-semibold capitalize">
+              {etichettaGiorno(data, oggi)}
+            </p>
+            <input
+              type="date"
+              value={data}
+              onChange={(e) => setData(e.target.value || oggi)}
+              aria-label="Scegli il giorno"
+              className="rounded-md border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <IconButton
+            label="Giorno successivo"
+            onClick={() => setData(spostaGiorno(data, 1))}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </IconButton>
+          {data !== oggi && (
+            <button
+              onClick={() => setData(oggi)}
+              className="rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+            >
+              Oggi
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={apriCopia}
+            aria-expanded={copiaAperta}
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+          >
+            <CopyPlus className="h-4 w-4" />
+            Copia giorno
+          </button>
+          <Link
+            href="/alimentazione/andamento"
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Andamento
           </Link>
           <Link
             href="/alimentazione/obiettivi"
@@ -91,13 +249,68 @@ export function DiarioGiorno() {
           </Link>
           <Link
             href={`/alimentazione/aggiungi?data=${data}`}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+            className="hidden items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 sm:inline-flex"
           >
             <Plus className="h-4 w-4" />
             Aggiungi
           </Link>
         </div>
       </div>
+
+      {/* Copia i pasti di un altro giorno in quello corrente */}
+      {copiaAperta && (
+        <div className="space-y-3 rounded-lg border p-4">
+          <p className="text-sm font-medium">
+            Porta in questo giorno ({data}) i pasti di:
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="date"
+              value={copiaDa}
+              onChange={(e) => setCopiaDa(e.target.value)}
+              aria-label="Giorno da cui copiare"
+              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            />
+            <button
+              onClick={() => setCopiaDa(spostaGiorno(data, -1))}
+              className="text-sm text-primary hover:underline"
+            >
+              ieri
+            </button>
+            <div className="flex flex-wrap gap-2">
+              {PASTI.map((p) => (
+                <ToggleChip
+                  key={p.value}
+                  attivo={copiaPasti.includes(p.value)}
+                  onClick={() => togglePastoCopia(p.value)}
+                >
+                  {p.label}
+                </ToggleChip>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={eseguiCopia}
+              disabled={copiando || copiaPasti.length === 0 || copiaDa === data}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+            >
+              {copiando ? "Copia…" : "Copia"}
+            </button>
+            <button
+              onClick={() => setCopiaAperta(false)}
+              className="rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent"
+            >
+              Annulla
+            </button>
+            {copiaDa === data && (
+              <span className="text-sm text-muted-foreground">
+                Scegli un giorno diverso da quello corrente.
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Totali del giorno vs obiettivi */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
@@ -140,16 +353,39 @@ export function DiarioGiorno() {
       {pasti === null ? (
         <p className="text-sm text-muted-foreground">Caricamento…</p>
       ) : pasti.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-10 text-center">
+        <div className="rounded-lg border border-dashed p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Nessun alimento registrato per questo giorno.
+            Nessun alimento registrato per{" "}
+            {etichettaGiorno(data, oggi).toLowerCase()}. Puoi aggiungerne uno in
+            tre modi:
           </p>
-          <Link
-            href={`/alimentazione/aggiungi?data=${data}`}
-            className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
-          >
-            + Aggiungi il primo
-          </Link>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <Link
+              href={`/alimentazione/aggiungi?data=${data}&tab=cerca`}
+              className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+            >
+              <Search className="h-4 w-4" />
+              Cerca un alimento
+            </Link>
+            <Link
+              href={`/alimentazione/aggiungi?data=${data}&tab=piatti`}
+              className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+            >
+              <ChefHat className="h-4 w-4" />
+              Scegli un tuo piatto
+            </Link>
+            <Link
+              href={`/alimentazione/aggiungi?data=${data}&tab=manuale`}
+              className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+            >
+              <PencilLine className="h-4 w-4" />
+              Inseriscilo a mano
+            </Link>
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Oppure usa <strong>Copia giorno</strong> se hai mangiato come un
+            altro giorno.
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -161,20 +397,29 @@ export function DiarioGiorno() {
               <div key={p.value} className="rounded-lg border">
                 <div className="flex items-center justify-between border-b bg-muted px-4 py-2">
                   <span className="text-sm font-semibold">{p.label}</span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
                     {Math.round(totPasto.kcal)} kcal
+                    <Link
+                      href={`/alimentazione/aggiungi?data=${data}&pasto=${p.value}`}
+                      aria-label={`Aggiungi a ${p.label.toLowerCase()}`}
+                      title={`Aggiungi a ${p.label.toLowerCase()}`}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md transition hover:bg-accent hover:text-foreground"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Link>
                   </span>
                 </div>
                 <ul>
                   {righe.map((r) => {
                     const v = valoriPorzione(r);
                     const inEdit = editingId === r.id;
+                    const porzioni = numeroPorzioni(r);
                     return (
                       <li
                         key={r.id}
-                        className="flex items-center justify-between gap-3 border-t px-4 py-2 text-sm first:border-t-0"
+                        className="flex items-center justify-between gap-3 border-t px-2 py-1 text-sm first:border-t-0 sm:px-4 sm:py-2"
                       >
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1 pl-2">
                           <p className="truncate font-medium">
                             {r.nome_alimento}
                             {r.marca ? (
@@ -186,17 +431,24 @@ export function DiarioGiorno() {
                           </p>
                           {inEdit ? (
                             <div className="mt-1 flex flex-wrap items-center gap-2">
-                              <input
-                                type="number"
-                                min="0"
+                              <NumberInput
                                 value={editG}
-                                onChange={(e) => setEditG(e.target.value)}
-                                className="w-24 rounded-md border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary"
+                                onChange={setEditG}
+                                aria-label="Quantità in grammi"
+                                className="w-24 py-1"
                               />
-                              <span className="text-xs text-muted-foreground">g</span>
+                              <span className="text-xs text-muted-foreground">
+                                g
+                                {porzioni > 0 && r.porzione_g
+                                  ? ` (1 ${r.porzione_nome ?? "porzione"} = ${Math.round(r.porzione_g)} g)`
+                                  : ""}
+                              </span>
                               <select
                                 value={editPasto}
-                                onChange={(e) => setEditPasto(e.target.value as Pasto)}
+                                onChange={(e) =>
+                                  setEditPasto(e.target.value as Pasto)
+                                }
+                                aria-label="Pasto"
                                 className="rounded-md border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary"
                               >
                                 {PASTI.map((pp) => (
@@ -208,46 +460,40 @@ export function DiarioGiorno() {
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground">
-                              {r.quantita_g} g · {Math.round(v.kcal)} kcal · P{" "}
+                              {fmtQuantita(r)} · {Math.round(v.kcal)} kcal · P{" "}
                               {v.proteine.toFixed(1)} · C {v.carboidrati.toFixed(1)}{" "}
                               · G {v.grassi.toFixed(1)}
                             </p>
                           )}
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
+                        <div className="flex shrink-0 items-center">
                           {inEdit ? (
                             <>
-                              <button
-                                title="Salva"
-                                onClick={saveEdit}
-                                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-success"
-                              >
-                                <Check className="h-4 w-4" />
-                              </button>
-                              <button
-                                title="Annulla"
+                              <IconButton label="Salva" onClick={saveEdit}>
+                                <Check className="h-5 w-5" />
+                              </IconButton>
+                              <IconButton
+                                label="Annulla modifica"
                                 onClick={() => setEditingId(null)}
-                                className="rounded p-1.5 text-muted-foreground hover:bg-accent"
                               >
-                                <X className="h-4 w-4" />
-                              </button>
+                                <X className="h-5 w-5" />
+                              </IconButton>
                             </>
                           ) : (
                             <>
-                              <button
-                                title="Modifica"
+                              <IconButton
+                                label={`Modifica ${r.nome_alimento}`}
                                 onClick={() => startEdit(r)}
-                                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
                               >
-                                <Pencil className="h-4 w-4" />
-                              </button>
-                              <button
-                                title="Elimina"
-                                onClick={() => handleDelete(r.id)}
-                                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive"
+                                <Pencil className="h-5 w-5" />
+                              </IconButton>
+                              <IconButton
+                                label={`Elimina ${r.nome_alimento}`}
+                                tono="distruttivo"
+                                onClick={() => handleDelete(r)}
                               >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                                <Trash2 className="h-5 w-5" />
+                              </IconButton>
                             </>
                           )}
                         </div>
@@ -260,6 +506,16 @@ export function DiarioGiorno() {
           })}
         </div>
       )}
+
+      {/* Su telefono l'azione principale sta a portata di pollice */}
+      <Link
+        href={`/alimentazione/aggiungi?data=${data}`}
+        aria-label="Aggiungi alimento"
+        className="fixed bottom-4 right-4 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lg transition hover:opacity-90 sm:hidden"
+      >
+        <Plus className="h-5 w-5" />
+        Aggiungi
+      </Link>
     </div>
   );
 }

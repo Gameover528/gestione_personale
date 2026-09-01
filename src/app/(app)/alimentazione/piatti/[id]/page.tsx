@@ -1,35 +1,29 @@
-"use client";
-
-import { use, useEffect, useState } from "react";
-import { getPiatto } from "@/modules/alimentazione/queries";
-import { type PiattoConIngredienti } from "@/modules/alimentazione/types";
-import { PiattoEditor } from "@/modules/alimentazione/components/PiattoEditor";
 import { PageHeader } from "@/core/components/ui";
+import { PiattoEditor } from "@/modules/alimentazione/components/PiattoEditor";
+import { getPiatto } from "@/modules/alimentazione/queries";
 
-export default function ModificaPiattoPage({
+export default async function ModificaPiattoPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
-  const [piatto, setPiatto] = useState<PiattoConIngredienti | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { id } = await params;
 
-  useEffect(() => {
-    getPiatto(id)
-      .then(setPiatto)
-      .catch(() => setError("Piatto non trovato"));
-  }, [id]);
+  // Il piatto viene caricato lato server: l'editor si apre già compilato.
+  let piatto = null;
+  try {
+    piatto = await getPiatto(id);
+  } catch {
+    piatto = null;
+  }
 
   return (
     <div>
       <PageHeader title="Modifica piatto" />
-      {error ? (
-        <p className="text-sm text-destructive">{error}</p>
-      ) : piatto ? (
+      {piatto ? (
         <PiattoEditor initial={piatto} />
       ) : (
-        <p className="text-sm text-muted-foreground">Caricamento…</p>
+        <p className="text-sm text-destructive">Piatto non trovato</p>
       )}
     </div>
   );

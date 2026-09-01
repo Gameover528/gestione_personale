@@ -41,3 +41,6 @@ cloudflare-env.d.ts
 /d1/migrate-data.sql
 /d1/upload-allegati.sh
 /allegati-migrati/
+
+# configurazione locale di Claude Code (impostazioni personali e anteprima browser)
+/.claude/

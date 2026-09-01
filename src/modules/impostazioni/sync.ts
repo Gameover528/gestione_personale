@@ -82,6 +82,7 @@ export async function sincronizzaProdSuDevAction(): Promise<SyncResult> {
   ]);
   riepilogo["Diario pasti"] = await copiaTabella(dbProd, dbDev, "diario_pasti", [
     "id", "user_id", "data", "pasto", "nome_alimento", "marca", "quantita_g",
+    "porzione_nome", "porzione_g",
     "kcal_100", "proteine_100", "carboidrati_100", "grassi_100", "fibre_100",
     "zuccheri_100", "sale_100", "fonte", "created_at",
   ]);
@@ -89,7 +90,9 @@ export async function sincronizzaProdSuDevAction(): Promise<SyncResult> {
     "user_id", "nutriente", "valore", "tipo",
   ]);
   riepilogo["Piatti"] = await copiaTabella(dbProd, dbDev, "piatti", [
-    "id", "user_id", "nome", "created_at",
+    "id", "user_id", "nome", "marca", "tipo", "porzione_nome", "porzione_g",
+    "kcal_100", "proteine_100", "carboidrati_100", "grassi_100", "fibre_100",
+    "zuccheri_100", "sale_100", "created_at",
   ]);
   riepilogo["Ingredienti piatti"] = await copiaTabella(dbProd, dbDev, "piatto_ingredienti", [
     "id", "piatto_id", "user_id", "nome_alimento", "marca", "quantita_g",
