@@ -44,3 +44,31 @@ export function parseNumero(value: string | number | null | undefined): number {
   const x = parseFloat(String(value).replace(",", "."));
   return Number.isFinite(x) ? x : 0;
 }
+
+/**
+ * Fuso orario di riferimento dell'app. Serve perche' "oggi" va deciso in ora
+ * locale: il Worker gira in UTC, quindi con new Date().toISOString() tra
+ * mezzanotte e le 2 (ora italiana d'estate) "oggi" risulterebbe il giorno
+ * prima — e uno spuntino di mezzanotte finirebbe nel giorno sbagliato.
+ */
+export const FUSO_ORARIO = "Europe/Rome";
+
+// "sv-SE" formatta le date come YYYY-MM-DD, che e' il formato usato su database.
+const isoFmt = new Intl.DateTimeFormat("sv-SE", {
+  timeZone: FUSO_ORARIO,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** La data di oggi (YYYY-MM-DD) nel fuso dell'app, uguale su server e client. */
+export function oggiIso(): string {
+  return isoFmt.format(new Date());
+}
+
+/** Sposta una data YYYY-MM-DD di N giorni (N negativo = indietro). */
+export function spostaGiorno(giorno: string, delta: number): string {
+  const d = new Date(`${giorno}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}

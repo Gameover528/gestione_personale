@@ -20,6 +20,7 @@ import {
   type Nutriente,
   type Obiettivo,
 } from "../types";
+import { oggiIso } from "@/lib/utils";
 
 // Nutrienti in grammi (le calorie stanno nel widget "Calorie di oggi").
 const IN_GRAMMI: Nutriente[] = [
@@ -42,7 +43,7 @@ export default function MacroOggi() {
   const [data, setData] = useState<Riga[] | null>(null);
 
   useEffect(() => {
-    const oggi = new Date().toISOString().slice(0, 10);
+    const oggi = oggiIso();
     Promise.all([listPasti(oggi), getObiettivi()]).then(([pasti, obiettivi]) => {
       const tot = sommaValori(pasti.map(valoriPorzione));
       const obMap = new Map<Nutriente, Obiettivo>(

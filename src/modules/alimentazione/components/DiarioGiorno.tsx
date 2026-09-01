@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  listPasti,
   deletePasto,
   deletePasti,
   ripristinaPasto,
@@ -38,17 +38,10 @@ import {
   ChefHat,
   PencilLine,
 } from "lucide-react";
-import { cn, parseNumero } from "@/lib/utils";
+import { cn, formatDate, parseNumero, spostaGiorno } from "@/lib/utils";
 
 function fmt(nutriente: Nutriente, v: number) {
   return nutriente === "kcal" ? String(Math.round(v)) : v.toFixed(1);
-}
-
-/** Sposta una data (YYYY-MM-DD) di N giorni. */
-function spostaGiorno(giorno: string, delta: number): string {
-  const d = new Date(`${giorno}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + delta);
-  return d.toISOString().slice(0, 10);
 }
 
 const giornoFmt = new Intl.DateTimeFormat("it-IT", {
@@ -64,53 +57,61 @@ function etichettaGiorno(giorno: string, oggi: string): string {
   return giornoFmt.format(new Date(`${giorno}T00:00:00Z`));
 }
 
+/** Rotta del diario per un certo giorno (oggi resta l'URL pulito). */
+export function hrefDiario(giorno: string, oggi: string): string {
+  return giorno === oggi ? "/alimentazione" : `/alimentazione?data=${giorno}`;
+}
+
 export function DiarioGiorno({
-  dataIniziale,
+  giorno,
+  oggi,
   pastiIniziali,
   obiettiviIniziali,
 }: {
-  dataIniziale: string;
+  giorno: string;
+  oggi: string;
   pastiIniziali: PastoDiario[];
   obiettiviIniziali: Obiettivo[];
 }) {
+  const router = useRouter();
   const toast = useToast();
-  const oggi = dataIniziale;
-  const [data, setData] = useState(dataIniziale);
-  const [pasti, setPasti] = useState<PastoDiario[] | null>(pastiIniziali);
-  const [obiettivi] = useState<Obiettivo[]>(obiettiviIniziali);
+  const [inCorso, startTransition] = useTransition();
 
-  const ricarica = useCallback(async () => {
-    setPasti(await listPasti(data));
-  }, [data]);
-
-  // Il primo giorno arriva già pronto dal server: si ricarica solo cambiando data.
-  const giornoMostrato = useRef(dataIniziale);
+  // I pasti arrivano dal server. La copia locale serve solo per aggiornare
+  // subito la lista dopo un'eliminazione, prima che il server risponda.
+  const [pasti, setPasti] = useState<PastoDiario[]>(pastiIniziali);
   useEffect(() => {
-    if (giornoMostrato.current === data) return;
-    giornoMostrato.current = data;
-    setPasti(null);
-    listPasti(data).then(setPasti);
-  }, [data]);
+    setPasti(pastiIniziali);
+  }, [pastiIniziali]);
 
-  const totali = sommaValori((pasti ?? []).map(valoriPorzione));
+  const obiettivi = obiettiviIniziali;
+  const totali = sommaValori(pasti.map(valoriPorzione));
+
+  /** Cambia giorno passando dall'URL, così il giorno non si perde più. */
+  function vaiAlGiorno(nuovo: string) {
+    startTransition(() => {
+      router.push(hrefDiario(nuovo, oggi), { scroll: false });
+    });
+  }
 
   async function handleDelete(r: PastoDiario) {
-    setPasti((prev) => prev?.filter((x) => x.id !== r.id) ?? null);
+    setPasti((prev) => prev.filter((x) => x.id !== r.id));
     try {
       await deletePasto(r.id);
+      router.refresh();
       toast({
         messaggio: `"${r.nome_alimento}" eliminato`,
         azione: {
           label: "Annulla",
           onClick: async () => {
             await ripristinaPasto(r);
-            ricarica();
+            router.refresh();
           },
         },
       });
     } catch {
       toast({ messaggio: "Errore durante l'eliminazione.", tono: "errore" });
-      ricarica();
+      router.refresh();
     }
   }
 
@@ -130,7 +131,7 @@ export function DiarioGiorno({
       pasto: editPasto,
     });
     setEditingId(null);
-    ricarica();
+    router.refresh();
   }
 
   function obiettivo(n: Nutriente) {
@@ -139,12 +140,12 @@ export function DiarioGiorno({
 
   // ---- Copia da un altro giorno ----
   const [copiaAperta, setCopiaAperta] = useState(false);
-  const [copiaDa, setCopiaDa] = useState(spostaGiorno(dataIniziale, -1));
+  const [copiaDa, setCopiaDa] = useState(spostaGiorno(giorno, -1));
   const [copiaPasti, setCopiaPasti] = useState<Pasto[]>(PASTI.map((p) => p.value));
   const [copiando, setCopiando] = useState(false);
 
   function apriCopia() {
-    setCopiaDa(spostaGiorno(data, -1));
+    setCopiaDa(spostaGiorno(giorno, -1));
     setCopiaPasti(PASTI.map((p) => p.value));
     setCopiaAperta((v) => !v);
   }
@@ -158,7 +159,7 @@ export function DiarioGiorno({
   async function eseguiCopia() {
     setCopiando(true);
     try {
-      const ids = await copiaGiorno(copiaDa, data, copiaPasti);
+      const ids = await copiaGiorno(copiaDa, giorno, copiaPasti);
       if (ids.length === 0) {
         toast({
           messaggio: "Nessuna riga da copiare per i pasti scelti.",
@@ -167,7 +168,7 @@ export function DiarioGiorno({
         return;
       }
       setCopiaAperta(false);
-      ricarica();
+      router.refresh();
       toast({
         messaggio:
           ids.length === 1 ? "Copiata 1 riga." : `Copiate ${ids.length} righe.`,
@@ -175,7 +176,7 @@ export function DiarioGiorno({
           label: "Annulla",
           onClick: async () => {
             await deletePasti(ids);
-            ricarica();
+            router.refresh();
           },
         },
       });
@@ -186,38 +187,41 @@ export function DiarioGiorno({
     }
   }
 
+  const hrefAggiungi = (pasto?: Pasto) =>
+    `/alimentazione/aggiungi?data=${giorno}${pasto ? `&pasto=${pasto}` : ""}`;
+
   return (
-    <div className="space-y-6 pb-20 sm:pb-0">
+    <div className={cn("space-y-6 pb-24 sm:pb-0", inCorso && "opacity-60")}>
       {/* Giorno mostrato: frecce e "Oggi" evitano di aprire il calendario */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <IconButton
             label="Giorno precedente"
-            onClick={() => setData(spostaGiorno(data, -1))}
+            onClick={() => vaiAlGiorno(spostaGiorno(giorno, -1))}
           >
             <ChevronLeft className="h-5 w-5" />
           </IconButton>
           <div className="text-center">
             <p className="text-sm font-semibold capitalize">
-              {etichettaGiorno(data, oggi)}
+              {etichettaGiorno(giorno, oggi)}
             </p>
             <input
               type="date"
-              value={data}
-              onChange={(e) => setData(e.target.value || oggi)}
+              value={giorno}
+              onChange={(e) => vaiAlGiorno(e.target.value || oggi)}
               aria-label="Scegli il giorno"
               className="rounded-md border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <IconButton
             label="Giorno successivo"
-            onClick={() => setData(spostaGiorno(data, 1))}
+            onClick={() => vaiAlGiorno(spostaGiorno(giorno, 1))}
           >
             <ChevronRight className="h-5 w-5" />
           </IconButton>
-          {data !== oggi && (
+          {giorno !== oggi && (
             <button
-              onClick={() => setData(oggi)}
+              onClick={() => vaiAlGiorno(oggi)}
               className="rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
             >
               Oggi
@@ -248,7 +252,7 @@ export function DiarioGiorno({
             Obiettivi
           </Link>
           <Link
-            href={`/alimentazione/aggiungi?data=${data}`}
+            href={hrefAggiungi()}
             className="hidden items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 sm:inline-flex"
           >
             <Plus className="h-4 w-4" />
@@ -261,7 +265,7 @@ export function DiarioGiorno({
       {copiaAperta && (
         <div className="space-y-3 rounded-lg border p-4">
           <p className="text-sm font-medium">
-            Porta in questo giorno ({data}) i pasti di:
+            Porta in questo giorno ({formatDate(giorno)}) i pasti di:
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <input
@@ -272,10 +276,10 @@ export function DiarioGiorno({
               className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             />
             <button
-              onClick={() => setCopiaDa(spostaGiorno(data, -1))}
+              onClick={() => setCopiaDa(spostaGiorno(giorno, -1))}
               className="text-sm text-primary hover:underline"
             >
-              ieri
+              il giorno prima
             </button>
             <div className="flex flex-wrap gap-2">
               {PASTI.map((p) => (
@@ -292,7 +296,7 @@ export function DiarioGiorno({
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={eseguiCopia}
-              disabled={copiando || copiaPasti.length === 0 || copiaDa === data}
+              disabled={copiando || copiaPasti.length === 0 || copiaDa === giorno}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
             >
               {copiando ? "Copia…" : "Copia"}
@@ -303,7 +307,7 @@ export function DiarioGiorno({
             >
               Annulla
             </button>
-            {copiaDa === data && (
+            {copiaDa === giorno && (
               <span className="text-sm text-muted-foreground">
                 Scegli un giorno diverso da quello corrente.
               </span>
@@ -350,32 +354,30 @@ export function DiarioGiorno({
       </div>
 
       {/* Pasti raggruppati */}
-      {pasti === null ? (
-        <p className="text-sm text-muted-foreground">Caricamento…</p>
-      ) : pasti.length === 0 ? (
+      {pasti.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center">
           <p className="text-sm text-muted-foreground">
             Nessun alimento registrato per{" "}
-            {etichettaGiorno(data, oggi).toLowerCase()}. Puoi aggiungerne uno in
-            tre modi:
+            {etichettaGiorno(giorno, oggi).toLowerCase()}. Puoi aggiungerne uno
+            in tre modi:
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <Link
-              href={`/alimentazione/aggiungi?data=${data}&tab=cerca`}
+              href={`${hrefAggiungi()}&tab=cerca`}
               className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
             >
               <Search className="h-4 w-4" />
               Cerca un alimento
             </Link>
             <Link
-              href={`/alimentazione/aggiungi?data=${data}&tab=piatti`}
+              href={`${hrefAggiungi()}&tab=piatti`}
               className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
             >
               <ChefHat className="h-4 w-4" />
               Scegli un tuo piatto
             </Link>
             <Link
-              href={`/alimentazione/aggiungi?data=${data}&tab=manuale`}
+              href={`${hrefAggiungi()}&tab=manuale`}
               className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
             >
               <PencilLine className="h-4 w-4" />
@@ -400,7 +402,7 @@ export function DiarioGiorno({
                   <span className="flex items-center gap-2 text-sm text-muted-foreground">
                     {Math.round(totPasto.kcal)} kcal
                     <Link
-                      href={`/alimentazione/aggiungi?data=${data}&pasto=${p.value}`}
+                      href={hrefAggiungi(p.value)}
                       aria-label={`Aggiungi a ${p.label.toLowerCase()}`}
                       title={`Aggiungi a ${p.label.toLowerCase()}`}
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md transition hover:bg-accent hover:text-foreground"
@@ -509,7 +511,7 @@ export function DiarioGiorno({
 
       {/* Su telefono l'azione principale sta a portata di pollice */}
       <Link
-        href={`/alimentazione/aggiungi?data=${data}`}
+        href={hrefAggiungi()}
         aria-label="Aggiungi alimento"
         className="fixed bottom-4 right-4 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lg transition hover:opacity-90 sm:hidden"
       >

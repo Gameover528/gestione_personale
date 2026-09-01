@@ -14,19 +14,16 @@ import {
 } from "recharts";
 import { getObiettivi, statistichePeriodo } from "../queries";
 import type { GiornoValori, Obiettivo } from "../types";
+import { oggiIso, spostaGiorno } from "@/lib/utils";
 
 const GIORNI = 7;
 const SIGLE = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
 
 /** Ultimi GIORNI giorni, oggi compreso. */
 function ultimiGiorni(): string[] {
+  const fine = oggiIso();
   const out: string[] = [];
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - (GIORNI - 1));
-  for (let i = 0; i < GIORNI; i++) {
-    out.push(d.toISOString().slice(0, 10));
-    d.setUTCDate(d.getUTCDate() + 1);
-  }
+  for (let i = GIORNI - 1; i >= 0; i--) out.push(spostaGiorno(fine, -i));
   return out;
 }
 

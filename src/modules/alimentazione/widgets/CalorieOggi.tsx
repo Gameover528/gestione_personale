@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { listPasti, getObiettivi } from "../queries";
 import { valoriPorzione, sommaValori } from "../types";
-import { cn } from "@/lib/utils";
+import { cn, oggiIso } from "@/lib/utils";
 
 export default function CalorieOggi() {
   const [tot, setTot] = useState<number | null>(null);
@@ -13,7 +13,7 @@ export default function CalorieOggi() {
   );
 
   useEffect(() => {
-    const oggi = new Date().toISOString().slice(0, 10);
+    const oggi = oggiIso();
     listPasti(oggi).then((p) =>
       setTot(sommaValori(p.map(valoriPorzione)).kcal)
     );

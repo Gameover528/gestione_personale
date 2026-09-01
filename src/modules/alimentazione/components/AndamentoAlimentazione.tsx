@@ -23,7 +23,7 @@ import {
   type Obiettivo,
 } from "../types";
 import { TabBar } from "@/core/components/controls";
-import { cn } from "@/lib/utils";
+import { cn, oggiIso, spostaGiorno } from "@/lib/utils";
 
 const PERIODI: { value: string; label: string }[] = [
   { value: "7", label: "7 giorni" },
@@ -33,13 +33,9 @@ const PERIODI: { value: string; label: string }[] = [
 
 /** Elenco dei giorni del periodo, oggi compreso, in ordine cronologico. */
 function giorniDelPeriodo(giorni: number): string[] {
+  const fine = oggiIso();
   const out: string[] = [];
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - (giorni - 1));
-  for (let i = 0; i < giorni; i++) {
-    out.push(d.toISOString().slice(0, 10));
-    d.setUTCDate(d.getUTCDate() + 1);
-  }
+  for (let i = giorni - 1; i >= 0; i--) out.push(spostaGiorno(fine, -i));
   return out;
 }
 

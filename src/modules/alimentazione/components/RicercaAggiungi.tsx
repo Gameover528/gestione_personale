@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   addPasto,
@@ -33,8 +34,8 @@ import {
 } from "@/core/components/controls";
 import { useRicercaAlimenti } from "./useRicercaAlimenti";
 import { RicercaFeedback } from "./RicercaFeedback";
-import { Search, Plus, Check } from "lucide-react";
-import { cn, parseNumero } from "@/lib/utils";
+import { Search, Plus, Check, ArrowLeft } from "lucide-react";
+import { cn, formatDate, oggiIso, parseNumero } from "@/lib/utils";
 
 type Modo = "recenti" | "cerca" | "piatti" | "manuale";
 
@@ -67,13 +68,30 @@ export function RicercaAggiungi({
 }) {
   const router = useRouter();
   const params = useSearchParams();
-  const oggi = new Date().toISOString().slice(0, 10);
+  const oggi = oggiIso();
 
-  const [data, setData] = useState(params.get("data") || oggi);
-  const [pasto, setPasto] = useState<Pasto>(() => {
-    const p = params.get("pasto") as Pasto | null;
-    return p && PASTI.some((x) => x.value === p) ? p : pastoSuggerito();
-  });
+  const giornoUrl = params.get("data");
+  const pastoUrl = params.get("pasto");
+
+  const [data, setData] = useState(giornoUrl || oggi);
+  const [pasto, setPasto] = useState<Pasto>(() =>
+    pastoUrl && PASTI.some((x) => x.value === pastoUrl)
+      ? (pastoUrl as Pasto)
+      : pastoSuggerito()
+  );
+
+  // Se si arriva di nuovo su questa pagina con parametri diversi (es. dal "+"
+  // di un altro pasto) il componente viene riusato e gli useState iniziali non
+  // vengono rivalutati: senza questa sincronizzazione l'alimento finirebbe nel
+  // giorno o nel pasto della visita precedente.
+  useEffect(() => {
+    if (giornoUrl) setData(giornoUrl);
+  }, [giornoUrl]);
+  useEffect(() => {
+    if (pastoUrl && PASTI.some((x) => x.value === pastoUrl)) {
+      setPasto(pastoUrl as Pasto);
+    }
+  }, [pastoUrl]);
 
   const [modo, setModo] = useState<Modo>(() => {
     const t = params.get("tab") as Modo | null;
@@ -233,6 +251,11 @@ export function RicercaAggiungi({
     }
   }
 
+  /**
+   * Aggiunge al diario e resta su questa pagina: chi registra un pasto ne
+   * inserisce spesso più di uno di fila, e riportarlo al diario ogni volta
+   * (perdendo anche il giorno scelto) costringeva a ricominciare il percorso.
+   */
   async function handleSave() {
     if (!sel) return;
     setSalvando(true);
@@ -245,14 +268,14 @@ export function RicercaAggiungi({
         false,
         manualeNuovo && salvaComePiatto
       );
-      if (esito !== "ok") {
-        setSalvando(false);
-        return;
-      }
-      router.push("/alimentazione");
+      if (esito !== "ok") return;
+      setSel(null);
+      ricerca.setQ("");
+      listRecenti().then(setRecenti);
       router.refresh();
     } catch {
       setError("Errore durante il salvataggio.");
+    } finally {
       setSalvando(false);
     }
   }
@@ -301,8 +324,20 @@ export function RicercaAggiungi({
   }
 
 
+  /** Diario del giorno su cui si sta lavorando, non genericamente "oggi". */
+  const hrefDiario =
+    data === oggi ? "/alimentazione" : `/alimentazione?data=${data}`;
+
   return (
     <div className="max-w-2xl space-y-5">
+      <Link
+        href={hrefDiario}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Torna al diario
+      </Link>
+
       {/* Dove finisce quello che aggiungo: sempre visibile */}
       <div className="grid grid-cols-1 gap-4 rounded-lg border p-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1">
@@ -336,25 +371,37 @@ export function RicercaAggiungi({
             <Check className="h-4 w-4 text-success" />
             Aggiunti: {aggiunti.join(", ")}
           </span>
-          <button
-            onClick={() => {
-              router.push("/alimentazione");
-              router.refresh();
-            }}
+          <Link
+            href={hrefDiario}
             className="font-medium text-primary hover:underline"
           >
             vai al diario
-          </button>
+          </Link>
         </div>
       )}
 
-      {/* Doppione: sommare o tenere due righe? */}
+      {/*
+        Doppione: sommare o tenere due righe? Va in primo piano, non in mezzo
+        alla pagina: l'inserimento si interrompe qui, e se la domanda restasse
+        fuori dallo schermo sembrerebbe che l'aggiunta non abbia funzionato.
+      */}
       {duplicato && (
-        <div className="space-y-3 rounded-lg border border-warning/50 bg-warning/5 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            aria-label="Chiudi senza aggiungere"
+            onClick={() => setDuplicato(null)}
+            className="absolute inset-0 bg-black/50"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Alimento già presente"
+            className="relative w-full max-w-md space-y-3 rounded-lg border border-warning/50 bg-card p-4 shadow-xl"
+          >
           <p className="text-sm">
             <strong>{duplicato.alimento.nome}</strong> è già in{" "}
-            {PASTI.find((p) => p.value === pasto)?.label.toLowerCase()} di questo
-            giorno: {fmtQuantita(duplicato.riga)}.
+            {PASTI.find((p) => p.value === pasto)?.label.toLowerCase()} del{" "}
+            {formatDate(data)}: {fmtQuantita(duplicato.riga)}.
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -379,6 +426,7 @@ export function RicercaAggiungi({
             >
               Lascia stare
             </button>
+          </div>
           </div>
         </div>
       )}
@@ -598,7 +646,7 @@ export function RicercaAggiungi({
               {salvando ? "Salvataggio…" : "Aggiungi al diario"}
             </button>
             <button
-              onClick={() => router.push("/alimentazione")}
+              onClick={() => setSel(null)}
               className="rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent"
             >
               Annulla

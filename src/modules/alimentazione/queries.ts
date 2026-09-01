@@ -2,6 +2,7 @@
 
 import { getDb } from "@/lib/cf";
 import { requireSessionUser } from "@/lib/auth/session";
+import { oggiIso, spostaGiorno } from "@/lib/utils";
 import {
   da100,
   scalaValori,
@@ -258,9 +259,8 @@ export async function listRecenti(limite = 20): Promise<AlimentoRicerca[]> {
  */
 export async function statistichePeriodo(giorni: number): Promise<GiornoValori[]> {
   const user = await requireSessionUser();
-  const oggi = new Date();
-  const inizio = new Date(oggi);
-  inizio.setUTCDate(inizio.getUTCDate() - (Math.max(1, giorni) - 1));
+  const fine = oggiIso();
+  const inizio = spostaGiorno(fine, -(Math.max(1, giorni) - 1));
 
   const { results } = await getDb()
     .prepare(
@@ -277,7 +277,7 @@ export async function statistichePeriodo(giorni: number): Promise<GiornoValori[]
         group by data
         order by data asc`
     )
-    .bind(user.id, inizio.toISOString().slice(0, 10), oggi.toISOString().slice(0, 10))
+    .bind(user.id, inizio, fine)
     .all<GiornoValori>();
 
   return (results ?? []).map((g) => ({
