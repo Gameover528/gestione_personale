@@ -70,7 +70,14 @@ export function AndamentoAlimentazione({
     statistichePeriodo(giorni).then(setDati);
   }, [giorni]);
 
-  /** Serie completa: i giorni senza registrazioni valgono zero. */
+  /**
+   * Serie per i grafici: un punto per ogni giorno del periodo.
+   *
+   * I giorni senza registrazioni valgono `null`, non zero: un giorno non
+   * compilato non è un giorno in cui non si è mangiato, e disegnarlo a zero
+   * faceva crollare le linee dei macronutrienti (e mostrava "0 kcal" nel
+   * tooltip) per tutti i giorni saltati. Con null il grafico lascia il buco.
+   */
   const serie = useMemo(() => {
     const perData = new Map((dati ?? []).map((g) => [g.data, g]));
     return giorniDelPeriodo(giorni).map((data) => {
@@ -78,15 +85,18 @@ export function AndamentoAlimentazione({
       return {
         data,
         label: etichettaGiorno(data),
-        registrato: g !== undefined,
-        ...(g ?? VALORI_ZERO),
+        kcal: g?.kcal ?? null,
+        proteine: g?.proteine ?? null,
+        carboidrati: g?.carboidrati ?? null,
+        grassi: g?.grassi ?? null,
       };
     });
   }, [dati, giorni]);
 
-  const conDati = serie.filter((g) => g.registrato);
+  /** Giorni effettivamente registrati: la query ne restituisce solo quelli. */
+  const conDati = dati ?? [];
 
-  /** Medie calcolate solo sui giorni effettivamente registrati. */
+  /** Medie calcolate solo sui giorni registrati. */
   const medie = useMemo(() => {
     const out = { ...VALORI_ZERO };
     if (conDati.length === 0) return out;
@@ -164,7 +174,12 @@ export function AndamentoAlimentazione({
 
           {/* Calorie giorno per giorno */}
           <div className="rounded-lg border p-4">
-            <p className="mb-3 text-sm font-semibold">Calorie per giorno</p>
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+              <p className="text-sm font-semibold">Calorie per giorno</p>
+              <p className="text-xs text-muted-foreground">
+                i giorni senza registrazioni restano vuoti
+              </p>
+            </div>
             <div
               role="img"
               aria-label={`Calorie giorno per giorno negli ultimi ${giorni} giorni: media ${Math.round(medie.kcal)} kcal su ${conDati.length} giorni registrati. I valori sono riportati nella tabella qui sotto.`}
@@ -203,6 +218,7 @@ export function AndamentoAlimentazione({
                     />
                   )}
                   <Bar
+                    isAnimationActive={false}
                     dataKey="kcal"
                     fill="hsl(var(--primary))"
                     radius={[4, 4, 0, 0]}
@@ -238,27 +254,33 @@ export function AndamentoAlimentazione({
                   <Tooltip formatter={(v: number) => `${v.toFixed(1)} g`} />
                   <Legend />
                   <Line
+                    isAnimationActive={false}
                     type="monotone"
                     dataKey="proteine"
                     name="Proteine"
                     stroke="hsl(var(--success))"
-                    dot={false}
+                    dot={{ r: 2 }}
+                    activeDot={{ r: 4 }}
                     strokeWidth={2}
                   />
                   <Line
+                    isAnimationActive={false}
                     type="monotone"
                     dataKey="carboidrati"
                     name="Carboidrati"
                     stroke="hsl(var(--primary))"
-                    dot={false}
+                    dot={{ r: 2 }}
+                    activeDot={{ r: 4 }}
                     strokeWidth={2}
                   />
                   <Line
+                    isAnimationActive={false}
                     type="monotone"
                     dataKey="grassi"
                     name="Grassi"
                     stroke="hsl(var(--warning))"
-                    dot={false}
+                    dot={{ r: 2 }}
+                    activeDot={{ r: 4 }}
                     strokeWidth={2}
                   />
                 </LineChart>

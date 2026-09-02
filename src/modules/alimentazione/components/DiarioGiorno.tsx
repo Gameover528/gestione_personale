@@ -98,14 +98,12 @@ export function DiarioGiorno({
     setPasti((prev) => prev.filter((x) => x.id !== r.id));
     try {
       await deletePasto(r.id);
-      router.refresh();
       toast({
         messaggio: `"${r.nome_alimento}" eliminato`,
         azione: {
           label: "Annulla",
           onClick: async () => {
             await ripristinaPasto(r);
-            router.refresh();
           },
         },
       });
@@ -131,7 +129,6 @@ export function DiarioGiorno({
       pasto: editPasto,
     });
     setEditingId(null);
-    router.refresh();
   }
 
   function obiettivo(n: Nutriente) {
@@ -168,7 +165,6 @@ export function DiarioGiorno({
         return;
       }
       setCopiaAperta(false);
-      router.refresh();
       toast({
         messaggio:
           ids.length === 1 ? "Copiata 1 riga." : `Copiate ${ids.length} righe.`,
@@ -176,7 +172,6 @@ export function DiarioGiorno({
           label: "Annulla",
           onClick: async () => {
             await deletePasti(ids);
-            router.refresh();
           },
         },
       });

@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   addPasto,
   createPiatto,
-  listRecenti,
   trovaPastoEsistente,
   updatePasto,
 } from "../queries";
@@ -66,7 +65,6 @@ export function RicercaAggiungi({
   recentiIniziali: AlimentoRicerca[];
   piattiIniziali: PiattoConValori[];
 }) {
-  const router = useRouter();
   const params = useSearchParams();
   const oggi = oggiIso();
 
@@ -99,7 +97,12 @@ export function RicercaAggiungi({
     return recentiIniziali.length > 0 ? "recenti" : "cerca";
   });
 
+  // I recenti arrivano dal server e si aggiornano da soli dopo un inserimento,
+  // perche' le azioni di scrittura invalidano le pagine dell'area.
   const [recenti, setRecenti] = useState(recentiIniziali);
+  useEffect(() => {
+    setRecenti(recentiIniziali);
+  }, [recentiIniziali]);
 
   // Ricerca in due fasi (piatti miei subito, fonti esterne dopo): la logica
   // sta nell'hook, condivisa con l'editor dei piatti.
@@ -241,9 +244,7 @@ export function RicercaAggiungi({
       // Un recente è già nell'archivio: non va risalvato come nuovo piatto.
       const esito = await inserisci(a, g, true, false, false);
       if (esito === "ok") {
-        listRecenti().then(setRecenti);
-        router.refresh();
-      }
+          }
     } catch {
       setError("Errore durante il salvataggio.");
     } finally {
@@ -271,8 +272,6 @@ export function RicercaAggiungi({
       if (esito !== "ok") return;
       setSel(null);
       ricerca.setQ("");
-      listRecenti().then(setRecenti);
-      router.refresh();
     } catch {
       setError("Errore durante il salvataggio.");
     } finally {
@@ -292,8 +291,6 @@ export function RicercaAggiungi({
       setAggiunti((prev) => [...prev, duplicato.alimento.nome]);
       setDuplicato(null);
       setSel(null);
-      listRecenti().then(setRecenti);
-      router.refresh();
     } catch {
       setError("Errore durante il salvataggio.");
     } finally {
@@ -314,8 +311,6 @@ export function RicercaAggiungi({
       );
       setDuplicato(null);
       setSel(null);
-      listRecenti().then(setRecenti);
-      router.refresh();
     } catch {
       setError("Errore durante il salvataggio.");
     } finally {

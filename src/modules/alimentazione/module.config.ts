@@ -1,8 +1,8 @@
 import { Utensils, ChefHat, TrendingUp } from "lucide-react";
 import type { ModuleConfig } from "@/core/modules/types";
-import CalorieOggi from "./widgets/CalorieOggi";
+import CalorieOggiESettimana from "./widgets/CalorieOggiESettimana";
 import MacroOggi from "./widgets/MacroOggi";
-import AndamentoSettimana from "./widgets/AndamentoSettimana";
+import MacroSettimana from "./widgets/MacroSettimana";
 
 export const alimentazioneModule: ModuleConfig = {
   id: "alimentazione",
@@ -16,10 +16,11 @@ export const alimentazioneModule: ModuleConfig = {
   ],
   widgets: [
     {
+      // Id storico: cambiandolo scomparirebbe dalle dashboard già personalizzate.
       id: "alimentazione.calorie-oggi",
-      title: "Calorie di oggi",
-      defaultSpan: 1,
-      component: CalorieOggi,
+      title: "Calorie: oggi e ultimi 7 giorni",
+      defaultSpan: 2,
+      component: CalorieOggiESettimana,
     },
     {
       id: "alimentazione.macro-oggi",
@@ -28,10 +29,10 @@ export const alimentazioneModule: ModuleConfig = {
       component: MacroOggi,
     },
     {
-      id: "alimentazione.andamento-settimana",
-      title: "Calorie degli ultimi 7 giorni",
-      defaultSpan: 2,
-      component: AndamentoSettimana,
+      id: "alimentazione.macro-settimana",
+      title: "Media macro degli ultimi 7 giorni",
+      defaultSpan: 1,
+      component: MacroSettimana,
     },
   ],
 };

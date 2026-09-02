@@ -1,8 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/cf";
 import { requireSessionUser } from "@/lib/auth/session";
 import { oggiIso, spostaGiorno } from "@/lib/utils";
+
 import {
   da100,
   scalaValori,
@@ -24,6 +26,23 @@ import {
   type GiornoValori,
   type DatiCorporei,
 } from "./types";
+
+/**
+ * Invalida le pagine dell'alimentazione dopo una modifica.
+ *
+ * Serve perche' il router di Next tiene in cache lato client il contenuto
+ * delle pagine gia' visitate, per URL: senza questa invalidazione, dopo aver
+ * aggiunto un pasto e tornato al diario di quel giorno si rivedeva la versione
+ * precedente (il diario "non caricava" il pasto appena inserito, oppure
+ * mostrava solo l'ultimo giorno effettivamente ricaricato). `router.refresh()`
+ * lato client non basta: aggiorna solo la pagina in cui ci si trova.
+ *
+ * "layout" estende l'invalidazione a tutte le pagine sotto /alimentazione
+ * (diario, piatti, andamento, inserimento, dashboard dell'area).
+ */
+function invalidaAlimentazione() {
+  revalidatePath("/alimentazione", "layout");
+}
 
 export async function listPasti(data: string): Promise<PastoDiario[]> {
   const user = await requireSessionUser();
@@ -83,6 +102,7 @@ export async function addPasto(input: PastoDiarioInput): Promise<void> {
       input.fonte
     )
     .run();
+  invalidaAlimentazione();
 }
 
 export async function deletePasto(id: string): Promise<void> {
@@ -91,6 +111,7 @@ export async function deletePasto(id: string): Promise<void> {
     .prepare("delete from diario_pasti where id = ? and user_id = ?")
     .bind(id, user.id)
     .run();
+  invalidaAlimentazione();
 }
 
 export async function updatePasto(
@@ -106,6 +127,7 @@ export async function updatePasto(
     .prepare(`update diario_pasti set ${setClause} where id = ? and user_id = ?`)
     .bind(...values, id, user.id)
     .run();
+  invalidaAlimentazione();
 }
 
 /**
@@ -146,6 +168,7 @@ export async function copiaGiorno(
       stmt.bind(ids[i], user.id, a, ...COLONNE_PASTO.map((c) => r[c] ?? null))
     )
   );
+  invalidaAlimentazione();
   return ids;
 }
 
@@ -156,6 +179,7 @@ export async function deletePasti(ids: string[]): Promise<void> {
   const db = getDb();
   const stmt = db.prepare("delete from diario_pasti where id = ? and user_id = ?");
   await db.batch(ids.map((id) => stmt.bind(id, user.id)));
+  invalidaAlimentazione();
 }
 
 /**
@@ -179,6 +203,7 @@ export async function ripristinaPasto(riga: PastoDiario): Promise<void> {
       riga.created_at
     )
     .run();
+  invalidaAlimentazione();
 }
 
 /**
@@ -320,6 +345,7 @@ export async function saveObiettivi(list: Obiettivo[]): Promise<void> {
       .bind(user.id, o.nutriente, o.valore, o.tipo)
   );
   if (statements.length > 0) await db.batch(statements);
+  invalidaAlimentazione();
 }
 
 // Scarta nomi con alfabeti non latini (arabo, ebraico, cirillico, CJK, ecc.)
@@ -727,6 +753,7 @@ export async function createPiatto(
   if (input.tipo === "composto") {
     await inserisciIngredienti(db, id, user.id, ingredienti);
   }
+  invalidaAlimentazione();
   return id;
 }
 
@@ -775,6 +802,7 @@ export async function updatePiatto(
   if (input.tipo === "composto") {
     await inserisciIngredienti(db, id, user.id, ingredienti);
   }
+  invalidaAlimentazione();
 }
 
 export async function deletePiatto(id: string): Promise<void> {
@@ -783,6 +811,7 @@ export async function deletePiatto(id: string): Promise<void> {
     .prepare("delete from piatti where id = ? and user_id = ?")
     .bind(id, user.id)
     .run();
+  invalidaAlimentazione();
 }
 
 /**
@@ -878,4 +907,5 @@ export async function saveDatiCorporei(dati: DatiCorporei): Promise<void> {
     )
     .bind(user.id, CHIAVE_CORPO, JSON.stringify(dati))
     .run();
+  invalidaAlimentazione();
 }

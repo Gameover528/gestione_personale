@@ -76,7 +76,13 @@ export default function MacroOggi() {
           <YAxis fontSize={11} tickLine={false} axisLine={false} unit="g" />
           <Tooltip formatter={(v: number, n) => [`${v} g`, n as string]} />
           <Legend />
-          <Bar dataKey="consumato" name="Consumato" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+          <Bar
+            isAnimationActive={false}
+            dataKey="consumato"
+            name="Consumato"
+            fill="#3b82f6"
+            radius={[4, 4, 0, 0]}
+          >
             <LabelList
               dataKey="consumato"
               position="top"
