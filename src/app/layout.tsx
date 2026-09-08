@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getAspetto } from "@/core/theme/preferenze";
+import { ID_STILE_TEMA, cssTema } from "@/core/theme/palette";
 
 export const metadata: Metadata = {
   title: "Gestione Personale",
@@ -56,7 +57,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { tema } = await getAspetto();
+  const { tema, colore } = await getAspetto();
+  // La palette derivata dal colore scelto: resa qui, quindi la pagina nasce
+  // già col colore giusto e non "cambia colore" dopo l'idratazione.
+  const css = cssTema(colore);
 
   return (
     <html
@@ -67,6 +71,9 @@ export default async function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        {css && (
+          <style id={ID_STILE_TEMA} dangerouslySetInnerHTML={{ __html: css }} />
+        )}
       </head>
       <body>{children}</body>
     </html>

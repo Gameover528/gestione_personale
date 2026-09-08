@@ -5,6 +5,7 @@ import { getDb } from "@/lib/cf";
 import { getSessionUser, requireSessionUser } from "@/lib/auth/session";
 import {
   ASPETTO_DEFAULT,
+  coloreValido,
   temaValido,
   type Aspetto,
   type Tema,
@@ -32,16 +33,15 @@ export async function getAspetto(): Promise<Aspetto> {
     const salvato = JSON.parse(row.value) as Partial<Aspetto>;
     return {
       tema: temaValido(salvato.tema) ? salvato.tema : ASPETTO_DEFAULT.tema,
+      colore: coloreValido(salvato.colore),
     };
   } catch {
     return ASPETTO_DEFAULT;
   }
 }
 
-export async function salvaTema(tema: Tema): Promise<void> {
+async function salvaAspetto(patch: Partial<Aspetto>): Promise<void> {
   const user = await requireSessionUser();
-  if (!temaValido(tema)) throw new Error("Tema non valido");
-
   const attuale = await getAspetto();
   await getDb()
     .prepare(
@@ -49,9 +49,19 @@ export async function salvaTema(tema: Tema): Promise<void> {
        values (?, ?, ?, datetime('now'))
        on conflict (user_id, key) do update set value = excluded.value, updated_at = excluded.updated_at`
     )
-    .bind(user.id, CHIAVE, JSON.stringify({ ...attuale, tema }))
+    .bind(user.id, CHIAVE, JSON.stringify({ ...attuale, ...patch }))
     .run();
 
-  // Il tema è deciso nel layout radice: va invalidato tutto, non una pagina.
+  // Tema e colore sono decisi nel layout radice: va invalidato tutto.
   revalidatePath("/", "layout");
+}
+
+export async function salvaTema(tema: Tema): Promise<void> {
+  if (!temaValido(tema)) throw new Error("Tema non valido");
+  await salvaAspetto({ tema });
+}
+
+/** Colore della palette; null torna a quella predefinita. */
+export async function salvaColore(colore: string | null): Promise<void> {
+  await salvaAspetto({ colore: coloreValido(colore) });
 }

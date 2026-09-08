@@ -1,3 +1,5 @@
+import { ID_STILE_TEMA, cssTema } from "./palette";
+
 /**
  * Tipi e costanti dell'aspetto, in un file separato dalle azioni server:
  * un modulo "use server" può esportare soltanto funzioni async.
@@ -13,9 +15,18 @@ export const TEMI: { value: Tema; label: string }[] = [
 
 export interface Aspetto {
   tema: Tema;
+  /** Colore scelto in formato "#rrggbb"; null = palette predefinita. */
+  colore: string | null;
 }
 
-export const ASPETTO_DEFAULT: Aspetto = { tema: "sistema" };
+export const ASPETTO_DEFAULT: Aspetto = { tema: "sistema", colore: null };
+
+/** Accetta solo "#rrggbb": qualunque altra cosa torna al colore predefinito. */
+export function coloreValido(c: unknown): string | null {
+  return typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c.trim())
+    ? c.trim().toLowerCase()
+    : null;
+}
 
 export function temaValido(t: unknown): t is Tema {
   return t === "chiaro" || t === "scuro" || t === "sistema";
@@ -40,4 +51,23 @@ export function applicaTema(t: Tema): void {
   } catch {
     // storage non disponibile: la scelta resta salvata sul profilo
   }
+}
+
+/**
+ * Applica il colore scelto senza attendere il server, sostituendo il foglio di
+ * stile che il layout radice genera lato server. Da usare solo lato client.
+ */
+export function applicaColore(hex: string | null): void {
+  const css = cssTema(coloreValido(hex));
+  let stile = document.getElementById(ID_STILE_TEMA);
+  if (!css) {
+    stile?.remove();
+    return;
+  }
+  if (!stile) {
+    stile = document.createElement("style");
+    stile.id = ID_STILE_TEMA;
+    document.head.appendChild(stile);
+  }
+  stile.textContent = css;
 }

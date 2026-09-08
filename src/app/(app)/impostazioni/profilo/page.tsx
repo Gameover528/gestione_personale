@@ -7,7 +7,7 @@ import { getAspetto } from "@/core/theme/preferenze";
 export default async function ProfiloPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  const { tema } = await getAspetto();
+  const { tema, colore } = await getAspetto();
 
   return (
     <div>
@@ -19,6 +19,7 @@ export default async function ProfiloPage() {
         email={user.email}
         nomeIniziale={user.nome ?? ""}
         temaIniziale={tema}
+        coloreIniziale={colore}
       />
     </div>
   );

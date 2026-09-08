@@ -33,6 +33,18 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.0-dev.7",
+    ambiente: "dev",
+    data: "2026-09-08",
+    titolo: "Colore del tema scelto da te",
+    punti: [
+      "Nel profilo si può scegliere il colore dell'app: undici campioni pronti oppure un colore qualsiasi.",
+      "Dal colore scelto viene ricavata tutta la palette — accento, sfondi virati verso quella tinta, bordi — e il testo viene scelto in base alla luminosità del colore, così resta leggibile anche su tinte chiare come il giallo.",
+      "Rosso, verde e giallo di errori, conferme e avvisi non cambiano: devono restare riconoscibili.",
+      "Il colore viene applicato prima che la pagina si disegni e vale su tutti i dispositivi, come il tema.",
+    ],
+  },
+  {
     versione: "0.5.0-dev.6",
     ambiente: "dev",
     data: "2026-09-02",
