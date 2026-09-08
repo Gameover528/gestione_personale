@@ -9,6 +9,7 @@ import {
   da100,
   scalaValori,
   piattoComeAlimento,
+  ordinaPerRilevanza,
   VALORI_ZERO,
   type Valori100,
   type PastoDiario,
@@ -500,7 +501,7 @@ export async function cercaAlimentiMiei(q: string): Promise<AlimentoRicerca[]> {
   const user = await requireSessionUser();
   const query = q.trim();
   if (query.length < 2) return [];
-  return cercaPiattiPersonali(user.id, query);
+  return ordinaPerRilevanza(await cercaPiattiPersonali(user.id, query), query);
 }
 
 /**
@@ -523,7 +524,10 @@ export async function cercaAlimentiEsterni(q: string): Promise<RisultatiEsterni>
   if (cached) {
     try {
       return {
-        risultati: JSON.parse(cached.risultati) as AlimentoRicerca[],
+        risultati: ordinaPerRilevanza(
+          JSON.parse(cached.risultati) as AlimentoRicerca[],
+          query
+        ),
         irraggiungibile: false,
       };
     } catch {
@@ -548,7 +552,9 @@ export async function cercaAlimentiEsterni(q: string): Promise<RisultatiEsterni>
   }
 
   return {
-    risultati,
+    // L'ordine per rilevanza si applica dopo la cache: le fonti esterne
+    // ordinano per popolarita', che non tiene conto del termine cercato.
+    risultati: ordinaPerRilevanza(risultati, query),
     irraggiungibile: risultati.length === 0 && (off.errore || usda.errore),
   };
 }

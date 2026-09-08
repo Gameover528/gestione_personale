@@ -412,3 +412,52 @@ export function obiettiviProposti(d: DatiCorporei): {
 
   return { kcal, proteine, grassi, carboidrati, fibre };
 }
+
+// ----------------------- Ordinamento dei risultati di ricerca -----------------------
+
+/** Minuscolo, senza accenti e spazi doppi: per confrontare quello che si digita. */
+function normalizza(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "") // via gli accenti scomposti da NFD
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Quanto un risultato "somiglia" al termine cercato: più basso, più in alto.
+ *
+ * Cercando "pane" ci si aspetta prima "Pane", poi "Pane integrale", poi
+ * "Pancarré ai cereali" e solo alla fine "Crackers di pane". Le fonti esterne
+ * ordinano per popolarità, che da sola porta in cima cose che col termine
+ * cercato hanno poco a che fare.
+ */
+export function rilevanza(a: AlimentoRicerca, query: string): number {
+  const q = normalizza(query);
+  if (!q) return 9;
+  const nome = normalizza(a.nome);
+  const marca = normalizza(a.marca ?? "");
+
+  if (nome === q) return 0;
+  if (nome.startsWith(q)) return 1;
+  // Una parola del nome che inizia col termine: "Fette di pane integrale".
+  if (nome.split(/[ ,.'()/-]+/).some((p) => p.startsWith(q))) return 2;
+  if (nome.includes(q)) return 3;
+  if (marca.startsWith(q) || marca.includes(q)) return 4;
+  return 5;
+}
+
+/**
+ * Riordina i risultati per rilevanza mantenendo, a pari rilevanza, l'ordine
+ * di partenza (che per le fonti esterne è quello di popolarità).
+ */
+export function ordinaPerRilevanza(
+  risultati: AlimentoRicerca[],
+  query: string
+): AlimentoRicerca[] {
+  return risultati
+    .map((a, i) => ({ a, i, r: rilevanza(a, query) }))
+    .sort((x, y) => x.r - y.r || x.i - y.i)
+    .map((x) => x.a);
+}

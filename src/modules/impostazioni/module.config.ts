@@ -1,4 +1,10 @@
-import { KeyRound, Users, Download, SlidersHorizontal } from "lucide-react";
+import {
+  KeyRound,
+  Users,
+  Download,
+  SlidersHorizontal,
+  History,
+} from "lucide-react";
 import type { ModuleConfig } from "@/core/modules/types";
 
 export const impostazioniModule: ModuleConfig = {
@@ -11,5 +17,6 @@ export const impostazioniModule: ModuleConfig = {
     { label: "Utenti", href: "/impostazioni/utenti", icon: Users, adminOnly: true },
     { label: "Backup dati", href: "/impostazioni/backup", icon: Download },
     { label: "Preferenze moduli", href: "/impostazioni/preferenze", icon: SlidersHorizontal },
+    { label: "Versioni", href: "/impostazioni/versioni", icon: History },
   ],
 };

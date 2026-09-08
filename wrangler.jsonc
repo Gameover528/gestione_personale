@@ -13,6 +13,10 @@
 	"observability": {
 		"enabled": true
 	},
+	// Ambiente mostrato dalla pagina Impostazioni > Versioni (registro per ambiente).
+	"vars": {
+		"AMBIENTE": "prod"
+	},
 	// Ambiente di default (nessun --env): PRODUZIONE.
 	"d1_databases": [
 		{
@@ -32,6 +36,9 @@
 	"env": {
 		"dev": {
 			"name": "gestione-personale-dev",
+			"vars": {
+				"AMBIENTE": "dev"
+			},
 			"d1_databases": [
 				{
 					"binding": "DB",

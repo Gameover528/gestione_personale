@@ -38,10 +38,14 @@ npx wrangler d1 execute gestione-personale-db --remote --file=./d1/seed-users.sq
 rm d1/seed-users.sql   # contiene l'hash della password, non va tenuto/commitato
 ```
 
-**Pubblicare una modifica al codice** (dopo aver testato in locale con `npm run preview`):
-```bash
-npm run deploy
-```
+**Pubblicare una modifica al codice**: basta il push, ci pensa la GitHub Action `.github/workflows/deploy.yml` — `develop` va sull'ambiente di sviluppo, `main` in produzione. Il deploy a mano (`npm run deploy` / `npm run deploy:dev`) serve solo per pubblicare senza passare da git. Attenzione: la pipeline **non** applica le migration del database, che restano manuali e vanno eseguite *prima* del push del codice che le richiede.
+
+**Aggiornare il registro delle versioni** (Impostazioni › Versioni): nello stesso commit delle modifiche aggiungi una voce in `src/core/versioni/changelog.ts`, scritta per chi usa l'app e non per chi legge il codice.
+
+- su **sviluppo** ogni pubblicazione è una voce a sé: `0.5.0-dev.1`, `0.5.0-dev.2`, …
+- quando quel lavoro passa in **produzione** si aggiunge *una* voce `0.5.0` che riassume il periodo, con `include: ["0.5.0-dev.1", ...]`: la pagina la mostra espandibile con le versioni di sviluppo che contiene.
+
+L'app sa in quale ambiente gira dalla variabile `AMBIENTE` definita in `wrangler.jsonc` (`dev` nel worker di sviluppo, `prod` in produzione), così ogni ambiente mostra il proprio registro. In sviluppo locale mostra sempre quello di sviluppo.
 
 **Modificare lo schema del database** (aggiungere una colonna/tabella): crea un nuovo file in `d1/migrations/` (es. `0002_qualcosa.sql`), poi applicalo sia in locale che in produzione:
 ```bash

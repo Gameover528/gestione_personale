@@ -1,0 +1,128 @@
+/**
+ * Registro delle versioni, per ambiente.
+ *
+ * Come funziona il numero di versione:
+ * - ogni rilascio su **sviluppo** è una voce `X.Y.Z-dev.N`, con N che cresce
+ *   a ogni pubblicazione su dev;
+ * - quando quel lavoro va in **produzione** si aggiunge una sola voce `X.Y.Z`
+ *   che riassume il periodo ed elenca in `include` le versioni dev raccolte.
+ *   Così su dev si vede il dettaglio giorno per giorno, in produzione si vede
+ *   cosa è cambiato tra un rilascio e l'altro.
+ *
+ * Questo file è la fonte di verità: sta nel repo, si rivede nella diff del
+ * commit e non richiede né tabelle né automatismi nella pipeline. La voce va
+ * aggiunta **nello stesso commit** delle modifiche che descrive.
+ */
+
+export type Ambiente = "dev" | "prod";
+
+export interface Rilascio {
+  /** Semver: "0.5.0" in produzione, "0.5.0-dev.3" su sviluppo. */
+  versione: string;
+  ambiente: Ambiente;
+  /** Data del rilascio (YYYY-MM-DD). */
+  data: string;
+  /** Una riga che dice di cosa si è trattato. */
+  titolo: string;
+  /** I punti delle modifiche, scritti per chi usa l'app. */
+  punti: string[];
+  /** Solo per i rilasci in produzione: le versioni dev che contiene. */
+  include?: string[];
+}
+
+/** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
+export const RILASCI: Rilascio[] = [
+  {
+    versione: "0.5.0-dev.5",
+    ambiente: "dev",
+    data: "2026-09-02",
+    titolo: "Ricerca alimenti ordinata per pertinenza e registro delle versioni",
+    punti: [
+      "Cercando un alimento vengono prima i risultati che iniziano col termine cercato, poi quelli che lo contengono: le fonti esterne ordinano per popolarità e portavano in cima prodotti poco pertinenti.",
+      "La ricerca ignora accenti e maiuscole: \"caffe\" trova \"Caffè macinato\".",
+      "Nuova pagina Impostazioni › Versioni con il registro delle modifiche dell'ambiente in cui si sta lavorando.",
+    ],
+  },
+  {
+    versione: "0.5.0-dev.4",
+    ambiente: "dev",
+    data: "2026-09-02",
+    titolo: "Correzioni sui caricamenti e sui grafici, widget calorie unificato",
+    punti: [
+      "Il diario mostrava a volte i dati di una visita precedente: ora ogni modifica aggiorna tutte le pagine dell'area alimentazione, non solo quella aperta.",
+      "Nei grafici i giorni senza registrazioni non vengono più disegnati come giorni a zero: restano vuoti, così le linee dei macronutrienti non crollano sui giorni saltati.",
+      "I grafici mostrano subito i valori definitivi, senza animazione d'ingresso.",
+      "\"Calorie di oggi\" e \"Calorie degli ultimi 7 giorni\" sono ora un unico riquadro con oggi, media settimanale e grafico.",
+      "Nuovo widget \"Media macro degli ultimi 7 giorni\" con confronto sugli obiettivi.",
+    ],
+  },
+  {
+    versione: "0.5.0-dev.3",
+    ambiente: "dev",
+    data: "2026-09-01",
+    titolo: "Correzioni all'aggiunta di un alimento",
+    punti: [
+      "Il giorno scelto nel diario non si perde più: sta nell'indirizzo della pagina, quindi resta anche dopo aver aggiunto un alimento e funziona col tasto indietro.",
+      "Dopo aver aggiunto un alimento si resta sulla schermata di inserimento, pronti per il pasto successivo.",
+      "Se l'alimento è già presente nello stesso pasto compare una richiesta in primo piano: sommare le quantità o tenere due righe separate.",
+      "\"Oggi\" viene calcolato sull'ora italiana: dopo mezzanotte i pasti non finiscono più nel giorno precedente.",
+    ],
+  },
+  {
+    versione: "0.5.0-dev.2",
+    ambiente: "dev",
+    data: "2026-09-01",
+    titolo: "Archivio piatti personale, porzioni e revisione dell'alimentazione",
+    punti: [
+      "I piatti diventano un archivio personale: ricette con ingredienti oppure piatti e prodotti con i valori dell'etichetta, e compaiono nella ricerca quando si aggiunge un pasto.",
+      "Porzioni: \"1 piatto = 350 g\", per registrare per porzioni invece che in grammi.",
+      "Elenco dei recenti con aggiunta in un tap e copia dei pasti da un altro giorno.",
+      "Nuova pagina Andamento: calorie e macronutrienti su 7, 30 o 90 giorni, con medie e aderenza agli obiettivi.",
+      "Gli obiettivi si possono calcolare dai propri dati (peso, altezza, età, attività).",
+      "Le eliminazioni si annullano da un avviso invece di chiedere conferma prima.",
+      "App installabile sul telefono, comandi più grandi e campi numerici che accettano la virgola.",
+    ],
+  },
+  {
+    versione: "0.5.0-dev.1",
+    ambiente: "dev",
+    data: "2026-08-26",
+    titolo: "Modulo Abbonamenti",
+    punti: [
+      "Nuovo modulo Abbonamenti: spese ricorrenti con generazione automatica delle rate secondo la frequenza scelta.",
+      "Sincronizzazione dei dati da produzione a sviluppo, riservata al superadmin.",
+    ],
+  },
+  {
+    versione: "0.4.0",
+    ambiente: "prod",
+    data: "2026-08-26",
+    titolo: "Passaggio a Cloudflare, ruoli utente e tema scuro",
+    punti: [
+      "L'app gira su Cloudflare Workers con database D1: nessun servizio esterno, deploy automatico a ogni pubblicazione.",
+      "Ruoli utente e gestione degli account dalle impostazioni.",
+      "Tema scuro.",
+      "Bollette: divisione della spesa con un'altra famiglia, periodi di competenza, allegati e ricevute in PDF, statistiche per tipo e andamento mensile.",
+      "Alimentazione: diario dei pasti, ricerca alimenti su Open Food Facts e USDA, obiettivi nutrizionali, ricette con ingredienti.",
+      "Dashboard personalizzabile con widget riordinabili.",
+    ],
+  },
+];
+
+/** I rilasci di un ambiente, dal più recente. */
+export function rilasciDi(ambiente: Ambiente): Rilascio[] {
+  return RILASCI.filter((r) => r.ambiente === ambiente);
+}
+
+/** Versione attualmente in esecuzione nell'ambiente indicato. */
+export function versioneCorrente(ambiente: Ambiente): Rilascio | undefined {
+  return rilasciDi(ambiente)[0];
+}
+
+/** Le voci dev raccolte in un rilascio di produzione. */
+export function devInclusi(r: Rilascio): Rilascio[] {
+  if (!r.include?.length) return [];
+  return r.include
+    .map((v) => RILASCI.find((x) => x.versione === v))
+    .filter((x): x is Rilascio => x !== undefined);
+}
