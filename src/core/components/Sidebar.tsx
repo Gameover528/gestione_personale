@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronDown, LayoutDashboard, LogOut, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  LayoutDashboard,
+  LogOut,
+  SlidersHorizontal,
+  UserCog,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import {
   macroAree,
@@ -26,11 +34,13 @@ function hrefAttivo(pathname: string, hrefs: string[]): string | null {
 
 export function Sidebar({
   userEmail,
+  userNome,
   ruolo,
   mobileOpen = false,
   onClose,
 }: {
   userEmail?: string;
+  userNome?: string | null;
   ruolo?: Ruolo;
   mobileOpen?: boolean;
   onClose?: () => void;
@@ -38,6 +48,7 @@ export function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profiloOpen, setProfiloOpen] = useState(false);
 
   const areaAttiva = getMacroAreaForPath(pathname) ?? macroAree[0];
   const AreaIcon = areaAttiva.icon;
@@ -160,22 +171,86 @@ export function Sidebar({
         })}
       </nav>
 
+      {/*
+        In basso il profilo, non l'uscita: e' il posto in cui si cercano nome,
+        password e aspetto, e l'uscita e' una delle voci del menu.
+      */}
       <div className="border-t p-3">
-        {userEmail && (
-          <p className="mb-2 truncate px-3 text-xs text-muted-foreground">
-            {userEmail}
-          </p>
-        )}
         <div className="flex items-center gap-2">
-          <form action="/auth/signout" method="post" className="flex-1">
+          <div className="relative min-w-0 flex-1">
             <button
-              type="submit"
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              onClick={() => setProfiloOpen((v) => !v)}
+              aria-expanded={profiloOpen}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition hover:bg-accent"
             >
-              <LogOut className="h-4 w-4" />
-              Esci
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                {iniziali(userNome, userEmail)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">
+                  {userNome?.trim() || userEmail || "Profilo"}
+                </span>
+                {userNome?.trim() && userEmail && (
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {userEmail}
+                  </span>
+                )}
+              </span>
+              <ChevronUp
+                className={cn(
+                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                  profiloOpen && "rotate-180"
+                )}
+              />
             </button>
-          </form>
+
+            {profiloOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setProfiloOpen(false)}
+                  aria-hidden
+                />
+                <div className="absolute bottom-full left-0 right-0 z-20 mb-2 overflow-hidden rounded-lg border bg-card py-1 shadow-lg">
+                  <Link
+                    href="/impostazioni/profilo"
+                    onClick={() => {
+                      setProfiloOpen(false);
+                      onClose?.();
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm transition hover:bg-accent"
+                  >
+                    <UserCog className="h-4 w-4 text-muted-foreground" />
+                    Impostazioni profilo
+                  </Link>
+                  <Link
+                    href="/impostazioni/preferenze"
+                    onClick={() => {
+                      setProfiloOpen(false);
+                      onClose?.();
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm transition hover:bg-accent"
+                  >
+                    <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+                    Preferenze moduli
+                  </Link>
+                  <form
+                    action="/auth/signout"
+                    method="post"
+                    className="border-t"
+                  >
+                    <button
+                      type="submit"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-accent"
+                    >
+                      <LogOut className="h-4 w-4 text-muted-foreground" />
+                      Esci
+                    </button>
+                  </form>
+                </div>
+              </>
+            )}
+          </div>
           <ThemeToggle />
         </div>
       </div>
@@ -211,4 +286,18 @@ function NavLink({
       {label}
     </Link>
   );
+}
+
+/** Iniziali per il pallino del profilo: dal nome se c'e', altrimenti dall'email. */
+function iniziali(nome?: string | null, email?: string): string {
+  const n = nome?.trim();
+  if (n) {
+    return n
+      .split(/s+/)
+      .slice(0, 2)
+      .map((p) => p[0])
+      .join("")
+      .toUpperCase();
+  }
+  return (email?.[0] ?? "?").toUpperCase();
 }

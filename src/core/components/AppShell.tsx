@@ -9,10 +9,12 @@ import type { Ruolo } from "@/lib/auth/roles";
 
 export function AppShell({
   userEmail,
+  userNome,
   ruolo,
   children,
 }: {
   userEmail?: string;
+  userNome?: string | null;
   ruolo?: Ruolo;
   children: React.ReactNode;
 }) {
@@ -32,6 +34,7 @@ export function AppShell({
 
       <Sidebar
         userEmail={userEmail}
+        userNome={userNome}
         ruolo={ruolo}
         mobileOpen={open}
         onClose={() => setOpen(false)}

@@ -9,6 +9,8 @@ import { puoGestireUtenti, type Ruolo, type StatoAccount } from "./roles";
 export interface SessionUser {
   id: string;
   email: string;
+  /** Come la persona vuole essere chiamata; null se non l'ha impostato. */
+  nome: string | null;
   ruolo: Ruolo;
   stato: StatoAccount;
 }
@@ -55,7 +57,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
   const row = await getDb()
     .prepare(
-      `select u.id as id, u.email as email, u.ruolo as ruolo, u.stato as stato
+      `select u.id as id, u.email as email, u.nome as nome, u.ruolo as ruolo, u.stato as stato
        from sessions s
        join users u on u.id = s.user_id
        where s.id = ? and s.expires_at > datetime('now')`

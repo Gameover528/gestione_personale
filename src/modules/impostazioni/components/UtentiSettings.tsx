@@ -6,6 +6,7 @@ import {
   creaUtenteAction,
   impostaStatoUtenteAction,
   impostaRuoloUtenteAction,
+  generaPasswordTemporaneaAction,
   type CreaUtenteResult,
   type UtenteInfo,
 } from "../queries";
@@ -43,6 +44,8 @@ export function UtentiSettings({
   const formRef = useRef<HTMLFormElement>(null);
   const [azioneInCorso, setAzioneInCorso] = useState<string | null>(null);
   const [erroreAzione, setErroreAzione] = useState<string | null>(null);
+  /** Password temporanea appena generata, da comunicare a voce: mostrata una volta sola. */
+  const [temporanea, setTemporanea] = useState<{ email: string; password: string } | null>(null);
 
   useEffect(() => {
     if (state.ok) {
@@ -50,6 +53,19 @@ export function UtentiSettings({
       router.refresh();
     }
   }, [state.ok, router]);
+
+  async function generaPassword(id: string, email: string) {
+    setAzioneInCorso(id);
+    setErroreAzione(null);
+    setTemporanea(null);
+    try {
+      const res = await generaPasswordTemporaneaAction(id);
+      if (res.error) setErroreAzione(res.error);
+      else if (res.password) setTemporanea({ email, password: res.password });
+    } finally {
+      setAzioneInCorso(null);
+    }
+  }
 
   async function cambiaStato(id: string, nuovoStato: StatoAccount) {
     setAzioneInCorso(id);
@@ -82,6 +98,29 @@ export function UtentiSettings({
         {erroreAzione && (
           <p className="mt-2 text-sm text-destructive">{erroreAzione}</p>
         )}
+        {temporanea && (
+          <div className="mt-3 space-y-2 rounded-lg border border-warning/50 bg-warning/5 p-3 text-sm">
+            <p>
+              Password temporanea per <strong>{temporanea.email}</strong>:
+            </p>
+            <p className="font-mono text-base font-semibold tracking-wide">
+              {temporanea.password}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Comunicala a voce: non viene salvata in chiaro e non e' piu'
+              recuperabile dopo aver chiuso questo avviso. Le sessioni aperte di
+              quell'account sono state chiuse; al primo accesso puo' cambiarla da
+              Impostazioni profilo.
+            </p>
+            <button
+              onClick={() => setTemporanea(null)}
+              className="rounded-md border px-3 py-1 text-xs font-medium transition hover:bg-accent"
+            >
+              Ho finito
+            </button>
+          </div>
+        )}
+
         <ul className="mt-3 divide-y">
           {utenti.map((u) => {
             const seStesso = u.id === utenteCorrenteId;
@@ -124,6 +163,14 @@ export function UtentiSettings({
                         <option value="admin">Admin</option>
                       </select>
                     )}
+                    <button
+                      disabled={inCorso}
+                      onClick={() => generaPassword(u.id, u.email)}
+                      title="Genera una password temporanea da comunicare"
+                      className="rounded-md border px-3 py-1 text-xs font-medium transition hover:bg-accent disabled:opacity-50"
+                    >
+                      Password temporanea
+                    </button>
                     {u.stato === "attivo" ? (
                       <>
                         <button

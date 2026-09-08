@@ -174,3 +174,64 @@ export async function saveBollettePreferenze(
     .bind(user.id, CHIAVE_PREFERENZE_BOLLETTE, JSON.stringify(preferenze))
     .run();
 }
+
+// ----------------------- Password temporanea (reset assistito) -----------------------
+
+/**
+ * Alfabeto senza caratteri che si confondono a voce o per iscritto
+ * (0/O, 1/l/I): la password va comunicata a mano, non per email.
+ */
+const ALFABETO = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+
+function passwordCasuale(lunghezza = 12): string {
+  const numeri = crypto.getRandomValues(new Uint32Array(lunghezza));
+  return Array.from(numeri, (n) => ALFABETO[n % ALFABETO.length]).join("");
+}
+
+export interface PasswordTemporaneaResult {
+  error?: string;
+  /** Mostrata una sola volta a chi l'ha generata: non viene salvata in chiaro. */
+  password?: string;
+}
+
+/**
+ * Genera una password temporanea per un account che l'ha dimenticata: non c'è
+ * un servizio di posta, quindi il reset passa da un amministratore che la
+ * comunica a voce. Tutte le sessioni di quell'account vengono chiuse, così
+ * chi rientra usa la nuova password e può cambiarla dal proprio profilo.
+ */
+export async function generaPasswordTemporaneaAction(
+  targetId: string
+): Promise<PasswordTemporaneaResult> {
+  const richiedente = await requireAdminUser();
+
+  if (targetId === richiedente.id) {
+    return {
+      error:
+        "Per la tua password usa Impostazioni profilo: qui si assiste solo qualcun altro.",
+    };
+  }
+
+  const target = await getDb()
+    .prepare("select ruolo from users where id = ?")
+    .bind(targetId)
+    .first<{ ruolo: Ruolo }>();
+
+  if (!target || !puoModificare(richiedente.ruolo, target.ruolo)) {
+    return { error: "Non hai i permessi per questo account." };
+  }
+
+  const password = passwordCasuale();
+  await getDb()
+    .prepare("update users set password_hash = ? where id = ?")
+    .bind(await hashPassword(password), targetId)
+    .run();
+
+  // Le sessioni aperte con la vecchia password non devono sopravvivere.
+  await getDb()
+    .prepare("delete from sessions where user_id = ?")
+    .bind(targetId)
+    .run();
+
+  return { password };
+}

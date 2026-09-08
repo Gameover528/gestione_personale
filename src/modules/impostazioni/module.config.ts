@@ -1,5 +1,5 @@
 import {
-  KeyRound,
+  UserCog,
   Users,
   Download,
   SlidersHorizontal,
@@ -13,7 +13,7 @@ export const impostazioniModule: ModuleConfig = {
   icon: SlidersHorizontal,
   basePath: "/impostazioni",
   nav: [
-    { label: "Account e sicurezza", href: "/impostazioni/account", icon: KeyRound },
+    { label: "Profilo", href: "/impostazioni/profilo", icon: UserCog },
     { label: "Utenti", href: "/impostazioni/utenti", icon: Users, adminOnly: true },
     { label: "Backup dati", href: "/impostazioni/backup", icon: Download },
     { label: "Preferenze moduli", href: "/impostazioni/preferenze", icon: SlidersHorizontal },

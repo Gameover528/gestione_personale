@@ -14,7 +14,7 @@ export default async function AppLayout({
 
   return (
     <ToastProvider>
-      <AppShell userEmail={user.email} ruolo={user.ruolo}>
+      <AppShell userEmail={user.email} userNome={user.nome} ruolo={user.ruolo}>
         {children}
       </AppShell>
     </ToastProvider>

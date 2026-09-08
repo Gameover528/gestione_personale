@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { getAspetto } from "@/core/theme/preferenze";
 
 export const metadata: Metadata = {
   title: "Gestione Personale",
@@ -25,23 +26,45 @@ export const viewport: Viewport = {
   ],
 };
 
+/**
+ * Decide il tema prima che la pagina venga disegnata.
+ *
+ * Il tema scelto arriva dal server (preferenza dell'utente, quindi valida su
+ * tutti i dispositivi) come attributo data-tema: se è "chiaro" o "scuro" la
+ * classe è già applicata lato server e non c'è nessun lampo. Con "sistema", o
+ * quando non si è autenticati, decide questo script leggendo l'impostazione
+ * del sistema operativo — e come ultima spiaggia quella salvata nel browser,
+ * che copre la pagina di accesso.
+ */
 const THEME_SCRIPT = `
 (function () {
-  try {
-    var salvato = localStorage.getItem("tema");
-    var scuro = salvato ? salvato === "scuro" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (scuro) document.documentElement.classList.add("dark");
-  } catch (e) {}
+  var html = document.documentElement;
+  var t = html.getAttribute("data-tema");
+  if (!t || t === "sistema") {
+    var salvato = null;
+    try { salvato = localStorage.getItem("tema"); } catch (e) {}
+    var scuro = t === "sistema" || !salvato
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+      : salvato === "scuro";
+    html.classList.toggle("dark", scuro);
+  }
 })();
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { tema } = await getAspetto();
+
   return (
-    <html lang="it" suppressHydrationWarning>
+    <html
+      lang="it"
+      data-tema={tema}
+      className={tema === "scuro" ? "dark" : undefined}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>

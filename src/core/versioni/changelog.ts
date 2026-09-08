@@ -33,6 +33,19 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.0-dev.6",
+    ambiente: "dev",
+    data: "2026-09-02",
+    titolo: "Profilo utente: nome, tema e password in un unico posto",
+    punti: [
+      "In basso a sinistra, al posto di \"Esci\", c'è il tuo profilo: apre un menu con Impostazioni profilo, Preferenze moduli ed Esci.",
+      "Puoi scegliere come farti chiamare: il nome sostituisce l'email nella barra laterale (per accedere si continua a usare l'email).",
+      "Tema chiaro, scuro o come il sistema, salvato sul profilo e quindi valido su tutti i dispositivi. Viene applicato prima che la pagina si disegni, senza il lampo di tema sbagliato.",
+      "Password e sessioni attive si trovano ora nella pagina del profilo, insieme al resto.",
+      "Chi dimentica la password non resta fuori: un amministratore, dalla pagina Utenti, genera una password temporanea da comunicare, che chiude le sessioni aperte di quell'account.",
+    ],
+  },
+  {
     versione: "0.5.0-dev.5",
     ambiente: "dev",
     data: "2026-09-02",

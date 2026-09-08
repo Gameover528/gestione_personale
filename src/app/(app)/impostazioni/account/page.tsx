@@ -1,14 +1,9 @@
-import { PageHeader } from "@/core/components/ui";
-import { AccountSettings } from "@/modules/impostazioni/components/AccountSettings";
+import { redirect } from "next/navigation";
 
+/**
+ * Password e sessioni sono state accorpate in "Impostazioni profilo": qui
+ * resta solo il rimando, per non rompere link e segnalibri esistenti.
+ */
 export default function AccountPage() {
-  return (
-    <div>
-      <PageHeader
-        title="Account e sicurezza"
-        description="Password e sessioni attive."
-      />
-      <AccountSettings />
-    </div>
-  );
+  redirect("/impostazioni/profilo");
 }
