@@ -9,6 +9,20 @@ export interface NavItem {
   adminOnly?: boolean;
 }
 
+/**
+ * Anteprima di un widget con dati inventati, mostrata nel pannello di
+ * aggiunta: serve a capire che aspetto avrà, non a mostrare dati veri (che
+ * richiederebbero di interrogare il database per ogni widget disponibile).
+ */
+export type AnteprimaWidget =
+  | { tipo: "numero"; valore: string; nota?: string; barra?: number }
+  | { tipo: "elenco"; righe: { testo: string; nota?: string; badge?: string }[] }
+  | { tipo: "barre"; valori: number[]; etichette?: string[]; soglia?: number }
+  | {
+      tipo: "progressi";
+      voci: { nome: string; valore: string; perc: number; ok?: boolean }[];
+    };
+
 export interface DashboardWidgetDef {
   /** ID globale univoco, es. "bollette.totale-da-pagare". */
   id: string;
@@ -17,6 +31,16 @@ export interface DashboardWidgetDef {
   defaultSpan?: 1 | 2 | 3;
   /** Componente client renderizzato dentro una card della dashboard. */
   component: ComponentType;
+  /** Una riga che spiega cosa mostra, nel pannello di aggiunta. */
+  descrizione?: string;
+  /**
+   * Widget essenziale per la sua area: sta sempre in testa alla dashboard e
+   * non si può rimuovere né spostare. Serve a garantire che l'informazione
+   * principale dell'area sia sempre sotto gli occhi.
+   */
+  fisso?: boolean;
+  /** Anteprima con dati di esempio per il pannello di aggiunta. */
+  anteprima?: AnteprimaWidget;
 }
 
 export interface ModuleConfig {

@@ -33,6 +33,18 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.0-dev.8",
+    ambiente: "dev",
+    data: "2026-09-08",
+    titolo: "Dashboard: widget fissi e pannello di scelta con anteprime",
+    punti: [
+      "Nuovo pulsante \"Aggiungi widget\" accanto a Personalizza: apre un pannello con tutti i widget disponibili, ognuno con una descrizione e un'anteprima con dati di esempio, così si vede cosa si sta aggiungendo prima di aggiungerlo.",
+      "\"Totale da pagare\" e \"Prossime scadenze\" sono diventati un unico riquadro: il totale dice quanto, l'elenco dice quando, e il dato viene chiesto al database una volta sola invece di due.",
+      "I widget essenziali di una sezione (da pagare e scadenze per Consumi e Costi, calorie per Alimentazione) restano in testa alla dashboard e non si possono rimuovere né spostare.",
+      "Il riordino si salva subito quando trascini, senza dover premere Fine.",
+    ],
+  },
+  {
     versione: "0.5.0-dev.7",
     ambiente: "dev",
     data: "2026-09-08",

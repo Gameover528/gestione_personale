@@ -35,8 +35,15 @@ export const macroAree: MacroAreaConfig[] = [
       {
         id: "consumi-costi.totale-generale",
         title: "Totale generale già pagato",
+        descrizione:
+          "Tutto quello che hai già speso: bollette pagate più rate degli abbonamenti.",
         defaultSpan: 1,
         component: TotaleGenerale,
+        anteprima: {
+          tipo: "numero",
+          valore: "8.430,00 €",
+          nota: "52 costi già sostenuti · bollette + abbonamenti",
+        },
       },
     ],
   },

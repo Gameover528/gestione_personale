@@ -12,8 +12,15 @@ export const abbonamentiModule: ModuleConfig = {
     {
       id: "abbonamenti.attivi",
       title: "Abbonamenti attivi",
+      descrizione:
+        "Quanto pesano al mese gli abbonamenti attivi, e quanti sono.",
       defaultSpan: 1,
       component: AbbonamentiAttivi,
+      anteprima: {
+        tipo: "numero",
+        valore: "47,90 €/mese",
+        nota: "6 abbonamenti attivi",
+      },
     },
   ],
 };
