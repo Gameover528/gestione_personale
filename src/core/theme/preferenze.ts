@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/cf";
 import { getSessionUser, requireSessionUser } from "@/lib/auth/session";
 import {
@@ -52,8 +51,11 @@ async function salvaAspetto(patch: Partial<Aspetto>): Promise<void> {
     .bind(user.id, CHIAVE, JSON.stringify({ ...attuale, ...patch }))
     .run();
 
-  // Tema e colore sono decisi nel layout radice: va invalidato tutto.
-  revalidatePath("/", "layout");
+  // Nessuna invalidazione: tema e colore vengono già applicati dal client
+  // (classe sul documento e foglio di stile sostituito) e il layout radice li
+  // rilegge dal database al prossimo caricamento completo. Invalidare tutto
+  // l'albero a ogni salvataggio significherebbe un secondo giro di rendering
+  // per una modifica che sullo schermo è già avvenuta.
 }
 
 export async function salvaTema(tema: Tema): Promise<void> {

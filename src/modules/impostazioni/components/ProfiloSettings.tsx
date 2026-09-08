@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   changePasswordAction,
   revokeOtherSessionsAction,
@@ -68,20 +68,69 @@ export function ProfiloSettings({
 
   // --- Colore ---
   const [colore, setColore] = useState<string | null>(coloreIniziale);
+  const coloreSalvato = useRef<string | null>(coloreIniziale);
+  /** Ultimo colore mostrato, leggibile anche dalla pulizia dell'effetto. */
+  const coloreCorrente = useRef<string | null>(coloreIniziale);
+  const attesa = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const richiestaColore = useRef(0);
 
   /**
-   * Applica subito e salva: dal colore scelto viene derivata tutta la palette
-   * (accento, sfondi virati verso quella tinta, testi scelti per contrasto).
+   * Mostra la palette derivata dal colore, solo lato client: è un foglio di
+   * stile sostituito, non costa una chiamata al server.
    */
-  async function cambiaColore(hex: string | null) {
+  function anteprimaColore(hex: string | null) {
+    coloreCorrente.current = hex;
     setColore(hex);
     applicaColore(hex);
+  }
+
+  async function salvaOra(hex: string | null) {
+    if (attesa.current) {
+      clearTimeout(attesa.current);
+      attesa.current = null;
+    }
+    if (hex === coloreSalvato.current) return;
+    const token = ++richiestaColore.current;
     try {
       await salvaColore(hex);
+      coloreSalvato.current = hex;
     } catch {
-      toast({ messaggio: "Colore non salvato: riprova.", tono: "errore" });
+      // Segnala solo se è ancora l'ultima scelta: un tentativo superato da una
+      // scelta più recente non è un errore da mostrare.
+      if (token === richiestaColore.current) {
+        toast({ messaggio: "Colore non salvato: riprova.", tono: "errore" });
+      }
     }
   }
+
+  /** Scelta con un gesto singolo (campione, ripristino): si salva subito. */
+  function scegliColore(hex: string | null) {
+    anteprimaColore(hex);
+    salvaOra(hex);
+  }
+
+  /**
+   * Scelta dal selettore di sistema: emette un evento per ogni spostamento del
+   * cursore, quindi la palette si aggiorna subito ma il salvataggio parte una
+   * volta sola, a scelta ferma. Senza questa attesa una singola scelta faceva
+   * partire centinaia di chiamate al server, che annullandosi a vicenda
+   * facevano comparire "colore non salvato" anche quando riusciva.
+   */
+  function trascinaColore(hex: string | null) {
+    anteprimaColore(hex);
+    if (attesa.current) clearTimeout(attesa.current);
+    attesa.current = setTimeout(() => salvaOra(hex), 600);
+  }
+
+  // Se si lascia la pagina prima che l'attesa sia scaduta la scelta andrebbe
+  // persa: qui si salva comunque, senza attenderne l'esito.
+  useEffect(() => {
+    return () => {
+      if (coloreCorrente.current !== coloreSalvato.current) {
+        salvaColore(coloreCorrente.current).catch(() => {});
+      }
+    };
+  }, []);
 
   // --- Password ---
   const [state, formAction, isPending] = useActionState(
@@ -177,7 +226,7 @@ export function ProfiloSettings({
           {COLORI_PRESET.map((c) => (
             <button
               key={c.hex}
-              onClick={() => cambiaColore(c.hex)}
+              onClick={() => scegliColore(c.hex)}
               aria-label={c.nome}
               aria-pressed={colore === c.hex}
               title={c.nome}
@@ -198,14 +247,14 @@ export function ProfiloSettings({
             <input
               type="color"
               value={colore ?? "#2563eb"}
-              onChange={(e) => cambiaColore(coloreValido(e.target.value))}
+              onChange={(e) => trascinaColore(coloreValido(e.target.value))}
               aria-label="Colore personalizzato"
               className="h-9 w-14 cursor-pointer rounded-md border bg-background p-1"
             />
           </label>
           {colore && (
             <button
-              onClick={() => cambiaColore(null)}
+              onClick={() => scegliColore(null)}
               className="text-sm text-muted-foreground hover:underline"
             >
               torna al colore predefinito
