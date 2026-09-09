@@ -73,10 +73,49 @@ const COLONNE_PASTO = [
   "fonte",
 ] as const;
 
-export async function addPasto(input: PastoDiarioInput): Promise<void> {
+/**
+ * Esito dell'aggiunta al diario.
+ *
+ * Il controllo del doppione sta dentro l'aggiunta e non in una chiamata a
+ * parte: erano due giri di rete per ogni alimento registrato, e in una
+ * sessione di inserimenti (decine di alimenti, ognuno cercato mentre si
+ * scrive) il conto delle chiamate al worker si moltiplica senza motivo.
+ */
+export interface EsitoAggiunta {
+  stato: "aggiunto" | "duplicato";
+  /** Riga gia' presente nello stesso pasto: c'e' solo se stato e' "duplicato". */
+  esistente?: PastoDiario;
+}
+
+/**
+ * Aggiunge una riga al diario. Se lo stesso alimento e' gia' nel pasto di quel
+ * giorno non inserisce nulla e lo segnala: decide l'utente se sommare le
+ * quantita' o tenere due righe separate. Con `forza` inserisce comunque.
+ */
+export async function addPasto(
+  input: PastoDiarioInput,
+  forza = false
+): Promise<EsitoAggiunta> {
   const user = await requireSessionUser();
+  const db = getDb();
+
+  if (!forza) {
+    const esistente = await db
+      .prepare(
+        `select * from diario_pasti
+          where user_id = ? and data = ? and pasto = ?
+            and lower(nome_alimento) = lower(?)
+            and coalesce(marca, '') = coalesce(?, '')
+          order by created_at desc
+          limit 1`
+      )
+      .bind(user.id, input.data, input.pasto, input.nome_alimento, input.marca)
+      .first<PastoDiario>();
+    if (esistente) return { stato: "duplicato", esistente };
+  }
+
   const id = crypto.randomUUID();
-  await getDb()
+  await db
     .prepare(
       `insert into diario_pasti
         (id, user_id, data, pasto, nome_alimento, marca, quantita_g, porzione_nome, porzione_g,
@@ -104,6 +143,7 @@ export async function addPasto(input: PastoDiarioInput): Promise<void> {
     )
     .run();
   invalidaAlimentazione();
+  return { stato: "aggiunto" };
 }
 
 export async function deletePasto(id: string): Promise<void> {
@@ -205,31 +245,6 @@ export async function ripristinaPasto(riga: PastoDiario): Promise<void> {
     )
     .run();
   invalidaAlimentazione();
-}
-
-/**
- * Cerca una riga già registrata per lo stesso alimento nello stesso pasto:
- * serve a proporre di sommare la quantità invece di creare un doppione.
- */
-export async function trovaPastoEsistente(
-  data: string,
-  pasto: Pasto,
-  nome_alimento: string,
-  marca: string | null
-): Promise<PastoDiario | null> {
-  const user = await requireSessionUser();
-  const riga = await getDb()
-    .prepare(
-      `select * from diario_pasti
-        where user_id = ? and data = ? and pasto = ?
-          and lower(nome_alimento) = lower(?)
-          and coalesce(marca, '') = coalesce(?, '')
-        order by created_at desc
-        limit 1`
-    )
-    .bind(user.id, data, pasto, nome_alimento, marca)
-    .first<PastoDiario>();
-  return riga ?? null;
 }
 
 /**
@@ -492,17 +507,13 @@ export interface RisultatiEsterni {
   irraggiungibile: boolean;
 }
 
-/**
- * Prima fase della ricerca: solo il proprio database di piatti. E' una query
- * locale, risponde subito, e ha la precedenza perche' e' dato personale e
- * verificato. Le fonti esterne arrivano dopo, con cercaAlimentiEsterni.
+/*
+ * La prima fase della ricerca — i propri piatti — non passa piu' da qui: le
+ * pagine che cercano hanno gia' l'elenco completo dei piatti, e filtrarlo nel
+ * browser (cercaTraIPiatti in types.ts) e' istantaneo e non costa una chiamata
+ * al worker per ogni lettera scritta. Qui resta la seconda fase, quella che
+ * deve davvero uscire in rete.
  */
-export async function cercaAlimentiMiei(q: string): Promise<AlimentoRicerca[]> {
-  const user = await requireSessionUser();
-  const query = q.trim();
-  if (query.length < 2) return [];
-  return ordinaPerRilevanza(await cercaPiattiPersonali(user.id, query), query);
-}
 
 /**
  * Seconda fase: Open Food Facts e USDA, passando dalla cache condivisa in
@@ -639,29 +650,6 @@ export async function listPiatti(): Promise<PiattoConValori[]> {
     .bind(user.id)
     .all<PiattoAggregato>();
   return (results ?? []).map(risolviPiatto);
-}
-
-/** Piatti personali il cui nome (o marca) contiene il termine cercato. */
-async function cercaPiattiPersonali(
-  userId: string,
-  query: string
-): Promise<AlimentoRicerca[]> {
-  // I caratteri jolly di LIKE vanno neutralizzati, altrimenti "100%" o "a_b"
-  // cercherebbero qualcosa di diverso da quello che l'utente ha scritto.
-  const termine = `%${query.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-  const { results } = await getDb()
-    .prepare(
-      `${SELECT_PIATTI_CON_VALORI}
-        where p.user_id = ?
-          and (p.nome like ? escape '\\' or coalesce(p.marca, '') like ? escape '\\')
-        group by p.id
-        order by p.nome asc
-        limit 15`
-    )
-    .bind(userId, termine, termine)
-    .all<PiattoAggregato>();
-
-  return (results ?? []).map(risolviPiatto).map(piattoComeAlimento);
 }
 
 export async function getPiatto(id: string): Promise<PiattoConIngredienti> {

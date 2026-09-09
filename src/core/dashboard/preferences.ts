@@ -1,7 +1,7 @@
 "use server";
 
 import { getDb } from "@/lib/cf";
-import { getSessionUser } from "@/lib/auth/session";
+import { getSessionUser, requireSessionUser } from "@/lib/auth/session";
 
 function chiave(macroAreaId: string) {
   return `dashboard:${macroAreaId}`;
@@ -32,8 +32,8 @@ export async function saveDashboardLayout(
   macroAreaId: string,
   widgetIds: string[]
 ): Promise<void> {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Non autenticato");
+  // Senza sessione valida si torna al login, non si risponde 500.
+  const user = await requireSessionUser();
 
   await getDb()
     .prepare(

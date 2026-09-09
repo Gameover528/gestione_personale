@@ -10,6 +10,7 @@ import {
   type AlimentoRicerca,
   type Nutriente,
   type PiattoConIngredienti,
+  type PiattoConValori,
   type TipoPiatto,
   type ValoriNutrizionali,
   totaliPiatto,
@@ -83,9 +84,17 @@ function valoriDaCampi(c: CampiValori): ValoriNutrizionali {
   };
 }
 
-export function PiattoEditor({ initial }: { initial?: PiattoConIngredienti }) {
+export function PiattoEditor({
+  initial,
+  piatti,
+}: {
+  initial?: PiattoConIngredienti;
+  /** I propri piatti: la ricerca degli ingredienti li propone senza chiamate. */
+  piatti: PiattoConValori[];
+}) {
   const router = useRouter();
-  const ricerca = useRicercaAlimenti();
+  // Un piatto non puo' essere ingrediente di se stesso.
+  const ricerca = useRicercaAlimenti({ piatti, escludiPiattoId: initial?.id });
 
   const [nome, setNome] = useState(initial?.nome ?? "");
   const [marca, setMarca] = useState(initial?.marca ?? "");

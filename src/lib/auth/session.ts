@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { getDb } from "@/lib/cf";
 
 const COOKIE_NAME = "session";
@@ -76,10 +77,18 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   return row;
 }
 
-/** Variante per l'uso in Server Action: lancia se non autenticato. */
+/**
+ * Utente autenticato, per Server Action e query.
+ *
+ * Senza sessione valida rimanda al login invece di lanciare un errore: la
+ * sessione può essere scaduta, revocata da un altro dispositivo o cancellata
+ * (reset password, account sospeso) mentre una scheda è ancora aperta, e da lì
+ * ogni azione tornava un errore 500 — all'utente "Application error", nei log
+ * di Cloudflare una risposta 5xx. Tornare al login è la cosa che serve.
+ */
 export async function requireSessionUser(): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user) throw new Error("Non autenticato");
+  if (!user) redirect("/login");
   return user;
 }
 

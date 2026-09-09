@@ -275,6 +275,15 @@ function NavLink({
     <Link
       href={href}
       onClick={onNavigate}
+      /*
+        Niente precaricamento per le voci del menu: sono sempre tutte a
+        schermo, e ogni modifica ai dati invalida la cache del router, quindi
+        venivano riscaricate dopo ogni salvataggio. In una sessione di
+        inserimenti erano quattro chiamate al worker per ogni pagina aperta,
+        spese per pagine che spesso non si aprono. Il ritardo che si paga e'
+        solo al primo clic su una voce.
+      */
+      prefetch={false}
       className={cn(
         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition",
         active

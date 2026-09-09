@@ -233,8 +233,15 @@ export function DiarioGiorno({
             <CopyPlus className="h-4 w-4" />
             Copia giorno
           </button>
+          {/*
+            Andamento e Obiettivi non vengono precaricati: si aprono una volta
+            ogni tanto, mentre questa pagina si riapre a ogni alimento
+            registrato, e ogni inserimento invalida la cache del router. Il
+            precaricamento resta dove serve davvero: il pulsante "Aggiungi".
+          */}
           <Link
             href="/alimentazione/andamento"
+            prefetch={false}
             className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
           >
             <TrendingUp className="h-4 w-4" />
@@ -242,6 +249,7 @@ export function DiarioGiorno({
           </Link>
           <Link
             href="/alimentazione/obiettivi"
+            prefetch={false}
             className="rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
           >
             Obiettivi

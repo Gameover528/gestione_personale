@@ -449,6 +449,31 @@ export function rilevanza(a: AlimentoRicerca, query: string): number {
 }
 
 /**
+ * Cerca tra i piatti personali già caricati nella pagina.
+ *
+ * È una funzione pura e non una query: l'elenco dei propri piatti serve
+ * comunque alla scheda "I miei piatti", quindi arriva già col resto della
+ * pagina. Filtrarlo qui rende la prima fase della ricerca istantanea e non
+ * costa una chiamata al server per ogni lettera scritta.
+ */
+export function cercaTraIPiatti(
+  piatti: PiattoConValori[],
+  query: string,
+  escludiId?: string,
+  limite = 15
+): AlimentoRicerca[] {
+  const q = normalizza(query);
+  if (!q) return [];
+  const trovati = piatti
+    .filter((p) => p.id !== escludiId)
+    .filter((p) =>
+      `${normalizza(p.nome)} ${normalizza(p.marca ?? "")}`.includes(q)
+    )
+    .map(piattoComeAlimento);
+  return ordinaPerRilevanza(trovati, query).slice(0, limite);
+}
+
+/**
  * Riordina i risultati per rilevanza mantenendo, a pari rilevanza, l'ordine
  * di partenza (che per le fonti esterne è quello di popolarità).
  */

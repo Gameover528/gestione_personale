@@ -33,6 +33,19 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.0-dev.9",
+    ambiente: "dev",
+    data: "2026-09-09",
+    titolo: "Meno chiamate al server durante gli inserimenti",
+    punti: [
+      "Aggiungere un alimento è una sola richiesta invece di due: il controllo del doppione lo fa il server nello stesso giro.",
+      "Le fonti esterne (Open Food Facts, USDA) vengono interrogate solo quando smetti di scrivere, non a ogni pezzo di parola; i tuoi piatti continuano a comparire subito.",
+      "I risultati dei termini già cercati restano in memoria per tutta la visita: correggere una parola o tornare indietro non rifà le ricerche.",
+      "Le voci del menu di lato non vengono più precaricate: erano quattro richieste per ogni pagina aperta, rifatte dopo ogni salvataggio.",
+      "Se la sessione è scaduta o è stata revocata mentre una scheda era aperta, l'app riporta al login invece di mostrare \"Application error\": prima ogni azione da quella scheda tornava un errore del server.",
+    ],
+  },
+  {
     versione: "0.5.0-dev.8",
     ambiente: "dev",
     data: "2026-09-08",

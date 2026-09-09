@@ -3,12 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import {
-  addPasto,
-  createPiatto,
-  trovaPastoEsistente,
-  updatePasto,
-} from "../queries";
+import { addPasto, createPiatto, updatePasto } from "../queries";
 import {
   NUTRIENTI,
   PASTI,
@@ -106,7 +101,7 @@ export function RicercaAggiungi({
 
   // Ricerca in due fasi (piatti miei subito, fonti esterne dopo): la logica
   // sta nell'hook, condivisa con l'editor dei piatti.
-  const ricerca = useRicercaAlimenti();
+  const ricerca = useRicercaAlimenti({ piatti: piattiIniziali });
 
   const [sel, setSel] = useState<AlimentoRicerca | null>(null);
   /**
@@ -200,36 +195,33 @@ export function RicercaAggiungi({
       setError("Indica una quantita' maggiore di zero.");
       return "errore";
     }
-    if (!forzato) {
-      const esistente = await trovaPastoEsistente(
+    const usaPorzione = conPorzione && Number(a.porzione_g ?? 0) > 0;
+    // Un solo giro di rete: il doppione lo riconosce il server, che inserisce
+    // oppure risponde qual e' la riga gia' presente.
+    const esito = await addPasto(
+      {
         data,
         pasto,
-        a.nome,
-        a.marca || null
-      );
-      if (esistente) {
-        setDuplicato({
-          riga: esistente,
-          alimento: a,
-          grammi: quantita_g,
-          conPorzione,
-          salvaPiatto,
-        });
-        return "duplicato";
-      }
+        nome_alimento: a.nome,
+        marca: a.marca || null,
+        quantita_g,
+        porzione_nome: usaPorzione ? a.porzione_nome ?? "porzione" : null,
+        porzione_g: usaPorzione ? Number(a.porzione_g) : null,
+        ...a100(a.per100),
+        fonte: a.fonte,
+      },
+      forzato
+    );
+    if (esito.stato === "duplicato" && esito.esistente) {
+      setDuplicato({
+        riga: esito.esistente,
+        alimento: a,
+        grammi: quantita_g,
+        conPorzione,
+        salvaPiatto,
+      });
+      return "duplicato";
     }
-    const usaPorzione = conPorzione && Number(a.porzione_g ?? 0) > 0;
-    await addPasto({
-      data,
-      pasto,
-      nome_alimento: a.nome,
-      marca: a.marca || null,
-      quantita_g,
-      porzione_nome: usaPorzione ? a.porzione_nome ?? "porzione" : null,
-      porzione_g: usaPorzione ? Number(a.porzione_g) : null,
-      ...a100(a.per100),
-      fonte: a.fonte,
-    });
     await salvaPiattoSeServe(a, salvaPiatto);
     setAggiunti((prev) => [...prev, a.nome]);
     return "ok";
