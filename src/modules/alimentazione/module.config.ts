@@ -1,4 +1,4 @@
-import { Utensils, ChefHat, TrendingUp } from "lucide-react";
+import { Utensils, ChefHat, TrendingUp, Plus } from "lucide-react";
 import type { ModuleConfig } from "@/core/modules/types";
 import CalorieOggiESettimana from "./widgets/CalorieOggiESettimana";
 import MacroOggi from "./widgets/MacroOggi";
@@ -14,6 +14,13 @@ export const alimentazioneModule: ModuleConfig = {
     { label: "Piatti", href: "/alimentazione/piatti", icon: ChefHat },
     { label: "Andamento", href: "/alimentazione/andamento", icon: TrendingUp },
   ],
+  // Registrare un alimento e' cio' che si fa piu' spesso in tutta l'app:
+  // sulla barra del telefono e' il pulsante centrale.
+  azionePrincipale: {
+    label: "Aggiungi",
+    href: "/alimentazione/aggiungi",
+    icon: Plus,
+  },
   widgets: [
     {
       // Id storico: cambiandolo scomparirebbe dalle dashboard già personalizzate.

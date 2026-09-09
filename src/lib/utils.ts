@@ -72,3 +72,20 @@ export function spostaGiorno(giorno: string, delta: number): string {
   d.setUTCDate(d.getUTCDate() + delta);
   return d.toISOString().slice(0, 10);
 }
+
+/**
+ * Iniziali per il pallino del profilo: dal nome se c'e' (max due parole),
+ * altrimenti la prima lettera dell'email.
+ */
+export function iniziali(nome?: string | null, email?: string): string {
+  const n = nome?.trim();
+  if (n) {
+    return n
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0])
+      .join("")
+      .toUpperCase();
+  }
+  return (email?.[0] ?? "?").toUpperCase();
+}

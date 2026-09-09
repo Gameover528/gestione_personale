@@ -31,7 +31,6 @@ import {
   Check,
   X,
   CopyPlus,
-  TrendingUp,
   ChevronLeft,
   ChevronRight,
   Search,
@@ -234,19 +233,15 @@ export function DiarioGiorno({
             Copia giorno
           </button>
           {/*
-            Andamento e Obiettivi non vengono precaricati: si aprono una volta
-            ogni tanto, mentre questa pagina si riapre a ogni alimento
-            registrato, e ogni inserimento invalida la cache del router. Il
-            precaricamento resta dove serve davvero: il pulsante "Aggiungi".
+            Qui restano le azioni, non la navigazione: "Andamento" e' una voce
+            della barra in basso (su telefono) e del menu (su schermo grande),
+            e ripeterla qui rubava una riga proprio alla pagina che si apre
+            piu' spesso. "Obiettivi" invece non sta in nessuno dei due.
+
+            Niente precaricamento: si aprono una volta ogni tanto, mentre
+            questa pagina si riapre a ogni alimento registrato e ogni
+            inserimento invalida la cache del router.
           */}
-          <Link
-            href="/alimentazione/andamento"
-            prefetch={false}
-            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
-          >
-            <TrendingUp className="h-4 w-4" />
-            Andamento
-          </Link>
           <Link
             href="/alimentazione/obiettivi"
             prefetch={false}
@@ -256,7 +251,8 @@ export function DiarioGiorno({
           </Link>
           <Link
             href={hrefAggiungi()}
-            className="hidden items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 sm:inline-flex"
+            /* Solo da lg: sotto, l'azione e' il "+" al centro della barra. */
+            className="hidden items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 lg:inline-flex"
           >
             <Plus className="h-4 w-4" />
             Aggiungi
@@ -512,15 +508,10 @@ export function DiarioGiorno({
         </div>
       )}
 
-      {/* Su telefono l'azione principale sta a portata di pollice */}
-      <Link
-        href={hrefAggiungi()}
-        aria-label="Aggiungi alimento"
-        className="fixed bottom-4 right-4 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lg transition hover:opacity-90 sm:hidden"
-      >
-        <Plus className="h-5 w-5" />
-        Aggiungi
-      </Link>
+      {/*
+        Su telefono l'azione principale e' il "+" al centro della barra in
+        basso: un pulsante flottante qui gli finirebbe sopra.
+      */}
     </div>
   );
 }

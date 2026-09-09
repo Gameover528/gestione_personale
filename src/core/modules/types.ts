@@ -7,6 +7,12 @@ export interface NavItem {
   icon: LucideIcon;
   /** Se true, la voce è visibile solo per ruolo admin/superadmin. */
   adminOnly?: boolean;
+  /**
+   * Etichetta per la barra di navigazione su telefono, dove una colonna su
+   * cinque regge ~9 caratteri ("Preferenze moduli" → "Preferenze"). Se manca
+   * si usa `label`.
+   */
+  labelBreve?: string;
 }
 
 /**
@@ -52,6 +58,12 @@ export interface ModuleConfig {
   basePath: string;
   /** Voci mostrate nella sidebar. */
   nav: NavItem[];
+  /**
+   * La cosa che in questo modulo si fa più spesso (non una pagina da
+   * consultare): compare al centro della barra su telefono, in rilievo. Al
+   * massimo una per macro-area.
+   */
+  azionePrincipale?: NavItem;
   /** Widget che il modulo mette a disposizione della dashboard. */
   widgets?: DashboardWidgetDef[];
 }

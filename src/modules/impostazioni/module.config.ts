@@ -15,8 +15,18 @@ export const impostazioniModule: ModuleConfig = {
   nav: [
     { label: "Profilo", href: "/impostazioni/profilo", icon: UserCog },
     { label: "Utenti", href: "/impostazioni/utenti", icon: Users, adminOnly: true },
-    { label: "Backup dati", href: "/impostazioni/backup", icon: Download },
-    { label: "Preferenze moduli", href: "/impostazioni/preferenze", icon: SlidersHorizontal },
+    {
+      label: "Backup dati",
+      labelBreve: "Backup",
+      href: "/impostazioni/backup",
+      icon: Download,
+    },
+    {
+      label: "Preferenze moduli",
+      labelBreve: "Preferenze",
+      href: "/impostazioni/preferenze",
+      icon: SlidersHorizontal,
+    },
     { label: "Versioni", href: "/impostazioni/versioni", icon: History },
   ],
 };

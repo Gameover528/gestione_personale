@@ -33,6 +33,20 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.0-dev.10",
+    ambiente: "dev",
+    data: "2026-09-10",
+    titolo: "Su telefono la navigazione passa in basso",
+    punti: [
+      "Le pagine della sezione in cui sei stanno in una barra in basso, dove arriva il pollice: al massimo cinque voci, con icona ed etichetta.",
+      "In Alimentazione la voce centrale è \"Aggiungi\", in rilievo: è la cosa che si fa più spesso in tutta l'app. Il pulsante rotondo che stava sopra il diario è stato rimosso, era lo stesso comando due volte.",
+      "La sezione si cambia toccando il nome in alto a sinistra: si apre un elenco che sale dal basso. Il menu a panino non serve più.",
+      "Profilo, tema e uscita sono nel pallino con le iniziali, in alto a destra.",
+      "Sul computer non cambia niente: resta il menu di sinistra, con tutte le voci e le etichette complete.",
+      "La voce \"Dashboard\" si chiama \"Riepilogo\", in barra e nel menu.",
+    ],
+  },
+  {
     versione: "0.5.0-dev.9",
     ambiente: "dev",
     data: "2026-09-09",

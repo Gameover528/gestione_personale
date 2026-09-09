@@ -9,7 +9,6 @@ import {
   LogOut,
   SlidersHorizontal,
   UserCog,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -17,33 +16,19 @@ import {
   getMacroAreaForPath,
   hrefForMacroArea,
 } from "@/core/modules/registry";
-import { cn } from "@/lib/utils";
+import { hrefAttivo } from "@/core/navigazione/barra";
+import { cn, iniziali } from "@/lib/utils";
 import type { Ruolo } from "@/lib/auth/roles";
 import { ThemeToggle } from "@/core/theme/ThemeToggle";
-
-/** Tra più href candidati che "matchano" il pathname, ritorna il più specifico (il più lungo). */
-function hrefAttivo(pathname: string, hrefs: string[]): string | null {
-  let migliore: string | null = null;
-  for (const href of hrefs) {
-    if (pathname === href || pathname.startsWith(href + "/")) {
-      if (!migliore || href.length > migliore.length) migliore = href;
-    }
-  }
-  return migliore;
-}
 
 export function Sidebar({
   userEmail,
   userNome,
   ruolo,
-  mobileOpen = false,
-  onClose,
 }: {
   userEmail?: string;
   userNome?: string | null;
   ruolo?: Ruolo;
-  mobileOpen?: boolean;
-  onClose?: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -64,17 +49,11 @@ export function Sidebar({
     setMenuOpen(false);
     if (!area) return;
     router.push(hrefForMacroArea(area));
-    onClose?.();
   }
 
   return (
-    <aside
-      className={cn(
-        "fixed inset-y-0 left-0 z-40 flex h-screen w-64 shrink-0 flex-col border-r bg-card transition-transform duration-200",
-        "lg:static lg:z-auto lg:w-56 lg:translate-x-0",
-        mobileOpen ? "translate-x-0" : "-translate-x-full"
-      )}
-    >
+    // Su telefono la navigazione è la barra in basso: lì la sidebar non c'è.
+    <aside className="hidden h-screen w-56 shrink-0 flex-col border-r bg-card lg:flex">
       <div className="relative px-3 py-4">
         <div className="flex items-center gap-2">
           <button
@@ -93,13 +72,6 @@ export function Sidebar({
                 menuOpen && "rotate-180"
               )}
             />
-          </button>
-          <button
-            onClick={onClose}
-            aria-label="Chiudi menu"
-            className="rounded p-1 text-muted-foreground hover:bg-accent lg:hidden"
-          >
-            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -136,10 +108,9 @@ export function Sidebar({
         {areaAttiva.dashboardHref && (
           <NavLink
             href={areaAttiva.dashboardHref}
-            label="Dashboard"
+            label="Riepilogo"
             active={attivo === areaAttiva.dashboardHref}
             icon={<LayoutDashboard className="h-4 w-4" />}
-            onNavigate={onClose}
           />
         )}
 
@@ -162,7 +133,6 @@ export function Sidebar({
                     label={item.label}
                     active={attivo === item.href}
                     icon={<Icon className="h-4 w-4" />}
-                    onNavigate={onClose}
                   />
                 );
               })}
@@ -214,10 +184,7 @@ export function Sidebar({
                 <div className="absolute bottom-full left-0 right-0 z-20 mb-2 overflow-hidden rounded-lg border bg-card py-1 shadow-lg">
                   <Link
                     href="/impostazioni/profilo"
-                    onClick={() => {
-                      setProfiloOpen(false);
-                      onClose?.();
-                    }}
+                    onClick={() => setProfiloOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 text-sm transition hover:bg-accent"
                   >
                     <UserCog className="h-4 w-4 text-muted-foreground" />
@@ -225,10 +192,7 @@ export function Sidebar({
                   </Link>
                   <Link
                     href="/impostazioni/preferenze"
-                    onClick={() => {
-                      setProfiloOpen(false);
-                      onClose?.();
-                    }}
+                    onClick={() => setProfiloOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 text-sm transition hover:bg-accent"
                   >
                     <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
@@ -263,18 +227,15 @@ function NavLink({
   label,
   active,
   icon,
-  onNavigate,
 }: {
   href: string;
   label: string;
   active: boolean;
   icon: React.ReactNode;
-  onNavigate?: () => void;
 }) {
   return (
     <Link
       href={href}
-      onClick={onNavigate}
       /*
         Niente precaricamento per le voci del menu: sono sempre tutte a
         schermo, e ogni modifica ai dati invalida la cache del router, quindi
@@ -295,18 +256,4 @@ function NavLink({
       {label}
     </Link>
   );
-}
-
-/** Iniziali per il pallino del profilo: dal nome se c'e', altrimenti dall'email. */
-function iniziali(nome?: string | null, email?: string): string {
-  const n = nome?.trim();
-  if (n) {
-    return n
-      .split(/s+/)
-      .slice(0, 2)
-      .map((p) => p[0])
-      .join("")
-      .toUpperCase();
-  }
-  return (email?.[0] ?? "?").toUpperCase();
 }
