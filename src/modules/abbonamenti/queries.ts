@@ -2,7 +2,15 @@
 
 import { getDb } from "@/lib/cf";
 import { requireSessionUser } from "@/lib/auth/session";
-import { prossimaData, oggiISO, type Abbonamento, type AbbonamentoInput, type Rata } from "./types";
+import {
+  prossimaData,
+  oggiISO,
+  type Abbonamento,
+  type AbbonamentoInput,
+  type Frequenza,
+  type Rata,
+} from "./types";
+import { oggiIso } from "@/lib/utils";
 
 const MAX_RATE_PER_GENERAZIONE = 2000; // rete di sicurezza contro loop involontari
 
@@ -210,4 +218,108 @@ export async function segnaRataDaPagareAction(rataId: string): Promise<void> {
     )
     .bind(rataId, user.id)
     .run();
+}
+
+/** Una voce dell'elenco "prossime rate" mostrato in dashboard. */
+export interface ProssimaRata {
+  abbonamento_id: string;
+  nome: string;
+  data_scadenza: string;
+  importo: number;
+  /** Rata gia' scaduta e non ancora segnata come pagata. */
+  arretrata: boolean;
+}
+
+export interface RiepilogoAbbonamenti {
+  /** Spesa mensile equivalente degli abbonamenti attivi. */
+  totaleMensile: number;
+  attivi: number;
+  prossime: ProssimaRata[];
+}
+
+/** Quanto pesa al mese un abbonamento, qualunque sia la sua frequenza. */
+const AL_MESE: Record<Frequenza, number> = {
+  settimanale: 52 / 12,
+  mensile: 1,
+  bimestrale: 1 / 2,
+  trimestrale: 1 / 3,
+  semestrale: 1 / 6,
+  annuale: 1 / 12,
+};
+
+/**
+ * Tutto quello che serve al riquadro degli abbonamenti in una chiamata sola:
+ * spesa mensile, quanti sono attivi e cosa si paga adesso.
+ *
+ * Per ogni abbonamento attivo la "prossima rata" e' la piu' vecchia non
+ * ancora pagata se ce n'e' una (quella che si deve davvero), altrimenti la
+ * data del prossimo addebito, calcolata dall'ultima rata generata: le rate
+ * esistono nel database solo fino a oggi, quindi il futuro va ricavato dalla
+ * frequenza.
+ */
+export async function riepilogoAbbonamenti(
+  limite = 4
+): Promise<RiepilogoAbbonamenti> {
+  const user = await requireSessionUser();
+  const abbonamenti = await listAbbonamenti(); // genera anche le rate mancanti
+  const attivi = abbonamenti.filter((a) => a.stato === "attivo");
+  const db = getDb();
+
+  const { results: daPagare } = await db
+    .prepare(
+      `select abbonamento_id, min(data_scadenza) as data_scadenza, importo
+         from abbonamento_rate
+        where user_id = ? and stato = 'da_pagare'
+        group by abbonamento_id`
+    )
+    .bind(user.id)
+    .all<{ abbonamento_id: string; data_scadenza: string; importo: number }>();
+
+  const { results: ultime } = await db
+    .prepare(
+      `select abbonamento_id, max(data_scadenza) as ultima
+         from abbonamento_rate
+        where user_id = ?
+        group by abbonamento_id`
+    )
+    .bind(user.id)
+    .all<{ abbonamento_id: string; ultima: string }>();
+
+  const arretrate = new Map((daPagare ?? []).map((r) => [r.abbonamento_id, r]));
+  const ultimaRata = new Map((ultime ?? []).map((r) => [r.abbonamento_id, r.ultima]));
+  const oggi = oggiIso();
+
+  const prossime: ProssimaRata[] = attivi.map((a) => {
+    const aperta = arretrate.get(a.id);
+    if (aperta) {
+      return {
+        abbonamento_id: a.id,
+        nome: a.nome,
+        data_scadenza: aperta.data_scadenza,
+        importo: Number(aperta.importo),
+        arretrata: aperta.data_scadenza <= oggi,
+      };
+    }
+    const ultima = ultimaRata.get(a.id);
+    return {
+      abbonamento_id: a.id,
+      nome: a.nome,
+      data_scadenza: ultima
+        ? prossimaData(ultima, a.frequenza)
+        : a.data_ripresa ?? a.data_inizio,
+      importo: Number(a.importo),
+      arretrata: false,
+    };
+  });
+
+  prossime.sort((x, y) => x.data_scadenza.localeCompare(y.data_scadenza));
+
+  return {
+    totaleMensile: attivi.reduce(
+      (s, a) => s + Number(a.importo) * (AL_MESE[a.frequenza] ?? 1),
+      0
+    ),
+    attivi: attivi.length,
+    prossime: prossime.slice(0, limite),
+  };
 }

@@ -10,6 +10,25 @@ export interface BolletteFilters {
   divisione?: string;
 }
 
+/**
+ * Totale e numero delle bollette gia' pagate, come somma nel database invece
+ * che caricando tutte le righe per sommarle nel browser.
+ */
+export async function totaleBollettePagate(): Promise<{
+  totale: number;
+  count: number;
+}> {
+  const user = await requireSessionUser();
+  const row = await getDb()
+    .prepare(
+      `select coalesce(sum(importo), 0) as totale, count(*) as count
+       from bollette where user_id = ? and stato = 'pagata'`
+    )
+    .bind(user.id)
+    .first<{ totale: number; count: number }>();
+  return row ?? { totale: 0, count: 0 };
+}
+
 export async function listBollette(
   filters: BolletteFilters = {}
 ): Promise<Bolletta[]> {

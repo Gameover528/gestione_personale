@@ -33,6 +33,18 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.0-dev.12",
+    ambiente: "dev",
+    data: "2026-09-11",
+    titolo: "Riquadro principale unico e riquadri alti quanto il contenuto",
+    punti: [
+      "In Consumi e Costi il primo riquadro occupa tutta la larghezza e raccoglie i tre numeri che si leggono insieme: quanto c'è da pagare, quanto hai già speso in tutto e le prossime scadenze. \"Totale generale già pagato\" non è più un riquadro a parte.",
+      "Il riquadro degli abbonamenti mostra anche le prossime rate: per ogni abbonamento attivo la rata da saldare se c'è, altrimenti la data del prossimo addebito.",
+      "I riquadri non vengono più stirati fino all'altezza del più alto della riga: ognuno è alto quanto il suo contenuto, quindi niente scatole mezze vuote.",
+      "Il riquadro principale costa una richiesta al posto di tre, e quello degli abbonamenti resta a una.",
+    ],
+  },
+  {
     versione: "0.5.0-dev.11",
     ambiente: "dev",
     data: "2026-09-11",

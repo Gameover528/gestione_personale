@@ -9,7 +9,7 @@ import { bolletteModule } from "@/modules/bollette/module.config";
 import { abbonamentiModule } from "@/modules/abbonamenti/module.config";
 import { alimentazioneModule } from "@/modules/alimentazione/module.config";
 import { impostazioniModule } from "@/modules/impostazioni/module.config";
-import TotaleGenerale from "@/core/dashboard/widgets/TotaleGenerale";
+import RiepilogoCosti from "@/core/dashboard/widgets/RiepilogoCosti";
 
 /**
  * Registro centrale delle macro-aree.
@@ -33,16 +33,24 @@ export const macroAree: MacroAreaConfig[] = [
     moduli: [bolletteModule, abbonamentiModule],
     widgets: [
       {
-        id: "consumi-costi.totale-generale",
-        title: "Totale generale già pagato",
+        // Prende il posto di "Totale da pagare", "Prossime scadenze" e
+        // "Totale generale gia' pagato": erano tre riquadri per tre numeri
+        // che si leggono insieme, e tre interrogazioni al database.
+        id: "consumi-costi.riepilogo",
+        title: "Da pagare, già pagato e prossime scadenze",
         descrizione:
-          "Tutto quello che hai già speso: bollette pagate più rate degli abbonamenti.",
-        defaultSpan: 1,
-        component: TotaleGenerale,
+          "Quanto c'è da pagare, quanto hai già speso in tutto e le bollette che scadono per prime.",
+        defaultSpan: 3,
+        // E' l'informazione per cui si apre questa dashboard: sempre in testa.
+        fisso: true,
+        component: RiepilogoCosti,
         anteprima: {
-          tipo: "numero",
-          valore: "8.430,00 €",
-          nota: "52 costi già sostenuti · bollette + abbonamenti",
+          tipo: "elenco",
+          righe: [
+            { testo: "1.240,00 € da pagare", nota: "4 bollette" },
+            { testo: "8.430,00 € già pagati", nota: "52 costi sostenuti" },
+            { testo: "Enel", nota: "luce · 12/09/2026", badge: "5g" },
+          ],
         },
       },
     ],

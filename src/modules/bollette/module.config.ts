@@ -1,6 +1,5 @@
 import { Receipt } from "lucide-react";
 import type { ModuleConfig } from "@/core/modules/types";
-import DaPagareEScadenze from "./widgets/DaPagareEScadenze";
 import SpesaPerTipo from "./widgets/SpesaPerTipo";
 import AndamentoMensile from "./widgets/AndamentoMensile";
 import DaRecuperare from "./widgets/DaRecuperare";
@@ -12,26 +11,6 @@ export const bolletteModule: ModuleConfig = {
   basePath: "/bollette",
   nav: [{ label: "Bollette", href: "/bollette", icon: Receipt }],
   widgets: [
-    {
-      // "Totale da pagare" e "Prossime scadenze" erano due widget separati che
-      // facevano la stessa interrogazione: uniti e resi fissi, perché sono
-      // l'informazione per cui si apre questa dashboard.
-      id: "bollette.da-pagare-scadenze",
-      title: "Da pagare e prossime scadenze",
-      descrizione:
-        "Quanto c'è da pagare in tutto e le cinque bollette che scadono per prime.",
-      defaultSpan: 2,
-      fisso: true,
-      component: DaPagareEScadenze,
-      anteprima: {
-        tipo: "elenco",
-        righe: [
-          { testo: "1.240,00 € · 4 bollette da pagare" },
-          { testo: "Enel", nota: "luce · 12/09/2026", badge: "5g" },
-          { testo: "Acea", nota: "acqua · 20/09/2026" },
-        ],
-      },
-    },
     {
       id: "bollette.da-recuperare",
       title: "Da recuperare (altra famiglia)",

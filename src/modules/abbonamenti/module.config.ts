@@ -13,13 +13,16 @@ export const abbonamentiModule: ModuleConfig = {
       id: "abbonamenti.attivi",
       title: "Abbonamenti attivi",
       descrizione:
-        "Quanto pesano al mese gli abbonamenti attivi, e quanti sono.",
+        "Quanto pesano al mese gli abbonamenti attivi e quali rate escono per prime.",
       defaultSpan: 1,
       component: AbbonamentiAttivi,
       anteprima: {
-        tipo: "numero",
-        valore: "47,90 €/mese",
-        nota: "6 abbonamenti attivi",
+        tipo: "elenco",
+        righe: [
+          { testo: "47,90 €/mese", nota: "6 abbonamenti attivi" },
+          { testo: "Netflix", nota: "13/09/2026", badge: "3g" },
+          { testo: "Spotify", nota: "20/09/2026" },
+        ],
       },
     },
   ],

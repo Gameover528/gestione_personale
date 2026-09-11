@@ -191,7 +191,7 @@ export function DashboardGrid({
       <div className="space-y-4">
         {/* Widget fissi: fuori dall'ordinamento, sempre per primi */}
         {fissi.length > 0 && (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
             {fissi.map((w) => {
               const Componente = w.component;
               return (
@@ -231,7 +231,14 @@ export function DashboardGrid({
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={order} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            {/*
+              items-start: ogni scheda e' alta quanto il suo contenuto. Con
+              l'allineamento predefinito la riga prende l'altezza della scheda
+              piu' alta e le altre vengono stirate, quindi un riquadro con due
+              righe di testo diventava una scatola mezza vuota alta come un
+              grafico.
+            */}
+            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
               {order.map((id) => {
                 const widget = getWidget(id);
                 if (!widget) return null;
