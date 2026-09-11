@@ -33,6 +33,19 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.0-dev.11",
+    ambiente: "dev",
+    data: "2026-09-11",
+    titolo: "Riquadri della dashboard che si spostano col dito",
+    punti: [
+      "Sul telefono tieni premuto un riquadro per un attimo e poi lo trascini dove vuoi, come sulla schermata di un telefono. Il nuovo ordine si salva da solo, senza passare da \"Personalizza\".",
+      "Se il dito si muove subito la pagina scorre come sempre: il riquadro si aggancia solo se resti fermo un quarto di secondo.",
+      "Quando si aggancia, una vibrazione breve lo segnala e il riquadro si solleva con un bordo colorato, così si vede quale stai spostando.",
+      "Alzando il dito non si apre più per sbaglio la pagina del riquadro appena spostato.",
+      "Col mouse non cambia niente: si trascina dalla maniglia in \"Personalizza\". In più ora si può riordinare anche da tastiera, con spazio e frecce sulla maniglia.",
+    ],
+  },
+  {
     versione: "0.5.0-dev.10",
     ambiente: "dev",
     data: "2026-09-10",

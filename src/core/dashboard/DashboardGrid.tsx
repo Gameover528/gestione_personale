@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -13,6 +15,7 @@ import {
   arrayMove,
   SortableContext,
   rectSortingStrategy,
+  sortableKeyboardCoordinates,
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -51,8 +54,21 @@ export function DashboardGrid({
   const [saving, setSaving] = useState(false);
   const [pannello, setPannello] = useState(false);
 
+  /**
+   * Un sensore per ogni modo di puntare, invece del PointerSensor unico.
+   *
+   * Il PointerSensor tratta dito e mouse allo stesso modo: con il vincolo di
+   * distanza, il primo mezzo centimetro di scorrimento della pagina faceva
+   * partire un trascinamento. Separandoli, il mouse continua a trascinare
+   * subito dalla maniglia, mentre il dito deve restare fermo un quarto di
+   * secondo: se si muove prima (cioe' se stai scorrendo) non succede niente.
+   */
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   /**
@@ -75,8 +91,29 @@ export function DashboardGrid({
 
   const attivi = useMemo(() => new Set(order), [order]);
 
+  function handleDragStart() {
+    // Un colpetto di vibrazione dice che il riquadro si e' staccato ed e'
+    // pronto a essere spostato: senza, la pressione prolungata non da' segno
+    // di aver funzionato finche' non si muove il dito. (Android; iOS ignora.)
+    navigator.vibrate?.(10);
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
+
+    // Alzando il dito il browser genera comunque un clic sull'elemento sotto:
+    // senza fermarlo, il rilascio aprirebbe il collegamento del riquadro
+    // appena spostato. Si blocca il primo clic e basta, e solo dopo un
+    // trascinamento col dito: col mouse quel clic non esiste.
+    if (typeof TouchEvent !== "undefined" && event.activatorEvent instanceof TouchEvent) {
+      const blocca = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+      document.addEventListener("click", blocca, { capture: true, once: true });
+      setTimeout(() => document.removeEventListener("click", blocca, true), 350);
+    }
+
     if (over && active.id !== over.id) {
       const next = (() => {
         const oldIndex = order.indexOf(active.id as string);
@@ -110,6 +147,17 @@ export function DashboardGrid({
 
   return (
     <div>
+      {/*
+        Il tocco prolungato non si vede: senza una riga che lo dica, resta una
+        funzione che conosce solo chi l'ha scritta. Solo su telefono, dove
+        serve: al mouse si trascina dalla maniglia in Personalizza.
+      */}
+      {order.length > 1 && (
+        <p className="mb-3 text-xs text-muted-foreground lg:hidden">
+          Tieni premuto un riquadro per spostarlo.
+        </p>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         {saving && <span className="text-xs text-muted-foreground">Salvato</span>}
         <button
@@ -179,6 +227,7 @@ export function DashboardGrid({
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={order} strategy={rectSortingStrategy}>
@@ -355,20 +404,49 @@ function SortableWidget({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id, disabled: !editMode });
+  } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
+  // dnd-kit tipa i suoi ascoltatori come `Function` generiche: qui serve la
+  // firma di React per l'evento di tocco.
+  const iniziaTocco = listeners?.onTouchStart as
+    | React.TouchEventHandler<HTMLDivElement>
+    | undefined;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(spanClass(widget.defaultSpan), isDragging && "z-10 opacity-70")}
+      /*
+        Il tocco prolungato aggancia il riquadro da qualunque punto, come sulla
+        schermata di un telefono: sul dito non c'e' una maniglia da centrare.
+        Al mouse restano le sue regole (solo dalla maniglia, in Personalizza),
+        perche' li' il puntatore serve anche a cliccare dentro il widget.
+      */
+      onTouchStart={iniziaTocco}
+      onContextMenu={(e) => {
+        // Su Android la pressione prolungata aprirebbe anche il menu del
+        // sistema sopra il riquadro che si sta spostando.
+        if (isDragging) e.preventDefault();
+      }}
+      className={cn(
+        spanClass(widget.defaultSpan),
+        "touch-manipulation select-none",
+        isDragging && "z-10"
+      )}
     >
-      <Card className={cn("h-full", editMode && "ring-1 ring-border")}>
+      <Card
+        className={cn(
+          "h-full transition-shadow",
+          editMode && "ring-1 ring-border",
+          // Sollevato: si vede quale riquadro si sta spostando.
+          isDragging && "scale-[1.02] shadow-xl ring-2 ring-primary"
+        )}
+      >
         <div className="mb-3 flex items-center justify-between">
           <CardTitle>{widget.title}</CardTitle>
           {editMode && (
