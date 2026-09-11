@@ -2,7 +2,6 @@ import { Utensils, ChefHat, TrendingUp, Plus } from "lucide-react";
 import type { ModuleConfig } from "@/core/modules/types";
 import CalorieOggiESettimana from "./widgets/CalorieOggiESettimana";
 import MacroOggi from "./widgets/MacroOggi";
-import MacroSettimana from "./widgets/MacroSettimana";
 
 export const alimentazioneModule: ModuleConfig = {
   id: "alimentazione",
@@ -25,10 +24,10 @@ export const alimentazioneModule: ModuleConfig = {
     {
       // Id storico: cambiandolo scomparirebbe dalle dashboard già personalizzate.
       id: "alimentazione.calorie-oggi",
-      title: "Calorie: oggi e ultimi 7 giorni",
+      title: "Calorie e macro: oggi e ultimi 7 giorni",
       descrizione:
-        "Le calorie di oggi con l'obiettivo, la media della settimana e il grafico degli ultimi sette giorni.",
-      defaultSpan: 2,
+        "Le calorie di oggi con l'obiettivo, il grafico della settimana e, di fianco, la media giornaliera dei macronutrienti.",
+      defaultSpan: 3,
       // È l'informazione per cui si apre questa dashboard: sempre in testa.
       fisso: true,
       component: CalorieOggiESettimana,
@@ -50,22 +49,6 @@ export const alimentazioneModule: ModuleConfig = {
         tipo: "barre",
         valori: [95, 120, 210, 250, 60, 70, 18, 30],
         etichette: ["Pro", "", "Carb", "", "Gras", "", "Fib", ""],
-      },
-    },
-    {
-      id: "alimentazione.macro-settimana",
-      title: "Media macro degli ultimi 7 giorni",
-      descrizione:
-        "La media giornaliera dei macronutrienti sulla settimana, con gli obiettivi.",
-      defaultSpan: 1,
-      component: MacroSettimana,
-      anteprima: {
-        tipo: "progressi",
-        voci: [
-          { nome: "Proteine", valore: "112,0 g", perc: 93, ok: false },
-          { nome: "Carboidrati", valore: "228,5 g", perc: 91 },
-          { nome: "Grassi", valore: "64,2 g", perc: 92 },
-        ],
       },
     },
   ],

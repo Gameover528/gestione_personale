@@ -141,7 +141,7 @@ export function AndamentoAlimentazione({
             <Riquadro
               titolo="Media calorie"
               valore={`${Math.round(medie.kcal)} kcal`}
-              nota={`su ${conDati.length} giorni registrati`}
+              nota={`Su ${conDati.length} giorni registrati`}
             />
             <Riquadro
               titolo="Giorni registrati"
@@ -157,8 +157,8 @@ export function AndamentoAlimentazione({
               }
               nota={
                 obKcal && obKcal.valore > 0
-                  ? "impostato negli obiettivi"
-                  : "nessun obiettivo impostato"
+                  ? "Impostato negli obiettivi"
+                  : "Nessun obiettivo impostato"
               }
             />
             <Riquadro

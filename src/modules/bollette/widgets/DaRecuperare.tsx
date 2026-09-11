@@ -25,7 +25,7 @@ export default function DaRecuperare() {
     <Link href="/bollette?divisione=da_dividere" className="block">
       <p className="text-3xl font-semibold">{formatCurrency(totale)}</p>
       <p className="mt-1 text-sm text-muted-foreground">
-        da recuperare · {items.length}{" "}
+        Da recuperare · {items.length}{" "}
         {items.length === 1 ? "bolletta da dividere" : "bollette da dividere"}
       </p>
 

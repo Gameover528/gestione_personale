@@ -903,3 +903,23 @@ export async function saveDatiCorporei(dati: DatiCorporei): Promise<void> {
     .run();
   invalidaAlimentazione();
 }
+
+export interface RiepilogoSettimana {
+  giorni: GiornoValori[];
+  obiettivi: Obiettivo[];
+}
+
+/**
+ * Dati e obiettivi degli ultimi giorni in una chiamata sola, per il riquadro
+ * principale della dashboard: erano due richieste per disegnare un riquadro
+ * che le usa sempre insieme.
+ */
+export async function riepilogoSettimana(
+  giorni = 7
+): Promise<RiepilogoSettimana> {
+  const [dati, obiettivi] = await Promise.all([
+    statistichePeriodo(giorni),
+    getObiettivi(),
+  ]);
+  return { giorni: dati, obiettivi };
+}

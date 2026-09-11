@@ -33,15 +33,45 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.0",
+    ambiente: "prod",
+    data: "2026-09-11",
+    titolo: "Abbonamenti, archivio piatti, dashboard e app da telefono",
+    punti: [
+      "Nuova sezione Abbonamenti: spese ricorrenti con le rate generate da sé in base alla frequenza, sospensione e ripresa, e il conto di quanto pesano al mese.",
+      "Alimentazione: archivio dei piatti personali con porzioni, alimenti recenti da riaggiungere in un tocco, ricerca ordinata per pertinenza e pagina Andamento con le medie del periodo.",
+      "Dashboard: il riquadro principale di ogni sezione è sempre in testa e non si rimuove, gli altri si scelgono da un pannello che li mostra in anteprima, e si riordinano trascinandoli — anche col dito, tenendo premuto.",
+      "Profilo: nome, colore dell'app, tema e password in un unico posto, con reset assistito per chi amministra.",
+      "Su telefono la navigazione è passata in basso, a portata di pollice, con l'azione più usata al centro.",
+      "Sotto il cofano: molte meno chiamate al server durante gli inserimenti, e la sessione scaduta riporta al login invece di mostrare un errore.",
+    ],
+    include: [
+      "0.5.0-dev.12",
+      "0.5.0-dev.11",
+      "0.5.0-dev.10",
+      "0.5.0-dev.9",
+      "0.5.0-dev.8",
+      "0.5.0-dev.7",
+      "0.5.0-dev.6",
+      "0.5.0-dev.5",
+      "0.5.0-dev.4",
+      "0.5.0-dev.3",
+      "0.5.0-dev.2",
+      "0.5.0-dev.1",
+    ],
+  },
+  {
     versione: "0.5.0-dev.12",
     ambiente: "dev",
     data: "2026-09-11",
     titolo: "Riquadro principale unico e riquadri alti quanto il contenuto",
     punti: [
-      "In Consumi e Costi il primo riquadro occupa tutta la larghezza e raccoglie i tre numeri che si leggono insieme: quanto c'è da pagare, quanto hai già speso in tutto e le prossime scadenze. \"Totale generale già pagato\" non è più un riquadro a parte.",
+      "Il riquadro principale di ogni sezione occupa tutta la larghezza. In Consumi e Costi raccoglie i tre numeri che si leggono insieme — quanto c'è da pagare, quanto hai già speso in tutto, le prossime scadenze — e in Alimentazione affianca alle calorie la media giornaliera dei macronutrienti.",
+      "\"Totale generale già pagato\" e \"Media macro degli ultimi 7 giorni\" non sono più riquadri a parte: sono dentro il riquadro principale della loro sezione.",
       "Il riquadro degli abbonamenti mostra anche le prossime rate: per ogni abbonamento attivo la rata da saldare se c'è, altrimenti la data del prossimo addebito.",
       "I riquadri non vengono più stirati fino all'altezza del più alto della riga: ognuno è alto quanto il suo contenuto, quindi niente scatole mezze vuote.",
-      "Il riquadro principale costa una richiesta al posto di tre, e quello degli abbonamenti resta a una.",
+      "Le voci come \"Diario di oggi\", \"Andamento completo\" o \"Vai al diario\" iniziano con la maiuscola.",
+      "Ogni riquadro principale costa una richiesta invece di tre: aprire una dashboard ne chiede meno di prima.",
     ],
   },
   {

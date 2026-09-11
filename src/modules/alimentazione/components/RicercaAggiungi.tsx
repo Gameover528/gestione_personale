@@ -362,7 +362,7 @@ export function RicercaAggiungi({
             href={hrefDiario}
             className="font-medium text-primary hover:underline"
           >
-            vai al diario
+            Vai al diario
           </Link>
         </div>
       )}
@@ -565,7 +565,7 @@ export function RicercaAggiungi({
               onClick={() => setSel(null)}
               className="mt-1 text-sm text-primary hover:underline"
             >
-              ← indietro
+              ← Indietro
             </button>
           </div>
 

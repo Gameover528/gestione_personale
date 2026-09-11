@@ -500,7 +500,7 @@ export function PiattoEditor({
             onClick={() => setPorzioneG(String(Math.round(peso)))}
             className="text-sm text-primary hover:underline"
           >
-            usa il peso totale degli ingredienti ({Math.round(peso)} g)
+            Usa il peso totale degli ingredienti ({Math.round(peso)} g)
           </button>
         )}
       </div>

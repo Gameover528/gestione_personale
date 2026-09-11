@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { getObiettivi, statistichePeriodo } from "../queries";
 import {
   NUTRIENTI,
   VALORI_ZERO,
@@ -12,46 +9,42 @@ import {
 } from "../types";
 import { cn } from "@/lib/utils";
 
-const GIORNI = 7;
-
-/** Nutrienti in grammi: le calorie stanno nel riquadro dedicato. */
+/** Nutrienti in grammi: le calorie stanno nella parte sinistra del riquadro. */
 const MOSTRATI: Nutriente[] = ["proteine", "carboidrati", "grassi", "fibre"];
 
 /**
- * Media dei macronutrienti sugli ultimi giorni, confrontata con gli obiettivi.
- * Completa il riquadro "di oggi": un singolo giorno oscilla molto, la media
- * settimanale dice se l'impostazione dei pasti sta funzionando.
+ * Media dei macronutrienti sui giorni registrati, confrontata con gli
+ * obiettivi.
+ *
+ * Non carica niente da sé: riceve i dati già presi dal riquadro che la
+ * contiene, che sono gli stessi delle calorie — sono due letture dello stesso
+ * periodo e chiederle due volte era una richiesta sprecata.
  */
-export default function MacroSettimana() {
-  const [dati, setDati] = useState<GiornoValori[] | null>(null);
-  const [obiettivi, setObiettivi] = useState<Obiettivo[]>([]);
-
-  useEffect(() => {
-    statistichePeriodo(GIORNI).then(setDati);
-    getObiettivi().then(setObiettivi);
-  }, []);
-
-  if (dati === null) return <p className="text-sm text-muted-foreground">…</p>;
-
+export function MedieMacro({
+  dati,
+  obiettivi,
+}: {
+  dati: GiornoValori[];
+  obiettivi: Obiettivo[];
+}) {
   const registrati = dati.length;
+
   if (registrati === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Nessun pasto registrato negli ultimi {GIORNI} giorni.
+        Nessun pasto registrato negli ultimi giorni.
       </p>
     );
   }
 
-  // Medie sui soli giorni registrati, come nella pagina Andamento.
   const medie = { ...VALORI_ZERO };
   for (const g of dati) for (const nu of NUTRIENTI) medie[nu.value] += g[nu.value];
   for (const nu of NUTRIENTI) medie[nu.value] /= registrati;
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
-        Media al giorno su {registrati}{" "}
-        {registrati === 1 ? "giorno registrato" : "giorni registrati"}
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Media al giorno
       </p>
 
       <ul className="space-y-2.5">
@@ -65,9 +58,7 @@ export default function MacroSettimana() {
               ? media <= target.valore
               : media >= target.valore
             : null;
-          const perc = target
-            ? Math.min(100, (media / target.valore) * 100)
-            : 0;
+          const perc = target ? Math.min(100, (media / target.valore) * 100) : 0;
 
           return (
             <li key={n}>
@@ -117,13 +108,6 @@ export default function MacroSettimana() {
           );
         })}
       </ul>
-
-      <Link
-        href="/alimentazione/andamento"
-        className="inline-block text-sm text-primary hover:underline"
-      >
-        andamento completo
-      </Link>
     </div>
   );
 }
