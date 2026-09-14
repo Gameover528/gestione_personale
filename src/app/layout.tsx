@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { getAspetto } from "@/core/theme/preferenze";
 import { ID_STILE_TEMA, cssTema } from "@/core/theme/palette";
@@ -62,6 +63,10 @@ export default async function RootLayout({
   // già col colore giusto e non "cambia colore" dopo l'idratazione.
   const css = cssTema(colore);
 
+  // Nonce della CSP (impostato dal middleware): senza, con `script-src` a
+  // nonce lo script del tema non partirebbe e la pagina lampeggerebbe.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="it"
@@ -70,9 +75,13 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         {css && (
-          <style id={ID_STILE_TEMA} dangerouslySetInnerHTML={{ __html: css }} />
+          <style
+            id={ID_STILE_TEMA}
+            nonce={nonce}
+            dangerouslySetInnerHTML={{ __html: css }}
+          />
         )}
       </head>
       <body>{children}</body>

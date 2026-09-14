@@ -46,6 +46,8 @@ export async function GET() {
       "Content-Disposition": `attachment; filename="backup-gestione-personale-${new Date()
         .toISOString()
         .slice(0, 10)}.json"`,
+      // Contiene tutti i dati dell'utente: non deve restare in nessuna cache.
+      "Cache-Control": "no-store",
     },
   });
 }

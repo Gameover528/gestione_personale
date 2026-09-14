@@ -20,13 +20,25 @@ export interface SessionUser {
 export async function createSession(userId: string): Promise<void> {
   const db = getDb();
   const id = crypto.randomUUID();
-  const expiresAt = new Date(
-    Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000
-  ).toISOString();
+  const expires = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
 
+  // Occasione buona per togliere di mezzo le sessioni ormai scadute: senza,
+  // restavano in tabella per sempre.
   await db
-    .prepare("insert into sessions (id, user_id, expires_at) values (?, ?, ?)")
-    .bind(id, userId, expiresAt)
+    .prepare("delete from sessions where expires_at <= datetime('now')")
+    .run();
+
+  // expires_at scritto nel formato di datetime('now') (spazio, niente T/Z né
+  // millisecondi): così il confronto `s.expires_at > datetime('now')` in
+  // middleware e getSessionUser è tra due valori nello stesso formato. Prima si
+  // confrontava un ISO ("...T...Z") col formato SQLite, e funzionava solo per
+  // il caso dell'anno che viene prima: fragile.
+  await db
+    .prepare(
+      `insert into sessions (id, user_id, expires_at)
+       values (?, ?, datetime('now', '+${SESSION_DAYS} days'))`
+    )
+    .bind(id, userId)
     .run();
 
   const cookieStore = await cookies();
@@ -35,7 +47,7 @@ export async function createSession(userId: string): Promise<void> {
     secure: true,
     sameSite: "lax",
     path: "/",
-    expires: new Date(expiresAt),
+    expires,
   });
 }
 

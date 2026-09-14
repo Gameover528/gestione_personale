@@ -33,6 +33,19 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.1-dev.4",
+    ambiente: "dev",
+    data: "2026-09-14",
+    titolo: "Login più robusto e difese aggiunte sulle pagine",
+    punti: [
+      "La pagina di accesso non lascia più capire se un'email è registrata: password sbagliata ed email inesistente danno lo stesso messaggio e impiegano lo stesso tempo. Il motivo del blocco (account sospeso o bloccato) si vede solo dopo aver messo la password giusta.",
+      "Dopo 8 tentativi di accesso falliti l'accesso si blocca per qualche minuto: è un freno alla forza bruta. Un accesso riuscito azzera il conteggio.",
+      "Ogni pagina ora dichiara al browser una serie di regole di sicurezza (non può essere incorniciata da altri siti, gli script partono solo se autorizzati, i form non possono inviare dati altrove): riducono l'impatto di eventuali tentativi di manomissione.",
+      "L'export di backup non viene più tenuto in nessuna cache; le sessioni scadute vengono ripulite da sole e la loro scadenza è registrata in modo coerente.",
+      "Richiede la migration 0007 (tabella dei tentativi di accesso) applicata al database.",
+    ],
+  },
+  {
     versione: "0.5.1-dev.3",
     ambiente: "dev",
     data: "2026-09-14",
