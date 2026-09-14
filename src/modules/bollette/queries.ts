@@ -96,13 +96,40 @@ export async function createBolletta(input: BollettaInput): Promise<Bolletta> {
   return created;
 }
 
+/**
+ * Colonne che updateBolletta puo' scrivere. E' un elenco chiuso, non le chiavi
+ * dell'oggetto ricevuto: gli argomenti di una Server Action arrivano dal client
+ * e il tipo TypeScript non esiste piu' a runtime, quindi il nome della colonna
+ * finirebbe altrimenti dritto nell'SQL. Un client puo' mandare una chiave come
+ * "fornitore = (select password_hash from users), importo = importo" e, con il
+ * vecchio `${chiave} = ?`, quella espressione veniva eseguita: lettura dei dati
+ * di altri utenti (hash inclusi) scrivendoli nella propria riga. L'allowlist
+ * taglia via qualsiasi chiave non prevista prima che tocchi la query.
+ */
+const COLONNE_MODIFICABILI = [
+  "fornitore",
+  "tipo",
+  "importo",
+  "data_scadenza",
+  "stato",
+  "data_pagamento",
+  "periodo_inizio",
+  "periodo_fine",
+  "divisione",
+  "persone_tue",
+  "persone_altre",
+  "note",
+  "allegato_path",
+  "pagamento_path",
+] as const;
+
 export async function updateBolletta(
   id: string,
   input: Partial<BollettaInput>
 ): Promise<Bolletta> {
   const user = await requireSessionUser();
 
-  const fields = Object.keys(input);
+  const fields = COLONNE_MODIFICABILI.filter((c) => c in input);
   if (fields.length > 0) {
     const setClause = fields.map((f) => `${f} = ?`).join(", ");
     const values = fields.map((f) => (input as Record<string, unknown>)[f]);

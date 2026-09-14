@@ -33,6 +33,15 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.1-dev.3",
+    ambiente: "dev",
+    data: "2026-09-14",
+    titolo: "Chiusa una falla nel salvataggio delle modifiche a bollette e diario",
+    punti: [
+      "La modifica di una bolletta e la modifica di una riga del diario decidevano quali colonne scrivere a partire dai dati ricevuti dal browser: un utente malintenzionato poteva sfruttarlo per leggere dati di altri account (comprese le password cifrate). Ora si possono toccare soltanto i campi previsti; tutto il resto viene ignorato prima di arrivare al database.",
+    ],
+  },
+  {
     versione: "0.5.1-dev.2",
     ambiente: "dev",
     data: "2026-09-14",

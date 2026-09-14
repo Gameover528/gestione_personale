@@ -155,12 +155,19 @@ export async function deletePasto(id: string): Promise<void> {
   invalidaAlimentazione();
 }
 
+// Le uniche colonne che updatePasto puo' scrivere: elenco chiuso, non le chiavi
+// dell'oggetto. Gli argomenti della Server Action arrivano dal client e il tipo
+// TypeScript sparisce a runtime, quindi una chiave arbitraria finirebbe dritta
+// nell'SQL (`${chiave} = ?`) e permetterebbe di iniettare espressioni. Vedi la
+// nota piu' estesa su COLONNE_MODIFICABILI in bollette/queries.ts.
+const COLONNE_PASTO_MODIFICABILI = ["quantita_g", "pasto"] as const;
+
 export async function updatePasto(
   id: string,
   patch: { quantita_g?: number; pasto?: string }
 ): Promise<void> {
   const user = await requireSessionUser();
-  const fields = Object.keys(patch);
+  const fields = COLONNE_PASTO_MODIFICABILI.filter((c) => c in patch);
   if (fields.length === 0) return;
   const setClause = fields.map((f) => `${f} = ?`).join(", ");
   const values = fields.map((f) => (patch as Record<string, unknown>)[f]);
