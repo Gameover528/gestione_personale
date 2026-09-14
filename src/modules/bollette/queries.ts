@@ -156,3 +156,43 @@ export async function removeAllegato(path: string): Promise<void> {
   if (!path.startsWith(`${user.id}/`)) return;
   await getAllegatiKv().delete(path);
 }
+
+/**
+ * Reinserisce una bolletta eliminata, con lo stesso id e la stessa data di
+ * creazione: e' l'annulla offerto dal messaggio dopo la cancellazione.
+ *
+ * L'allegato PDF non viene toccato dalla cancellazione proprio per questo:
+ * finche' l'annulla e' possibile il file deve restare al suo posto, altrimenti
+ * la bolletta tornerebbe senza il suo documento.
+ */
+export async function ripristinaBolletta(b: Bolletta): Promise<void> {
+  const user = await requireSessionUser();
+  await getDb()
+    .prepare(
+      `insert into bollette
+        (id, user_id, fornitore, tipo, importo, data_scadenza, stato, data_pagamento,
+         note, allegato_path, pagamento_path, divisione, persone_tue, persone_altre,
+         periodo_inizio, periodo_fine, created_at)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(
+      b.id,
+      user.id,
+      b.fornitore,
+      b.tipo,
+      b.importo,
+      b.data_scadenza,
+      b.stato,
+      b.data_pagamento,
+      b.note,
+      b.allegato_path,
+      b.pagamento_path,
+      b.divisione,
+      b.persone_tue,
+      b.persone_altre,
+      b.periodo_inizio,
+      b.periodo_fine,
+      b.created_at
+    )
+    .run();
+}

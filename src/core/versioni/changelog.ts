@@ -33,6 +33,20 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.1-dev.1",
+    ambiente: "dev",
+    data: "2026-09-14",
+    titolo: "Bollette e abbonamenti usabili col pollice, e l'annulla dopo aver cancellato",
+    punti: [
+      "Dopo aver eliminato una bolletta o un abbonamento compare per qualche secondo un messaggio con \"Annulla\": niente più finestre di conferma prima di ogni cancellazione. L'abbonamento torna indietro con tutte le sue rate, e la bolletta con i suoi PDF allegati.",
+      "L'elenco delle bollette su telefono diventa una scheda per bolletta: prima era una tabella da otto colonne che nascondeva il fornitore e spingeva i pulsanti fuori dallo schermo. Su computer resta la tabella.",
+      "I pulsanti con la sola icona (paga, dividi, modifica, elimina, sospendi, disdici) passano da 28 a 44 pixel, hanno un'etichetta leggibile dai lettori di schermo e \"Elimina\" è staccato dagli altri: erano tre bersagli a quattro pixel di distanza, e uno cancella.",
+      "Campi e pulsanti sono alti 44 pixel sul telefono, compresi i campi per allegare i PDF che prima erano alti 25.",
+      "I filtri delle bollette stanno dietro un pulsante \"Filtri\" che dice quanti ne hai attivi: prima quattro menu occupavano la prima schermata prima di far vedere una bolletta.",
+      "Anche le rate di un abbonamento diventano un elenco leggibile su telefono, e i pulsanti \"Nuova bolletta\" e \"Nuovo abbonamento\" non vanno più a capo su tre righe.",
+    ],
+  },
+  {
     versione: "0.5.0",
     ambiente: "prod",
     data: "2026-09-11",

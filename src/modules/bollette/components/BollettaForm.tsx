@@ -20,9 +20,15 @@ import {
   quotaAltra,
 } from "../types";
 import { formatCurrency } from "@/lib/utils";
+import {
+  bottoneClass,
+  bottonePrimarioClass,
+  inputClass,
+} from "@/core/components/controls";
 
-const inputClass =
-  "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
+/** Campo file: alto come gli altri e con il pulsante interno leggibile. */
+const fileClass =
+  "min-h-11 w-full rounded-md border bg-background px-3 py-2 text-sm file:mr-3 file:rounded file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium lg:min-h-0";
 
 export function BollettaForm({ initial }: { initial?: Bolletta }) {
   const router = useRouter();
@@ -316,7 +322,7 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
             type="file"
             accept="application/pdf"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="text-sm"
+            className={fileClass}
           />
         )}
       </Field>
@@ -338,7 +344,7 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
             type="file"
             accept="application/pdf"
             onChange={(e) => setFilePagamento(e.target.files?.[0] ?? null)}
-            className="text-sm"
+            className={fileClass}
           />
         )}
       </Field>
@@ -349,14 +355,14 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+          className={bottonePrimarioClass}
         >
           {saving ? "Salvataggio…" : editing ? "Salva modifiche" : "Crea bolletta"}
         </button>
         <button
           type="button"
           onClick={() => router.back()}
-          className="rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent"
+          className={bottoneClass}
         >
           Annulla
         </button>

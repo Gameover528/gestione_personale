@@ -3,8 +3,24 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Campi di inserimento: 44 px di altezza sul telefono, piu' compatti da
+ * schermo grande in su.
+ *
+ * 44 px e' la misura sotto la quale un polpastrello inizia a sbagliare
+ * bersaglio; col mouse non serve, e su una pagina piena di campi togliere
+ * quei pixel rende tutto piu' leggibile in una schermata.
+ */
 export const inputClass =
-  "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
+  "min-h-11 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary lg:min-h-0";
+
+/** Pulsante secondario (bordo). Stessa regola dei campi sull'altezza. */
+export const bottoneClass =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50 lg:min-h-0";
+
+/** Pulsante principale (pieno). */
+export const bottonePrimarioClass =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50 lg:min-h-0";
 
 /**
  * Campo numerico "amichevole": accetta la virgola come separatore decimale

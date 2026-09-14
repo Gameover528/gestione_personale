@@ -11,19 +11,26 @@ import {
   riattivaAbbonamentoAction,
   disdiciAbbonamentoAction,
   eliminaAbbonamentoAction,
+  ripristinaAbbonamento,
   type AbbonamentoResult,
 } from "../queries";
 import { type Abbonamento, type Rata, frequenzaLabel, LABEL_STATO_ABBONAMENTO } from "../types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardTitle, Badge } from "@/core/components/ui";
+import {
+  IconButton,
+  bottoneClass,
+  bottonePrimarioClass,
+  inputClass,
+} from "@/core/components/controls";
+import { useToast } from "@/core/components/Toast";
 import { Pause, Play, XCircle, Trash2, Check, Undo2 } from "lucide-react";
 
 const initialState: AbbonamentoResult = {};
-const inputClass =
-  "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
 
 export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento }) {
   const router = useRouter();
+  const toast = useToast();
   const [state, formAction, isPending] = useActionState(aggiornaAbbonamentoAction, initialState);
   const [rate, setRate] = useState<Rata[] | null>(null);
 
@@ -57,15 +64,28 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
     await disdiciAbbonamentoAction(abbonamento.id);
     router.refresh();
   }
+  /**
+   * Elimina e torna all'elenco, offrendo l'annulla nel messaggio: le rate
+   * vengono lette prima perché la cancellazione se le porta via a cascata.
+   */
   async function handleElimina() {
-    if (
-      !confirm(
-        `Eliminare definitivamente "${abbonamento.nome}" e TUTTE le sue rate? L'operazione non è reversibile.`
-      )
-    )
-      return;
+    const salvate = await listRate(abbonamento.id);
     await eliminaAbbonamentoAction(abbonamento.id);
     router.push("/abbonamenti");
+    toast({
+      messaggio:
+        salvate.length > 0
+          ? `"${abbonamento.nome}" eliminato con ${salvate.length} ${salvate.length === 1 ? "rata" : "rate"}`
+          : `"${abbonamento.nome}" eliminato`,
+      azione: {
+        label: "Annulla",
+        onClick: async () => {
+          await ripristinaAbbonamento(abbonamento, salvate);
+          router.push(`/abbonamenti/${abbonamento.id}`);
+          router.refresh();
+        },
+      },
+    });
   }
   async function handlePaga(r: Rata) {
     await segnaRataPagataAction(r.id);
@@ -138,7 +158,7 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+            className={bottonePrimarioClass}
           >
             {isPending ? "Salvataggio…" : "Salva modifiche"}
           </button>
@@ -153,7 +173,7 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
           {abbonamento.stato === "attivo" && (
             <button
               onClick={handleSospendi}
-              className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+              className={bottoneClass}
             >
               <Pause className="h-4 w-4" />
               Sospendi
@@ -162,7 +182,7 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
           {abbonamento.stato === "sospeso" && (
             <button
               onClick={handleRiattiva}
-              className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+              className={bottoneClass}
             >
               <Play className="h-4 w-4" />
               Riattiva
@@ -171,7 +191,7 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
           {abbonamento.stato !== "disdetto" && (
             <button
               onClick={handleDisdici}
-              className="inline-flex items-center gap-2 rounded-md border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10"
+              className={cn(bottoneClass, "border-destructive/40 text-destructive hover:bg-destructive/10")}
             >
               <XCircle className="h-4 w-4" />
               Disdici
@@ -179,7 +199,7 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
           )}
           <button
             onClick={handleElimina}
-            className="inline-flex items-center gap-2 rounded-md border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10"
+            className={cn(bottoneClass, "border-destructive/40 text-destructive hover:bg-destructive/10")}
           >
             <Trash2 className="h-4 w-4" />
             Elimina tutto
@@ -194,54 +214,104 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
         ) : rate.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">Nessuna rata generata finora.</p>
         ) : (
-          <div className="mt-3 overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted text-left text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Scadenza</th>
-                  <th className="px-4 py-2 text-right font-medium">Importo</th>
-                  <th className="px-4 py-2 font-medium">Stato</th>
-                  <th className="px-4 py-2 text-right font-medium">Azioni</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rate.map((r) => (
-                  <tr key={r.id} className="border-t">
-                    <td className="px-4 py-2">{formatDate(r.data_scadenza)}</td>
-                    <td className="px-4 py-2 text-right">{formatCurrency(r.importo)}</td>
-                    <td className="px-4 py-2">
-                      {r.stato === "pagata" ? (
-                        <Badge variant="success">Pagata</Badge>
-                      ) : (
-                        <Badge>Da pagare</Badge>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      {r.stato === "da_pagare" ? (
-                        <button
-                          title="Segna come pagata"
-                          onClick={() => handlePaga(r)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-success"
-                        >
-                          <Check className="h-4 w-4" />
-                        </button>
-                      ) : (
-                        <button
-                          title="Annulla pagamento"
-                          onClick={() => handleAnnullaPagamento(r)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-                        >
-                          <Undo2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </td>
+          <>
+            {/*
+              Su telefono la tabella delle rate sbordava dallo schermo: qui
+              ogni rata e' una riga con data, importo e stato, e il pulsante
+              e' grande quanto un dito.
+            */}
+            <ul className="mt-3 divide-y rounded-lg border lg:hidden">
+              {rate.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex items-center justify-between gap-3 px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium">{formatDate(r.data_scadenza)}</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {formatCurrency(r.importo)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {r.stato === "pagata" ? (
+                      <Badge variant="success">Pagata</Badge>
+                    ) : (
+                      <Badge>Da pagare</Badge>
+                    )}
+                    <AzioniRata r={r} onPaga={handlePaga} onAnnulla={handleAnnullaPagamento} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-3 hidden overflow-x-auto rounded-lg border lg:block">
+              <table className="w-full text-sm">
+                <thead className="bg-muted text-left text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">Scadenza</th>
+                    <th className="px-4 py-2 text-right font-medium">Importo</th>
+                    <th className="px-4 py-2 font-medium">Stato</th>
+                    <th className="px-4 py-2 text-right font-medium">Azioni</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rate.map((r) => (
+                    <tr key={r.id} className="border-t">
+                      <td className="px-4 py-2">{formatDate(r.data_scadenza)}</td>
+                      <td className="px-4 py-2 text-right">
+                        {formatCurrency(r.importo)}
+                      </td>
+                      <td className="px-4 py-2">
+                        {r.stato === "pagata" ? (
+                          <Badge variant="success">Pagata</Badge>
+                        ) : (
+                          <Badge>Da pagare</Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="flex justify-end">
+                          <AzioniRata r={r} onPaga={handlePaga} onAnnulla={handleAnnullaPagamento} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
     </div>
+  );
+}
+
+/**
+ * Le azioni di una rata, uguali nella lista e nella tabella. Sta fuori dal
+ * componente che la usa: definita dentro, verrebbe rimontata a ogni ricarica
+ * delle rate.
+ */
+function AzioniRata({
+  r,
+  onPaga,
+  onAnnulla,
+}: {
+  r: Rata;
+  onPaga: (r: Rata) => void;
+  onAnnulla: (r: Rata) => void;
+}) {
+  return r.stato === "da_pagare" ? (
+    <IconButton
+      label={`Segna pagata la rata del ${formatDate(r.data_scadenza)}`}
+      onClick={() => onPaga(r)}
+    >
+      <Check className="h-5 w-5" />
+    </IconButton>
+  ) : (
+    <IconButton
+      label={`Annulla il pagamento della rata del ${formatDate(r.data_scadenza)}`}
+      onClick={() => onAnnulla(r)}
+    >
+      <Undo2 className="h-5 w-5" />
+    </IconButton>
   );
 }

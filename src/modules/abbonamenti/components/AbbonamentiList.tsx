@@ -4,18 +4,27 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   listAbbonamenti,
+  listRate,
   sospendiAbbonamentoAction,
   riattivaAbbonamentoAction,
   disdiciAbbonamentoAction,
   eliminaAbbonamentoAction,
+  ripristinaAbbonamento,
 } from "../queries";
-import { type Abbonamento, frequenzaLabel, LABEL_STATO_ABBONAMENTO } from "../types";
+import {
+  type Abbonamento,
+  frequenzaLabel,
+  LABEL_STATO_ABBONAMENTO,
+} from "../types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/core/components/ui";
+import { IconButton } from "@/core/components/controls";
+import { useToast } from "@/core/components/Toast";
 import { Pause, Play, XCircle, Trash2, ChevronRight } from "lucide-react";
 
 export function AbbonamentiList() {
   const [items, setItems] = useState<Abbonamento[] | null>(null);
+  const toast = useToast();
 
   const load = useCallback(() => {
     listAbbonamenti().then(setItems);
@@ -28,33 +37,64 @@ export function AbbonamentiList() {
   async function handleSospendi(a: Abbonamento) {
     await sospendiAbbonamentoAction(a.id);
     load();
+    toast({ messaggio: `"${a.nome}" sospeso` });
   }
 
   async function handleRiattiva(a: Abbonamento) {
     await riattivaAbbonamentoAction(a.id);
     load();
+    toast({ messaggio: `"${a.nome}" riattivato` });
   }
 
+  /**
+   * Disdire non cancella niente (le rate generate restano), quindi si fa
+   * subito e si offre di tornare indietro: riattivare è l'operazione opposta.
+   */
   async function handleDisdici(a: Abbonamento) {
-    if (
-      !confirm(
-        `Disdire "${a.nome}"? Le rate già generate restano, ma non ne verranno create di nuove. L'operazione non è reversibile.`
-      )
-    )
-      return;
     await disdiciAbbonamentoAction(a.id);
     load();
+    toast({
+      messaggio: `"${a.nome}" disdetto: non verranno create nuove rate`,
+      azione: {
+        label: "Annulla",
+        onClick: async () => {
+          await riattivaAbbonamentoAction(a.id);
+          load();
+        },
+      },
+    });
   }
 
+  /**
+   * Elimina subito e offre l'annulla. Le rate vengono lette prima della
+   * cancellazione perché spariscono a cascata: senza, il ripristino
+   * restituirebbe un abbonamento senza storico.
+   */
   async function handleElimina(a: Abbonamento) {
-    if (
-      !confirm(
-        `Eliminare definitivamente "${a.nome}" e TUTTE le sue rate (anche quelle già pagate)? L'operazione non è reversibile.`
-      )
-    )
+    let rate;
+    try {
+      rate = await listRate(a.id);
+      setItems((prev) => (prev ?? []).filter((x) => x.id !== a.id));
+      await eliminaAbbonamentoAction(a.id);
+    } catch {
+      toast({ messaggio: "Errore durante l'eliminazione.", tono: "errore" });
+      load();
       return;
-    await eliminaAbbonamentoAction(a.id);
-    load();
+    }
+
+    toast({
+      messaggio:
+        rate.length > 0
+          ? `"${a.nome}" eliminato con ${rate.length} ${rate.length === 1 ? "rata" : "rate"}`
+          : `"${a.nome}" eliminato`,
+      azione: {
+        label: "Annulla",
+        onClick: async () => {
+          await ripristinaAbbonamento(a, rate);
+          load();
+        },
+      },
+    });
   }
 
   if (items === null) {
@@ -64,8 +104,13 @@ export function AbbonamentiList() {
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-dashed p-10 text-center">
-        <p className="text-sm text-muted-foreground">Nessun abbonamento configurato.</p>
-        <Link href="/abbonamenti/nuovo" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
+        <p className="text-sm text-muted-foreground">
+          Nessun abbonamento configurato.
+        </p>
+        <Link
+          href="/abbonamenti/nuovo"
+          className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+        >
           + Aggiungi il primo abbonamento
         </Link>
       </div>
@@ -73,64 +118,81 @@ export function AbbonamentiList() {
   }
 
   return (
-    <div className="space-y-3">
+    <ul className="space-y-3">
       {items.map((a) => (
-        <div key={a.id} className="flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link href={`/abbonamenti/${a.id}`} className="flex flex-1 items-center justify-between gap-3">
-            <div>
+        <li
+          key={a.id}
+          className="flex flex-col gap-2 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+        >
+          <Link
+            href={`/abbonamenti/${a.id}`}
+            className="flex flex-1 items-center justify-between gap-3"
+          >
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{a.nome}</span>
                 <Badge
-                  variant={a.stato === "attivo" ? "success" : a.stato === "sospeso" ? "warning" : "default"}
+                  variant={
+                    a.stato === "attivo"
+                      ? "success"
+                      : a.stato === "sospeso"
+                        ? "warning"
+                        : "default"
+                  }
                 >
                   {LABEL_STATO_ABBONAMENTO[a.stato]}
                 </Badge>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {formatCurrency(a.importo)} · {frequenzaLabel(a.frequenza)} · dal {formatDate(a.data_inizio)}
+                {formatCurrency(a.importo)} · {frequenzaLabel(a.frequenza)} · dal{" "}
+                {formatDate(a.data_inizio)}
               </p>
             </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
           </Link>
 
-          <div className="flex items-center justify-end gap-1 sm:justify-normal">
+          {/*
+            Bersagli da 44 px e un po' d'aria attorno a "Elimina": erano tre
+            icone da 28 px a quattro pixel l'una dall'altra, e una delle tre
+            cancella l'abbonamento con tutto lo storico.
+          */}
+          <div className="flex items-center justify-end gap-1 border-t pt-1 sm:border-0 sm:pt-0">
             {a.stato === "attivo" && (
-              <button
-                title="Sospendi"
+              <IconButton
+                label={`Sospendi ${a.nome}`}
                 onClick={() => handleSospendi(a)}
-                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-warning"
               >
-                <Pause className="h-4 w-4" />
-              </button>
+                <Pause className="h-5 w-5" />
+              </IconButton>
             )}
             {a.stato === "sospeso" && (
-              <button
-                title="Riattiva"
+              <IconButton
+                label={`Riattiva ${a.nome}`}
                 onClick={() => handleRiattiva(a)}
-                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-success"
               >
-                <Play className="h-4 w-4" />
-              </button>
+                <Play className="h-5 w-5" />
+              </IconButton>
             )}
             {a.stato !== "disdetto" && (
-              <button
-                title="Disdici"
+              <IconButton
+                label={`Disdici ${a.nome}`}
                 onClick={() => handleDisdici(a)}
-                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive"
               >
-                <XCircle className="h-4 w-4" />
-              </button>
+                <XCircle className="h-5 w-5" />
+              </IconButton>
             )}
-            <button
-              title="Elimina definitivamente"
-              onClick={() => handleElimina(a)}
-              className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <span className="ml-2">
+              <IconButton
+                label={`Elimina ${a.nome} e tutte le sue rate`}
+                tono="distruttivo"
+                onClick={() => handleElimina(a)}
+              >
+                <Trash2 className="h-5 w-5" />
+              </IconButton>
+            </span>
           </div>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

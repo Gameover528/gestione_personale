@@ -4,10 +4,12 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { creaAbbonamentoAction, type AbbonamentoResult } from "../queries";
 import { FREQUENZE, oggiISO } from "../types";
+import {
+  bottonePrimarioClass,
+  inputClass,
+} from "@/core/components/controls";
 
 const initialState: AbbonamentoResult = {};
-const inputClass =
-  "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
 
 export function AbbonamentoForm() {
   const router = useRouter();
@@ -91,7 +93,7 @@ export function AbbonamentoForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+        className={bottonePrimarioClass}
       >
         {isPending ? "Creazione…" : "Crea abbonamento"}
       </button>

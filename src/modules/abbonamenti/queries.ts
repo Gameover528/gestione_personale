@@ -323,3 +323,60 @@ export async function riepilogoAbbonamenti(
     prossime: prossime.slice(0, limite),
   };
 }
+
+/**
+ * Reinserisce un abbonamento eliminato insieme a tutte le sue rate: e'
+ * l'annulla offerto dal messaggio dopo la cancellazione.
+ *
+ * Le rate vanno ripristinate qui perche' la cancellazione le porta via a
+ * cascata: senza, l'annulla restituirebbe un abbonamento vuoto, perdendo lo
+ * storico dei pagamenti.
+ */
+export async function ripristinaAbbonamento(
+  a: Abbonamento,
+  rate: Rata[]
+): Promise<void> {
+  const user = await requireSessionUser();
+  const db = getDb();
+
+  await db
+    .prepare(
+      `insert into abbonamenti
+        (id, user_id, nome, importo, frequenza, data_inizio, stato, data_ripresa, note, created_at)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(
+      a.id,
+      user.id,
+      a.nome,
+      a.importo,
+      a.frequenza,
+      a.data_inizio,
+      a.stato,
+      a.data_ripresa,
+      a.note,
+      a.created_at
+    )
+    .run();
+
+  if (rate.length === 0) return;
+  const stmt = db.prepare(
+    `insert into abbonamento_rate
+      (id, abbonamento_id, user_id, data_scadenza, importo, stato, data_pagamento, created_at)
+     values (?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  await db.batch(
+    rate.map((r) =>
+      stmt.bind(
+        r.id,
+        a.id,
+        user.id,
+        r.data_scadenza,
+        r.importo,
+        r.stato,
+        r.data_pagamento,
+        r.created_at
+      )
+    )
+  );
+}

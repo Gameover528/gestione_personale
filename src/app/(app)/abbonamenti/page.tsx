@@ -12,7 +12,7 @@ export default function AbbonamentiPage() {
         action={
           <Link
             href="/abbonamenti/nuovo"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 sm:w-auto lg:min-h-0"
           >
             <Plus className="h-4 w-4" />
             Nuovo abbonamento
