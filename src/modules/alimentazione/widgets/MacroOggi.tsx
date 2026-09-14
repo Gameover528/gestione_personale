@@ -12,11 +12,10 @@ import {
   Legend,
   LabelList,
 } from "recharts";
-import { listPasti, getObiettivi } from "../queries";
+import { riepilogoSettimana } from "../queries";
 import {
   NUTRIENTI,
-  valoriPorzione,
-  sommaValori,
+  VALORI_ZERO,
   type Nutriente,
   type Obiettivo,
 } from "../types";
@@ -43,9 +42,12 @@ export default function MacroOggi() {
   const [data, setData] = useState<Riga[] | null>(null);
 
   useEffect(() => {
-    const oggi = oggiIso();
-    Promise.all([listPasti(oggi), getObiettivi()]).then(([pasti, obiettivi]) => {
-      const tot = sommaValori(pasti.map(valoriPorzione));
+    // Una chiamata sola: i totali di oggi li somma gia' il database (e' lo
+    // stesso conto che faceva questo riquadro sulle righe del diario) e gli
+    // obiettivi arrivano insieme, invece di chiederli a parte.
+    riepilogoSettimana(1).then(({ giorni, obiettivi }) => {
+      const oggi = oggiIso();
+      const tot = giorni.find((g) => g.data === oggi) ?? VALORI_ZERO;
       const obMap = new Map<Nutriente, Obiettivo>(
         obiettivi.map((o) => [o.nutriente, o])
       );

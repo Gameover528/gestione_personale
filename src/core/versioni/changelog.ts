@@ -33,6 +33,16 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.1-dev.2",
+    ambiente: "dev",
+    data: "2026-09-14",
+    titolo: "Anche l'ultimo riquadro chiede i dati una volta sola",
+    punti: [
+      "Il riquadro \"Valori di oggi vs obiettivi\" faceva due richieste, una per i pasti e una per gli obiettivi: ora ne fa una, e la somma di giornata arriva già fatta dal database invece di essere calcolata sulle righe del diario.",
+      "Aprire la dashboard dell'alimentazione costa tre richieste: erano sette prima di questo giro di lavoro.",
+    ],
+  },
+  {
     versione: "0.5.1-dev.1",
     ambiente: "dev",
     data: "2026-09-14",
