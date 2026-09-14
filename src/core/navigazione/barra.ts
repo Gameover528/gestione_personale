@@ -50,6 +50,9 @@ export function vociBarra(area: MacroAreaConfig, ruolo?: Ruolo): VoceBarra[] {
   for (const modulo of area.moduli) {
     for (const voce of modulo.nav) {
       if (voce.adminOnly && !(ruolo && puoGestireUtenti(ruolo))) continue;
+      // Pagine dichiarate fuori barra: restano nella sidebar del desktop, qui
+      // non occupano uno dei cinque posti.
+      if (voce.fuoriBarra) continue;
       voci.push({ label: etichetta(voce), href: voce.href, icon: voce.icon });
     }
   }

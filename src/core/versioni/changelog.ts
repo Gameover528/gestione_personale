@@ -33,6 +33,20 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.6.0-dev.1",
+    ambiente: "dev",
+    data: "2026-09-14",
+    titolo: "Nuova area Salute: arriva l'Esercizio",
+    punti: [
+      "L'area Alimentazione diventa \"Salute\" e contiene due sezioni: Cibo ed Esercizio. In basso trovi Riepilogo, Cibo, ＋, Esercizio e Andamento; Piatti e Miei esercizi restano nel menu laterale del computer.",
+      "Catalogo di 1500 esercizi con ricerca per nome, attrezzo o muscolo: scrivendo non parte nessuna richiesta, l'elenco è già nel browser.",
+      "Ogni esercizio mostra la figura del corpo con i muscoli lavorati illuminati — pieni i principali, più tenui i secondari, fronte e retro — nei colori del tema che hai scelto.",
+      "Sulla scheda trovi anche la dimostrazione animata e le istruzioni passo passo.",
+      "Puoi crearti esercizi tuoi per quello che il catalogo non copre, come già fai con i piatti.",
+      "Richiede la migration 0008 e il caricamento del catalogo (d1/seed-esercizi.sql).",
+    ],
+  },
+  {
     versione: "0.5.1-dev.5",
     ambiente: "dev",
     data: "2026-09-14",

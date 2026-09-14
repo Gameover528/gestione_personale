@@ -1,4 +1,4 @@
-import { Wallet } from "lucide-react";
+import { Wallet, HeartPulse } from "lucide-react";
 import type {
   ModuleConfig,
   MacroAreaConfig,
@@ -8,6 +8,7 @@ import type {
 import { bolletteModule } from "@/modules/bollette/module.config";
 import { abbonamentiModule } from "@/modules/abbonamenti/module.config";
 import { alimentazioneModule } from "@/modules/alimentazione/module.config";
+import { esercizioModule } from "@/modules/esercizio/module.config";
 import { impostazioniModule } from "@/modules/impostazioni/module.config";
 import RiepilogoCosti from "@/core/dashboard/widgets/RiepilogoCosti";
 
@@ -56,11 +57,16 @@ export const macroAree: MacroAreaConfig[] = [
     ],
   },
   {
+    // Id storico: è la chiave con cui sono salvate le dashboard già
+    // personalizzate (`dashboard:<id>` in user_preferences). Cambiarlo in
+    // "salute" farebbe ripartire tutti da zero, quindi resta "alimentazione"
+    // anche ora che l'area contiene due moduli. Stessa regola già seguita per
+    // gli id dei widget.
     id: "alimentazione",
-    label: "Alimentazione",
-    icon: alimentazioneModule.icon,
+    label: "Salute",
+    icon: HeartPulse,
     dashboardHref: "/alimentazione/dashboard",
-    moduli: [alimentazioneModule],
+    moduli: [alimentazioneModule, esercizioModule],
   },
   {
     id: "impostazioni",

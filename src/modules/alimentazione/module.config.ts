@@ -9,8 +9,19 @@ export const alimentazioneModule: ModuleConfig = {
   icon: Utensils,
   basePath: "/alimentazione",
   nav: [
-    { label: "Diario", href: "/alimentazione", icon: Utensils },
-    { label: "Piatti", href: "/alimentazione/piatti", icon: ChefHat },
+    // "Cibo" e non "Diario": da quando l'area contiene anche l'esercizio, in
+    // barra le due voci devono dire di quale dei due dominii sono.
+    { label: "Cibo", href: "/alimentazione", icon: Utensils },
+    // Fuori barra: l'area ha cinque posti (Riepilogo, Cibo, ＋, Esercizio,
+    // Andamento) e Piatti è il candidato naturale a scendere, essendo un
+    // archivio che si consulta di rado. Sul desktop resta nella sidebar, su
+    // telefono ci si arriva dalla pagina Cibo.
+    {
+      label: "Piatti",
+      href: "/alimentazione/piatti",
+      icon: ChefHat,
+      fuoriBarra: true,
+    },
     { label: "Andamento", href: "/alimentazione/andamento", icon: TrendingUp },
   ],
   // Registrare un alimento e' cio' che si fa piu' spesso in tutta l'app:

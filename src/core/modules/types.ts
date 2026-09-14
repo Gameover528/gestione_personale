@@ -13,6 +13,16 @@ export interface NavItem {
    * si usa `label`.
    */
   labelBreve?: string;
+  /**
+   * Pagina raggiungibile dalla sidebar del desktop ma non dalla barra del
+   * telefono, che di posti ne ha solo cinque (MAX_VOCI_BARRA).
+   *
+   * Serve quando un'area ha piu' pagine di quanti slot esistano: invece di
+   * togliere la voce da tutta l'app — perdendola anche dove lo spazio c'e' —
+   * la si tiene sul desktop e su telefono ci si arriva dalla pagina che la
+   * contiene (es. Piatti dal diario del cibo).
+   */
+  fuoriBarra?: boolean;
 }
 
 /**
