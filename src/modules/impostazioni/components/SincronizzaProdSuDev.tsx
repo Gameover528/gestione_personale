@@ -15,9 +15,9 @@ export function SincronizzaProdSuDev() {
   async function handleSync() {
     if (
       !confirm(
-        "Questo SOVRASCRIVE tutti i dati dell'ambiente di sviluppo con una copia fresca di quelli di produzione. " +
-          "Tutto ciò che c'è ora su dev (bollette, abbonamenti, diario, ecc. di test) verrà perso. " +
-          "Dopo l'operazione dovrai rifare login su dev con le tue credenziali di produzione. Continuare?"
+        "Sostituisce i TUOI dati su dev (bollette, abbonamenti, diario, piatti, " +
+          "obiettivi, preferenze) con quelli del tuo account di produzione. " +
+          "Gli altri profili di test su dev non vengono toccati. Continuare?"
       )
     )
       return;
@@ -34,13 +34,14 @@ export function SincronizzaProdSuDev() {
 
   return (
     <Card>
-      <CardTitle>Sincronizza dati da produzione (solo superadmin)</CardTitle>
+      <CardTitle>Porta i miei dati da produzione (solo superadmin)</CardTitle>
       <p className="mt-2 text-sm text-muted-foreground">
-        Sostituisce tutti i dati di questo ambiente (dev) con una copia fresca di quelli
-        di produzione, per testare con dati reali senza mai scrivere su produzione.
-        Funziona solo nell&apos;ambiente di sviluppo. Non copia gli allegati PDF (restano
-        su Workers KV di produzione). Dopo la sincronizzazione le sessioni attive su dev
-        vengono invalidate: serve rifare login con le credenziali di produzione.
+        Copia su dev i dati del tuo account presi da produzione (individuato dalla tua
+        email), per testare con dati reali senza mai scrivere su produzione. Rimpiazza
+        solo le tue righe: gli altri profili di test presenti su dev restano intatti, e
+        la sessione resta valida (niente login da rifare). Funziona solo
+        nell&apos;ambiente di sviluppo. Non copia gli allegati PDF (restano su Workers KV
+        di produzione, quindi da dev non saranno apribili).
       </p>
       <button
         onClick={handleSync}

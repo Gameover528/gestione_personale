@@ -33,6 +33,16 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.5.1-dev.5",
+    ambiente: "dev",
+    data: "2026-09-14",
+    titolo: "La sincronizzazione da produzione porta solo i miei dati",
+    punti: [
+      "Il pulsante \"Porta i miei dati da produzione\" (solo superadmin, solo su dev) ora copia soltanto i dati del proprio account — bollette, abbonamenti, diario, piatti, obiettivi, preferenze — invece di svuotare l'intero ambiente. Gli altri profili di test presenti su dev restano intatti.",
+      "Non serve più rifare login dopo la sincronizzazione: la tabella degli account non viene toccata e la sessione resta valida.",
+    ],
+  },
+  {
     versione: "0.5.1-dev.4",
     ambiente: "dev",
     data: "2026-09-14",
