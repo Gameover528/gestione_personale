@@ -1,359 +1,175 @@
 /**
- * Registro delle versioni, per ambiente.
+ * Registro delle versioni.
  *
- * Come funziona il numero di versione:
- * - ogni rilascio su **sviluppo** è una voce `X.Y.Z-dev.N`, con N che cresce
- *   a ogni pubblicazione su dev;
- * - quando quel lavoro va in **produzione** si aggiunge una sola voce `X.Y.Z`
- *   che riassume il periodo ed elenca in `include` le versioni dev raccolte.
- *   Così su dev si vede il dettaglio giorno per giorno, in produzione si vede
- *   cosa è cambiato tra un rilascio e l'altro.
+ * NUMERAZIONE — CalVer (calver.org): un rilascio si chiama con la sua data,
+ * `2026.09.15`, e `2026.09.15.2` se ne capitano due nello stesso giorno.
+ * Non semver, perché semver risponde a "se aggiorno mi si rompe
+ * l'integrazione?" e qui non c'è nessuna integrazione da rompere: ci sono
+ * persone che usano l'app. A loro la data dice subito quanto è vecchio quello
+ * che stanno guardando e da quando è cambiato qualcosa, mentre "0.6.0" era un
+ * numero scelto a sentimento — tanto che le vecchie voci portavano etichette
+ * (`0.5.1`, `0.6.0`) di rilasci che non sono mai esistiti.
  *
- * Questo file è la fonte di verità: sta nel repo, si rivede nella diff del
- * commit e non richiede né tabelle né automatismi nella pipeline. La voce va
- * aggiunta **nello stesso commit** delle modifiche che descrive.
+ * VOCI — formato Keep a Changelog (keepachangelog.com): ogni modifica è una
+ * riga sola, asciutta come un messaggio di commit ma scritta per chi usa
+ * l'app, classificata in Aggiunto / Modificato / Corretto / Rimosso /
+ * Sicurezza. Così chi legge trova a colpo d'occhio la categoria che gli
+ * interessa invece di scorrere un elenco piatto.
+ *
+ * COME SI LAVORA
+ * 1. Mentre si sviluppa, ogni modifica si aggiunge a `NON_RILASCIATO`, nello
+ *    stesso commit del codice che descrive.
+ * 2. Quando il lavoro va in produzione, quelle righe diventano un nuovo
+ *    `Rilascio` in testa a `RILASCI` con la data del giorno, e
+ *    `NON_RILASCIATO` torna vuoto.
+ *
+ * Ogni modifica si scrive quindi **una volta sola**: prima era descritta nella
+ * voce di sviluppo e poi riscritta nel riassunto di produzione, con il doppio
+ * del lavoro e il rischio che le due versioni divergessero.
+ *
+ * `migrazioni` elenca cosa va applicato al database perché quel rilascio
+ * funzioni: è una lista di controllo prima del merge, non un dettaglio
+ * tecnico. Ci siamo già fermati due volte per una migration dimenticata.
  */
 
 export type Ambiente = "dev" | "prod";
 
-export interface Rilascio {
-  /** Semver: "0.5.0" in produzione, "0.5.0-dev.3" su sviluppo. */
-  versione: string;
-  ambiente: Ambiente;
-  /** Data del rilascio (YYYY-MM-DD). */
-  data: string;
-  /** Una riga che dice di cosa si è trattato. */
-  titolo: string;
-  /** I punti delle modifiche, scritti per chi usa l'app. */
-  punti: string[];
-  /** Solo per i rilasci in produzione: le versioni dev che contiene. */
-  include?: string[];
+export type Categoria =
+  | "aggiunto"
+  | "modificato"
+  | "corretto"
+  | "rimosso"
+  | "sicurezza";
+
+/** Ordine in cui le categorie compaiono, e come si chiamano a schermo. */
+export const CATEGORIE: { valore: Categoria; label: string }[] = [
+  { valore: "aggiunto", label: "Aggiunto" },
+  { valore: "modificato", label: "Modificato" },
+  { valore: "corretto", label: "Corretto" },
+  { valore: "rimosso", label: "Rimosso" },
+  { valore: "sicurezza", label: "Sicurezza" },
+];
+
+export interface Modifica {
+  categoria: Categoria;
+  /** Una riga, in italiano, per chi usa l'app. */
+  testo: string;
 }
+
+export interface Rilascio {
+  /** CalVer: "2026.09.15", o "2026.09.15.2" per il secondo dello stesso giorno. */
+  versione: string;
+  data: string;
+  modifiche: Modifica[];
+  /** Cosa applicare al database perché funzioni (numero migration o descrizione). */
+  migrazioni?: string[];
+}
+
+/**
+ * Quello che sta su sviluppo e non è ancora andato in produzione.
+ * `null` quando dev e produzione sono allineati.
+ */
+export interface NonRilasciato {
+  /** Data dell'ultima modifica aggiunta qui. */
+  aggiornato: string;
+  modifiche: Modifica[];
+  migrazioni?: string[];
+}
+
+export const NON_RILASCIATO: NonRilasciato | null = {
+  aggiornato: "2026-09-15",
+  migrazioni: [
+    "0007 — freno ai tentativi di accesso",
+    "0008 — esercizi e allenamenti",
+    "0009 — schede",
+    "0010 — riparazione tabelle schede",
+    "Caricamento del catalogo esercizi (d1/seed-esercizi.sql)",
+  ],
+  modifiche: [
+    // --- Area Salute
+    { categoria: "aggiunto", testo: "Nuova area Salute, con le sezioni Cibo ed Esercizio." },
+    { categoria: "aggiunto", testo: "Catalogo di 1500 esercizi, cercabili per nome, attrezzo o muscolo." },
+    { categoria: "aggiunto", testo: "Figura del corpo con i muscoli lavorati illuminati, più dimostrazione animata e istruzioni passo passo." },
+    { categoria: "aggiunto", testo: "Registrazione degli allenamenti: serie, ripetizioni, carichi e calorie stimate." },
+    { categoria: "aggiunto", testo: "Schede di allenamento ricorrenti, da avviare o da richiamare dentro una sessione già aperta." },
+    { categoria: "aggiunto", testo: "Esercizi personali, con la mappa muscolare che si accende mentre li componi." },
+    { categoria: "aggiunto", testo: "Riquadro del bilancio energetico: mangiate meno bruciate, confrontate con l'obiettivo." },
+    { categoria: "aggiunto", testo: "Andamento diviso in Cibo e Allenamento, sotto lo stesso periodo." },
+    { categoria: "aggiunto", testo: "Obiettivo di giorni di allenamento a settimana, nelle preferenze." },
+    { categoria: "modificato", testo: "Nel grafico delle calorie le bruciate scendono dalla cima delle mangiate: si legge quanto è entrato e quanto ne è stato tolto." },
+    { categoria: "rimosso", testo: "Tolto dalla sezione Allenamento il grafico che ripeteva lo stesso confronto già presente in Cibo." },
+
+    // --- Uso quotidiano
+    { categoria: "modificato", testo: "Bollette e abbonamenti si usano col pollice: schede al posto della tabella, pulsanti più grandi, filtri raccolti dietro un pulsante." },
+    { categoria: "aggiunto", testo: "Dopo una cancellazione compare \"Annulla\" per qualche secondo, al posto della finestra di conferma." },
+    { categoria: "modificato", testo: "Ogni riquadro della dashboard chiede i dati una volta sola." },
+    { categoria: "modificato", testo: "La sincronizzazione da produzione porta solo i dati del tuo account, senza toccare gli altri profili di prova." },
+
+    // --- Sicurezza
+    { categoria: "sicurezza", testo: "Chiusa una falla nel salvataggio di bollette e diario che permetteva di leggere dati di altri account." },
+    { categoria: "sicurezza", testo: "Il login non lascia più capire se un'email è registrata, e si blocca per qualche minuto dopo 8 tentativi falliti." },
+    { categoria: "sicurezza", testo: "Ogni pagina dichiara al browser regole di sicurezza: non è incorniciabile da altri siti e i moduli non possono inviare dati altrove." },
+    { categoria: "sicurezza", testo: "L'export di backup non resta in nessuna cache e le sessioni scadute vengono ripulite." },
+
+    // --- Correzioni
+    { categoria: "corretto", testo: "Le schede non comparivano: mancavano le loro tabelle sul database." },
+    { categoria: "corretto", testo: "Quando la lettura dei dati fallisce l'app lo dice, invece di restare in caricamento all'infinito." },
+  ],
+};
 
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
-    versione: "0.6.0-dev.4",
-    ambiente: "dev",
-    data: "2026-09-15",
-    titolo: "Calorie bruciate nel grafico del cibo, e obiettivo di giorni a settimana",
-    punti: [
-      "Nel grafico delle calorie per giorno le bruciate scendono dalla cima delle mangiate: si vede quanto hai messo dentro e quanto ne hai tolto, e dove finisce la barra è il netto della giornata. Vanno sotto lo zero solo se sopra non c'è niente, anche quando il cibo non è ancora stato segnato.",
-      "Nelle preferenze puoi dire quanti giorni a settimana conti di allenarti: l'Andamento confronta i giorni allenati con quelli che ti eri prefissato (\"5 su 17\") invece che con tutti i giorni del calendario, che non voleva dire niente.",
-      "Tolto il grafico doppione dalla sezione Allenamento: il confronto fra mangiate e bruciate sta ora solo nella sezione Cibo.",
-    ],
-  },
-  {
-    versione: "0.6.0-dev.3",
-    ambiente: "dev",
-    data: "2026-09-15",
-    titolo: "Schede ricorrenti, esercizi tuoi e allenamenti nell'andamento",
-    punti: [
-      "Le schede: prepari un allenamento che si ripete (\"Spinta A: panca 4×8 a 60 kg\") e lo avvii quando ti alleni, con tutte le serie già pronte. I numeri vengono copiati, quindi correggerli durante l'allenamento non tocca la scheda.",
-      "Puoi anche richiamare una scheda dentro un allenamento già aperto, per unirne due o aggiungerla a quello che hai già fatto.",
-      "Quando aggiungi un esercizio scegli quante serie mettere in una volta: non serve più premere quattro volte per quattro serie uguali.",
-      "I numeri di ogni serie si correggono direttamente nell'elenco: tocchi il carico, lo cambi, è salvato.",
-      "Cercando un esercizio vedi la sua immagine e i muscoli che lavora, così non sbagli fra nomi che si somigliano.",
-      "Puoi creare esercizi tuoi scegliendo i muscoli da una tavolozza, con l'anteprima della figura che si accende mentre scegli.",
-      "L'Andamento ora ha due sezioni, Cibo e Allenamento, sotto lo stesso periodo: quante sessioni, quanti minuti e un grafico delle calorie mangiate contro quelle bruciate.",
-      "Richiede la migration 0009 (schede).",
-    ],
-  },
-  {
-    versione: "0.6.0-dev.2",
-    ambiente: "dev",
-    data: "2026-09-15",
-    titolo: "Registrare gli allenamenti, e il bilancio fra mangiato e bruciato",
-    punti: [
-      "La pagina Esercizio ora sono i tuoi allenamenti: crei una sessione, ci aggiungi gli esercizi e per ognuno le serie. Per la forza chiede ripetizioni e carico, per il cardio durata e distanza, e i campi restano compilati così la serie dopo è un tocco solo.",
-      "Ogni allenamento stima le calorie bruciate da durata, tipo di esercizio e peso corporeo (quello che hai già inserito negli obiettivi nutrizionali). È una stima, e l'app lo dice.",
-      "Nuovo riquadro \"Bilancio energetico di oggi\": le calorie mangiate meno quelle bruciate, confrontate con l'obiettivo. È il motivo per cui Alimentazione ed Esercizio stanno nella stessa area.",
-      "Nuovo riquadro con gli allenamenti degli ultimi 7 giorni: quanti, quanti minuti e quante calorie.",
-      "Eliminando un allenamento compare \"Annulla\": torna indietro con tutte le sue serie.",
-      "Il catalogo degli esercizi si è spostato sotto Esercizio › Catalogo esercizi.",
-      "Nessuna migration nuova: le tabelle erano già nella 0008.",
-    ],
-  },
-  {
-    versione: "0.6.0-dev.1",
-    ambiente: "dev",
-    data: "2026-09-14",
-    titolo: "Nuova area Salute: arriva l'Esercizio",
-    punti: [
-      "L'area Alimentazione diventa \"Salute\" e contiene due sezioni: Cibo ed Esercizio. In basso trovi Riepilogo, Cibo, ＋, Esercizio e Andamento; Piatti e Miei esercizi restano nel menu laterale del computer.",
-      "Catalogo di 1500 esercizi con ricerca per nome, attrezzo o muscolo: scrivendo non parte nessuna richiesta, l'elenco è già nel browser.",
-      "Ogni esercizio mostra la figura del corpo con i muscoli lavorati illuminati — pieni i principali, più tenui i secondari, fronte e retro — nei colori del tema che hai scelto.",
-      "Sulla scheda trovi anche la dimostrazione animata e le istruzioni passo passo.",
-      "Puoi crearti esercizi tuoi per quello che il catalogo non copre, come già fai con i piatti.",
-      "Richiede la migration 0008 e il caricamento del catalogo (d1/seed-esercizi.sql).",
-    ],
-  },
-  {
-    versione: "0.5.1-dev.5",
-    ambiente: "dev",
-    data: "2026-09-14",
-    titolo: "La sincronizzazione da produzione porta solo i miei dati",
-    punti: [
-      "Il pulsante \"Porta i miei dati da produzione\" (solo superadmin, solo su dev) ora copia soltanto i dati del proprio account — bollette, abbonamenti, diario, piatti, obiettivi, preferenze — invece di svuotare l'intero ambiente. Gli altri profili di test presenti su dev restano intatti.",
-      "Non serve più rifare login dopo la sincronizzazione: la tabella degli account non viene toccata e la sessione resta valida.",
-    ],
-  },
-  {
-    versione: "0.5.1-dev.4",
-    ambiente: "dev",
-    data: "2026-09-14",
-    titolo: "Login più robusto e difese aggiunte sulle pagine",
-    punti: [
-      "La pagina di accesso non lascia più capire se un'email è registrata: password sbagliata ed email inesistente danno lo stesso messaggio e impiegano lo stesso tempo. Il motivo del blocco (account sospeso o bloccato) si vede solo dopo aver messo la password giusta.",
-      "Dopo 8 tentativi di accesso falliti l'accesso si blocca per qualche minuto: è un freno alla forza bruta. Un accesso riuscito azzera il conteggio.",
-      "Ogni pagina ora dichiara al browser una serie di regole di sicurezza (non può essere incorniciata da altri siti, gli script partono solo se autorizzati, i form non possono inviare dati altrove): riducono l'impatto di eventuali tentativi di manomissione.",
-      "L'export di backup non viene più tenuto in nessuna cache; le sessioni scadute vengono ripulite da sole e la loro scadenza è registrata in modo coerente.",
-      "Richiede la migration 0007 (tabella dei tentativi di accesso) applicata al database.",
-    ],
-  },
-  {
-    versione: "0.5.1-dev.3",
-    ambiente: "dev",
-    data: "2026-09-14",
-    titolo: "Chiusa una falla nel salvataggio delle modifiche a bollette e diario",
-    punti: [
-      "La modifica di una bolletta e la modifica di una riga del diario decidevano quali colonne scrivere a partire dai dati ricevuti dal browser: un utente malintenzionato poteva sfruttarlo per leggere dati di altri account (comprese le password cifrate). Ora si possono toccare soltanto i campi previsti; tutto il resto viene ignorato prima di arrivare al database.",
-    ],
-  },
-  {
-    versione: "0.5.1-dev.2",
-    ambiente: "dev",
-    data: "2026-09-14",
-    titolo: "Anche l'ultimo riquadro chiede i dati una volta sola",
-    punti: [
-      "Il riquadro \"Valori di oggi vs obiettivi\" faceva due richieste, una per i pasti e una per gli obiettivi: ora ne fa una, e la somma di giornata arriva già fatta dal database invece di essere calcolata sulle righe del diario.",
-      "Aprire la dashboard dell'alimentazione costa tre richieste: erano sette prima di questo giro di lavoro.",
-    ],
-  },
-  {
-    versione: "0.5.1-dev.1",
-    ambiente: "dev",
-    data: "2026-09-14",
-    titolo: "Bollette e abbonamenti usabili col pollice, e l'annulla dopo aver cancellato",
-    punti: [
-      "Dopo aver eliminato una bolletta o un abbonamento compare per qualche secondo un messaggio con \"Annulla\": niente più finestre di conferma prima di ogni cancellazione. L'abbonamento torna indietro con tutte le sue rate, e la bolletta con i suoi PDF allegati.",
-      "L'elenco delle bollette su telefono diventa una scheda per bolletta: prima era una tabella da otto colonne che nascondeva il fornitore e spingeva i pulsanti fuori dallo schermo. Su computer resta la tabella.",
-      "I pulsanti con la sola icona (paga, dividi, modifica, elimina, sospendi, disdici) passano da 28 a 44 pixel, hanno un'etichetta leggibile dai lettori di schermo e \"Elimina\" è staccato dagli altri: erano tre bersagli a quattro pixel di distanza, e uno cancella.",
-      "Campi e pulsanti sono alti 44 pixel sul telefono, compresi i campi per allegare i PDF che prima erano alti 25.",
-      "I filtri delle bollette stanno dietro un pulsante \"Filtri\" che dice quanti ne hai attivi: prima quattro menu occupavano la prima schermata prima di far vedere una bolletta.",
-      "Anche le rate di un abbonamento diventano un elenco leggibile su telefono, e i pulsanti \"Nuova bolletta\" e \"Nuovo abbonamento\" non vanno più a capo su tre righe.",
-    ],
-  },
-  {
-    versione: "0.5.0",
-    ambiente: "prod",
+    versione: "2026.09.11",
     data: "2026-09-11",
-    titolo: "Abbonamenti, archivio piatti, dashboard e app da telefono",
-    punti: [
-      "Nuova sezione Abbonamenti: spese ricorrenti con le rate generate da sé in base alla frequenza, sospensione e ripresa, e il conto di quanto pesano al mese.",
-      "Alimentazione: archivio dei piatti personali con porzioni, alimenti recenti da riaggiungere in un tocco, ricerca ordinata per pertinenza e pagina Andamento con le medie del periodo.",
-      "Dashboard: il riquadro principale di ogni sezione è sempre in testa e non si rimuove, gli altri si scelgono da un pannello che li mostra in anteprima, e si riordinano trascinandoli — anche col dito, tenendo premuto.",
-      "Profilo: nome, colore dell'app, tema e password in un unico posto, con reset assistito per chi amministra.",
-      "Su telefono la navigazione è passata in basso, a portata di pollice, con l'azione più usata al centro.",
-      "Sotto il cofano: molte meno chiamate al server durante gli inserimenti, e la sessione scaduta riporta al login invece di mostrare un errore.",
-    ],
-    include: [
-      "0.5.0-dev.12",
-      "0.5.0-dev.11",
-      "0.5.0-dev.10",
-      "0.5.0-dev.9",
-      "0.5.0-dev.8",
-      "0.5.0-dev.7",
-      "0.5.0-dev.6",
-      "0.5.0-dev.5",
-      "0.5.0-dev.4",
-      "0.5.0-dev.3",
-      "0.5.0-dev.2",
-      "0.5.0-dev.1",
+    modifiche: [
+      { categoria: "aggiunto", testo: "Sezione Abbonamenti: spese ricorrenti con le rate generate da sé, sospensione e ripresa, e quanto pesano al mese." },
+      { categoria: "aggiunto", testo: "Archivio dei piatti personali con porzioni, e alimenti recenti da riaggiungere in un tocco." },
+      { categoria: "aggiunto", testo: "Pagina Andamento dell'alimentazione, con le medie del periodo." },
+      { categoria: "aggiunto", testo: "Profilo: nome, colore dell'app, tema e password in un unico posto, con reset assistito per chi amministra." },
+      { categoria: "modificato", testo: "Dashboard: il riquadro principale è sempre in testa, gli altri si scelgono da un pannello con le anteprime e si riordinano trascinandoli, anche col dito." },
+      { categoria: "modificato", testo: "Su telefono la navigazione è passata in basso, con l'azione più usata al centro." },
+      { categoria: "modificato", testo: "Molte meno chiamate al server durante gli inserimenti." },
+      { categoria: "modificato", testo: "La ricerca degli alimenti è ordinata per pertinenza." },
+      { categoria: "corretto", testo: "La sessione scaduta riporta al login invece di mostrare un errore." },
     ],
   },
   {
-    versione: "0.5.0-dev.12",
-    ambiente: "dev",
-    data: "2026-09-11",
-    titolo: "Riquadro principale unico e riquadri alti quanto il contenuto",
-    punti: [
-      "Il riquadro principale di ogni sezione occupa tutta la larghezza. In Consumi e Costi raccoglie i tre numeri che si leggono insieme — quanto c'è da pagare, quanto hai già speso in tutto, le prossime scadenze — e in Alimentazione affianca alle calorie la media giornaliera dei macronutrienti.",
-      "\"Totale generale già pagato\" e \"Media macro degli ultimi 7 giorni\" non sono più riquadri a parte: sono dentro il riquadro principale della loro sezione.",
-      "Il riquadro degli abbonamenti mostra anche le prossime rate: per ogni abbonamento attivo la rata da saldare se c'è, altrimenti la data del prossimo addebito.",
-      "I riquadri non vengono più stirati fino all'altezza del più alto della riga: ognuno è alto quanto il suo contenuto, quindi niente scatole mezze vuote.",
-      "Le voci come \"Diario di oggi\", \"Andamento completo\" o \"Vai al diario\" iniziano con la maiuscola.",
-      "Ogni riquadro principale costa una richiesta invece di tre: aprire una dashboard ne chiede meno di prima.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.11",
-    ambiente: "dev",
-    data: "2026-09-11",
-    titolo: "Riquadri della dashboard che si spostano col dito",
-    punti: [
-      "Sul telefono tieni premuto un riquadro per un attimo e poi lo trascini dove vuoi, come sulla schermata di un telefono. Il nuovo ordine si salva da solo, senza passare da \"Personalizza\".",
-      "Se il dito si muove subito la pagina scorre come sempre: il riquadro si aggancia solo se resti fermo un quarto di secondo.",
-      "Quando si aggancia, una vibrazione breve lo segnala e il riquadro si solleva con un bordo colorato, così si vede quale stai spostando.",
-      "Alzando il dito non si apre più per sbaglio la pagina del riquadro appena spostato.",
-      "Col mouse non cambia niente: si trascina dalla maniglia in \"Personalizza\". In più ora si può riordinare anche da tastiera, con spazio e frecce sulla maniglia.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.10",
-    ambiente: "dev",
-    data: "2026-09-10",
-    titolo: "Su telefono la navigazione passa in basso",
-    punti: [
-      "Le pagine della sezione in cui sei stanno in una barra in basso, dove arriva il pollice: al massimo cinque voci, con icona ed etichetta.",
-      "In Alimentazione la voce centrale è \"Aggiungi\", in rilievo: è la cosa che si fa più spesso in tutta l'app. Il pulsante rotondo che stava sopra il diario è stato rimosso, era lo stesso comando due volte.",
-      "La sezione si cambia toccando il nome in alto a sinistra: si apre un elenco che sale dal basso. Il menu a panino non serve più.",
-      "Profilo, tema e uscita sono nel pallino con le iniziali, in alto a destra.",
-      "Sul computer non cambia niente: resta il menu di sinistra, con tutte le voci e le etichette complete.",
-      "La voce \"Dashboard\" si chiama \"Riepilogo\", in barra e nel menu.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.9",
-    ambiente: "dev",
-    data: "2026-09-09",
-    titolo: "Meno chiamate al server durante gli inserimenti",
-    punti: [
-      "Aggiungere un alimento è una sola richiesta invece di due: il controllo del doppione lo fa il server nello stesso giro.",
-      "Le fonti esterne (Open Food Facts, USDA) vengono interrogate solo quando smetti di scrivere, non a ogni pezzo di parola; i tuoi piatti continuano a comparire subito.",
-      "I risultati dei termini già cercati restano in memoria per tutta la visita: correggere una parola o tornare indietro non rifà le ricerche.",
-      "Le voci del menu di lato non vengono più precaricate: erano quattro richieste per ogni pagina aperta, rifatte dopo ogni salvataggio.",
-      "Se la sessione è scaduta o è stata revocata mentre una scheda era aperta, l'app riporta al login invece di mostrare \"Application error\": prima ogni azione da quella scheda tornava un errore del server.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.8",
-    ambiente: "dev",
-    data: "2026-09-08",
-    titolo: "Dashboard: widget fissi e pannello di scelta con anteprime",
-    punti: [
-      "Nuovo pulsante \"Aggiungi widget\" accanto a Personalizza: apre un pannello con tutti i widget disponibili, ognuno con una descrizione e un'anteprima con dati di esempio, così si vede cosa si sta aggiungendo prima di aggiungerlo.",
-      "\"Totale da pagare\" e \"Prossime scadenze\" sono diventati un unico riquadro: il totale dice quanto, l'elenco dice quando, e il dato viene chiesto al database una volta sola invece di due.",
-      "I widget essenziali di una sezione (da pagare e scadenze per Consumi e Costi, calorie per Alimentazione) restano in testa alla dashboard e non si possono rimuovere né spostare.",
-      "Il riordino si salva subito quando trascini, senza dover premere Fine.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.7",
-    ambiente: "dev",
-    data: "2026-09-08",
-    titolo: "Colore del tema scelto da te",
-    punti: [
-      "Nel profilo si può scegliere il colore dell'app: undici campioni pronti oppure un colore qualsiasi.",
-      "Dal colore scelto viene ricavata tutta la palette — accento, sfondi virati verso quella tinta, bordi — e il testo viene scelto in base alla luminosità del colore, così resta leggibile anche su tinte chiare come il giallo.",
-      "Rosso, verde e giallo di errori, conferme e avvisi non cambiano: devono restare riconoscibili.",
-      "Il colore viene applicato prima che la pagina si disegni e vale su tutti i dispositivi, come il tema.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.6",
-    ambiente: "dev",
-    data: "2026-09-02",
-    titolo: "Profilo utente: nome, tema e password in un unico posto",
-    punti: [
-      "In basso a sinistra, al posto di \"Esci\", c'è il tuo profilo: apre un menu con Impostazioni profilo, Preferenze moduli ed Esci.",
-      "Puoi scegliere come farti chiamare: il nome sostituisce l'email nella barra laterale (per accedere si continua a usare l'email).",
-      "Tema chiaro, scuro o come il sistema, salvato sul profilo e quindi valido su tutti i dispositivi. Viene applicato prima che la pagina si disegni, senza il lampo di tema sbagliato.",
-      "Password e sessioni attive si trovano ora nella pagina del profilo, insieme al resto.",
-      "Chi dimentica la password non resta fuori: un amministratore, dalla pagina Utenti, genera una password temporanea da comunicare, che chiude le sessioni aperte di quell'account.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.5",
-    ambiente: "dev",
-    data: "2026-09-02",
-    titolo: "Ricerca alimenti ordinata per pertinenza e registro delle versioni",
-    punti: [
-      "Cercando un alimento vengono prima i risultati che iniziano col termine cercato, poi quelli che lo contengono: le fonti esterne ordinano per popolarità e portavano in cima prodotti poco pertinenti.",
-      "La ricerca ignora accenti e maiuscole: \"caffe\" trova \"Caffè macinato\".",
-      "Nuova pagina Impostazioni › Versioni con il registro delle modifiche dell'ambiente in cui si sta lavorando.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.4",
-    ambiente: "dev",
-    data: "2026-09-02",
-    titolo: "Correzioni sui caricamenti e sui grafici, widget calorie unificato",
-    punti: [
-      "Il diario mostrava a volte i dati di una visita precedente: ora ogni modifica aggiorna tutte le pagine dell'area alimentazione, non solo quella aperta.",
-      "Nei grafici i giorni senza registrazioni non vengono più disegnati come giorni a zero: restano vuoti, così le linee dei macronutrienti non crollano sui giorni saltati.",
-      "I grafici mostrano subito i valori definitivi, senza animazione d'ingresso.",
-      "\"Calorie di oggi\" e \"Calorie degli ultimi 7 giorni\" sono ora un unico riquadro con oggi, media settimanale e grafico.",
-      "Nuovo widget \"Media macro degli ultimi 7 giorni\" con confronto sugli obiettivi.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.3",
-    ambiente: "dev",
-    data: "2026-09-01",
-    titolo: "Correzioni all'aggiunta di un alimento",
-    punti: [
-      "Il giorno scelto nel diario non si perde più: sta nell'indirizzo della pagina, quindi resta anche dopo aver aggiunto un alimento e funziona col tasto indietro.",
-      "Dopo aver aggiunto un alimento si resta sulla schermata di inserimento, pronti per il pasto successivo.",
-      "Se l'alimento è già presente nello stesso pasto compare una richiesta in primo piano: sommare le quantità o tenere due righe separate.",
-      "\"Oggi\" viene calcolato sull'ora italiana: dopo mezzanotte i pasti non finiscono più nel giorno precedente.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.2",
-    ambiente: "dev",
-    data: "2026-09-01",
-    titolo: "Archivio piatti personale, porzioni e revisione dell'alimentazione",
-    punti: [
-      "I piatti diventano un archivio personale: ricette con ingredienti oppure piatti e prodotti con i valori dell'etichetta, e compaiono nella ricerca quando si aggiunge un pasto.",
-      "Porzioni: \"1 piatto = 350 g\", per registrare per porzioni invece che in grammi.",
-      "Elenco dei recenti con aggiunta in un tap e copia dei pasti da un altro giorno.",
-      "Nuova pagina Andamento: calorie e macronutrienti su 7, 30 o 90 giorni, con medie e aderenza agli obiettivi.",
-      "Gli obiettivi si possono calcolare dai propri dati (peso, altezza, età, attività).",
-      "Le eliminazioni si annullano da un avviso invece di chiedere conferma prima.",
-      "App installabile sul telefono, comandi più grandi e campi numerici che accettano la virgola.",
-    ],
-  },
-  {
-    versione: "0.5.0-dev.1",
-    ambiente: "dev",
+    versione: "2026.08.26",
     data: "2026-08-26",
-    titolo: "Modulo Abbonamenti",
-    punti: [
-      "Nuovo modulo Abbonamenti: spese ricorrenti con generazione automatica delle rate secondo la frequenza scelta.",
-      "Sincronizzazione dei dati da produzione a sviluppo, riservata al superadmin.",
-    ],
-  },
-  {
-    versione: "0.4.0",
-    ambiente: "prod",
-    data: "2026-08-26",
-    titolo: "Passaggio a Cloudflare, ruoli utente e tema scuro",
-    punti: [
-      "L'app gira su Cloudflare Workers con database D1: nessun servizio esterno, deploy automatico a ogni pubblicazione.",
-      "Ruoli utente e gestione degli account dalle impostazioni.",
-      "Tema scuro.",
-      "Bollette: divisione della spesa con un'altra famiglia, periodi di competenza, allegati e ricevute in PDF, statistiche per tipo e andamento mensile.",
-      "Alimentazione: diario dei pasti, ricerca alimenti su Open Food Facts e USDA, obiettivi nutrizionali, ricette con ingredienti.",
-      "Dashboard personalizzabile con widget riordinabili.",
+    modifiche: [
+      { categoria: "aggiunto", testo: "L'app gira su Cloudflare con database D1: nessun servizio esterno, pubblicazione automatica a ogni rilascio." },
+      { categoria: "aggiunto", testo: "Ruoli utente e gestione degli account dalle impostazioni." },
+      { categoria: "aggiunto", testo: "Tema scuro." },
+      { categoria: "aggiunto", testo: "Bollette: divisione della spesa con un'altra famiglia, periodi di competenza, allegati e ricevute in PDF, statistiche per tipo e andamento mensile." },
+      { categoria: "aggiunto", testo: "Alimentazione: diario dei pasti, ricerca su Open Food Facts e USDA, obiettivi nutrizionali, ricette con ingredienti." },
+      { categoria: "aggiunto", testo: "Dashboard personalizzabile con widget riordinabili." },
     ],
   },
 ];
 
-/** I rilasci di un ambiente, dal più recente. */
-export function rilasciDi(ambiente: Ambiente): Rilascio[] {
-  return RILASCI.filter((r) => r.ambiente === ambiente);
+/** Il rilascio attualmente in produzione. */
+export function ultimoRilascio(): Rilascio | undefined {
+  return RILASCI[0];
 }
 
-/** Versione attualmente in esecuzione nell'ambiente indicato. */
-export function versioneCorrente(ambiente: Ambiente): Rilascio | undefined {
-  return rilasciDi(ambiente)[0];
+/**
+ * Come si chiama la versione in esecuzione. In produzione è l'ultimo rilascio;
+ * su sviluppo non esiste un numero, perché sviluppo non è un rilascio ma
+ * "quello che c'è adesso su develop".
+ */
+export function etichettaVersione(ambiente: Ambiente): string {
+  if (ambiente === "prod") return ultimoRilascio()?.versione ?? "—";
+  return NON_RILASCIATO ? "sviluppo" : (ultimoRilascio()?.versione ?? "—");
 }
 
-/** Le voci dev raccolte in un rilascio di produzione. */
-export function devInclusi(r: Rilascio): Rilascio[] {
-  if (!r.include?.length) return [];
-  return r.include
-    .map((v) => RILASCI.find((x) => x.versione === v))
-    .filter((x): x is Rilascio => x !== undefined);
+/** Raggruppa le modifiche per categoria, nell'ordine di CATEGORIE. */
+export function perCategoria(
+  modifiche: Modifica[]
+): { categoria: Categoria; label: string; testi: string[] }[] {
+  return CATEGORIE.map(({ valore, label }) => ({
+    categoria: valore,
+    label,
+    testi: modifiche.filter((m) => m.categoria === valore).map((m) => m.testo),
+  })).filter((g) => g.testi.length > 0);
 }

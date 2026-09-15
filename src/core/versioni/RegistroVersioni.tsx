@@ -1,151 +1,157 @@
-"use client";
-
-import { useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/core/components/ui";
-import { TabBar } from "@/core/components/controls";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { cn, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { etichettaAmbiente } from "./ambiente";
-import type { Ambiente, Rilascio } from "./changelog";
-
-type Filtro = "ambiente" | "tutti";
+import {
+  perCategoria,
+  type Ambiente,
+  type Categoria,
+  type Modifica,
+  type NonRilasciato,
+  type Rilascio,
+} from "./changelog";
 
 /**
- * Registro delle versioni. Mostra per default i rilasci dell'ambiente in cui
- * si sta navigando: su sviluppo il dettaglio di ogni pubblicazione, in
- * produzione la voce che riassume il periodo (espandibile per vedere le
- * versioni di sviluppo che contiene).
+ * Registro delle versioni.
+ *
+ * In produzione si vedono i rilasci, ognuno col suo nome a data. Su sviluppo,
+ * in testa, c'è quello che non è ancora arrivato in produzione: è la domanda
+ * che si fa chi prova l'app ("cosa c'è qui che là non c'è ancora?").
+ *
+ * Non è più un componente client: non c'è niente da aprire o richiudere, il
+ * contenuto si legge tutto insieme.
  */
+
+/** Il colore dell'etichetta dice di che tipo di cambiamento si tratta. */
+const TONO: Record<Categoria, "success" | "default" | "warning"> = {
+  aggiunto: "success",
+  modificato: "default",
+  corretto: "warning",
+  rimosso: "default",
+  sicurezza: "warning",
+};
+
 export function RegistroVersioni({
   ambiente,
   rilasci,
-  devPerVersione,
+  nonRilasciato,
 }: {
   ambiente: Ambiente;
   rilasci: Rilascio[];
-  /** Per ogni rilascio di produzione, le voci dev che raccoglie. */
-  devPerVersione: Record<string, Rilascio[]>;
+  /** Presente solo su sviluppo: le modifiche non ancora in produzione. */
+  nonRilasciato: NonRilasciato | null;
 }) {
-  const [filtro, setFiltro] = useState<Filtro>("ambiente");
-  const [aperti, setAperti] = useState<string[]>([]);
-
-  const visibili =
-    filtro === "ambiente"
-      ? rilasci.filter((r) => r.ambiente === ambiente)
-      : rilasci;
-
-  function toggle(versione: string) {
-    setAperti((prev) =>
-      prev.includes(versione)
-        ? prev.filter((v) => v !== versione)
-        : [...prev, versione]
-    );
-  }
+  const inProduzione = rilasci[0];
 
   return (
     <div className="max-w-3xl space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          Stai usando l&apos;ambiente di{" "}
-          <strong>{etichettaAmbiente(ambiente).toLowerCase()}</strong>
-          {visibili[0] ? (
-            <>
-              , versione <strong>{visibili[0].versione}</strong>
-            </>
-          ) : null}
-          .
-        </p>
-        <TabBar
-          label="Quali versioni mostrare"
-          value={filtro}
-          onChange={setFiltro}
-          items={[
-            { value: "ambiente", label: "Questo ambiente" },
-            { value: "tutti", label: "Tutti gli ambienti" },
-          ]}
-        />
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Stai usando l&apos;ambiente di{" "}
+        <strong>{etichettaAmbiente(ambiente).toLowerCase()}</strong>
+        {ambiente === "prod" && inProduzione ? (
+          <>
+            , versione <strong>{inProduzione.versione}</strong>.
+          </>
+        ) : (
+          <>
+            . In produzione c&apos;è la{" "}
+            <strong>{inProduzione?.versione ?? "—"}</strong>.
+          </>
+        )}
+      </p>
 
-      {visibili.length === 0 ? (
+      {ambiente === "dev" && nonRilasciato && (
+        <section className="rounded-lg border border-primary/40">
+          <header className="flex flex-wrap items-center gap-2 border-b bg-primary/10 px-4 py-2">
+            <span className="font-semibold">Non ancora in produzione</span>
+            <Badge variant="default">solo sviluppo</Badge>
+            <span className="ml-auto text-sm text-muted-foreground">
+              aggiornato il {formatDate(nonRilasciato.aggiornato)}
+            </span>
+          </header>
+          <div className="space-y-3 px-4 py-3">
+            <Modifiche modifiche={nonRilasciato.modifiche} />
+            <Migrazioni elenco={nonRilasciato.migrazioni} />
+          </div>
+        </section>
+      )}
+
+      {rilasci.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Nessun rilascio registrato per questo ambiente.
+          Nessun rilascio registrato.
         </p>
       ) : (
         <ol className="space-y-4">
-          {visibili.map((r, i) => {
-            const dev = devPerVersione[r.versione] ?? [];
-            const aperto = aperti.includes(r.versione);
-            return (
-              <li key={r.versione} className="rounded-lg border">
-                <div className="flex flex-wrap items-center gap-2 border-b bg-muted px-4 py-2">
-                  <span className="font-semibold">{r.versione}</span>
-                  {filtro === "tutti" && (
-                    <Badge variant={r.ambiente === "prod" ? "success" : "default"}>
-                      {etichettaAmbiente(r.ambiente)}
-                    </Badge>
-                  )}
-                  {i === 0 && filtro === "ambiente" && (
-                    <Badge variant="success">in uso</Badge>
-                  )}
-                  <span className="ml-auto text-sm text-muted-foreground">
-                    {formatDate(r.data)}
-                  </span>
-                </div>
-
-                <div className="space-y-3 px-4 py-3">
-                  <p className="font-medium">{r.titolo}</p>
-                  <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
-                    {r.punti.map((p, k) => (
-                      <li key={k}>{p}</li>
-                    ))}
-                  </ul>
-
-                  {dev.length > 0 && (
-                    <div className="rounded-md border">
-                      <button
-                        onClick={() => toggle(r.versione)}
-                        aria-expanded={aperto}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium transition hover:bg-accent"
-                      >
-                        {aperto ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                        Contiene {dev.length}{" "}
-                        {dev.length === 1
-                          ? "versione di sviluppo"
-                          : "versioni di sviluppo"}
-                      </button>
-                      {aperto && (
-                        <ul className="divide-y border-t">
-                          {dev.map((d) => (
-                            <li key={d.versione} className="px-3 py-2 text-sm">
-                              <p className="flex flex-wrap items-baseline gap-2">
-                                <span className="font-medium">{d.versione}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDate(d.data)}
-                                </span>
-                              </p>
-                              <p className="text-muted-foreground">{d.titolo}</p>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </li>
-            );
-          })}
+          {rilasci.map((r, i) => (
+            <li key={r.versione} className="rounded-lg border">
+              <div className="flex flex-wrap items-center gap-2 border-b bg-muted px-4 py-2">
+                <span className="font-semibold">{r.versione}</span>
+                {i === 0 && <Badge variant="success">in produzione</Badge>}
+                <span className="ml-auto text-sm text-muted-foreground">
+                  {formatDate(r.data)}
+                </span>
+              </div>
+              <div className="space-y-3 px-4 py-3">
+                <Modifiche modifiche={r.modifiche} />
+                <Migrazioni elenco={r.migrazioni} />
+              </div>
+            </li>
+          ))}
         </ol>
       )}
 
-      <p className={cn("text-xs text-muted-foreground")}>
-        Le versioni con il suffisso <code>-dev</code> sono pubblicazioni
-        sull&apos;ambiente di sviluppo; quando il lavoro passa in produzione
-        diventano un&apos;unica versione che le riassume.
+      <p className="text-xs text-muted-foreground">
+        I rilasci prendono il nome dalla loro data (2026.09.15). Le modifiche
+        sono divise per tipo: aggiunte, cambiamenti, correzioni, rimozioni e
+        sicurezza.
       </p>
+    </div>
+  );
+}
+
+function Modifiche({ modifiche }: { modifiche: Modifica[] }) {
+  const gruppi = perCategoria(modifiche);
+  if (gruppi.length === 0) {
+    return <p className="text-sm text-muted-foreground">Nessuna modifica.</p>;
+  }
+
+  return (
+    <dl className="space-y-3">
+      {gruppi.map((g) => (
+        <div key={g.categoria} className="flex flex-col gap-1.5 sm:flex-row sm:gap-3">
+          <dt className="sm:w-28 sm:shrink-0">
+            <Badge variant={TONO[g.categoria]}>{g.label}</Badge>
+          </dt>
+          <dd className="min-w-0">
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              {g.testi.map((t, k) => (
+                <li key={k}>{t}</li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/**
+ * Le migration necessarie: si applicano a mano, quindi vanno dette a chi legge
+ * e non nascoste nel codice. Due guasti sono già passati di qui.
+ */
+function Migrazioni({ elenco }: { elenco?: string[] }) {
+  if (!elenco?.length) return null;
+  return (
+    <div className="flex gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+      <div>
+        <p className="font-medium">Richiede interventi sul database</p>
+        <ul className="mt-1 space-y-0.5 text-muted-foreground">
+          {elenco.map((m, k) => (
+            <li key={k}>{m}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
