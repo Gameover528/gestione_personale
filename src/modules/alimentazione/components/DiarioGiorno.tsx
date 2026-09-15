@@ -41,6 +41,13 @@ import {
 } from "lucide-react";
 import { cn, formatDate, parseNumero, spostaGiorno } from "@/lib/utils";
 
+/**
+ * I riquadri dei totali in cima al diario: le fibre non hanno piu' un riquadro
+ * proprio perche' sono conteggiate dentro i carboidrati, come fanno le altre
+ * app. Restano visibili per riga e nel calcolo degli obiettivi.
+ */
+const NUTRIENTI_TOTALI = NUTRIENTI.filter((n) => n.value !== "fibre");
+
 function fmt(nutriente: Nutriente, v: number) {
   return nutriente === "kcal" ? String(Math.round(v)) : v.toFixed(1);
 }
@@ -318,9 +325,18 @@ export function DiarioGiorno({
       )}
 
       {/* Totali del giorno vs obiettivi */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        {NUTRIENTI.map((nu) => {
-          const tot = totali[nu.value];
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+        {NUTRIENTI_TOTALI.map((nu) => {
+          // I carboidrati in cima comprendono le fibre: e' la convenzione
+          // americana, quella che usano le altre app di conteggio, e serve a
+          // poter confrontare i numeri. Le etichette europee invece dichiarano
+          // i carboidrati al netto delle fibre, ed e' quello che arriva da Open
+          // Food Facts: e' la ragione per cui lo stesso pasto risultava avere
+          // meno carboidrati qui che altrove.
+          const tot =
+            nu.value === "carboidrati"
+              ? totali.carboidrati + totali.fibre
+              : totali[nu.value];
           const ob = obiettivo(nu.value);
           let stato: "ok" | "over" | "under" | "none" = "none";
           if (ob && ob.valore > 0) {

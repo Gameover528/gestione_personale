@@ -45,11 +45,18 @@ const TOLLERANZA = 0.10;
 /**
  * Fattori di Atwater: quante kcal rende un grammo di ciascun macronutriente.
  *
- * Le fibre non entrano nel conto di proposito. In teoria rendono ~2 kcal/g e
- * andrebbero aggiunte, ma nei dati reali i carboidrati dichiarati le includono
- * già molto spesso: sullo stesso campione, sommarle faceva salire le
- * segnalazioni dal 5,2% al 6,5% — cioè aggiungeva falsi allarmi invece di
- * toglierne.
+ * Le fibre non entrano nel conto, ma non perché siano già dentro i
+ * carboidrati: misurato su 112 prodotti con almeno 3 g di fibre, l'energia
+ * dichiarata supera quella dei soli macronutrienti di 12,7 kcal in media,
+ * contro le 15,1 attese se le fibre fossero conteggiate a parte — quindi in
+ * Open Food Facts i carboidrati le **escludono**, secondo la convenzione
+ * europea delle etichette.
+ *
+ * Restano fuori da questa formula per una ragione pratica: aggiungerle faceva
+ * salire le segnalazioni dal 5,2% al 6,5% sullo stesso campione. I casi oltre
+ * tolleranza sono dominati da errori grossolani (kJ scambiati per kcal), e un
+ * termine in più basato su un dato spesso mancante o impreciso aggiungeva
+ * rumore senza prendere niente di nuovo.
  */
 const KCAL_PER_GRAMMO = { proteine: 4, carboidrati: 4, grassi: 9 };
 
