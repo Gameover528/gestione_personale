@@ -53,10 +53,14 @@ export function AndamentoAllenamenti({
       return {
         data,
         label: etichettaGiorno(data),
-        minuti: a?.minuti ?? 0,
+        // I giorni senza allenamento valgono null e non zero, come già fatto
+        // per i pasti: con zero il grafico disegna una barra invisibile su ogni
+        // giorno vuoto e il passaggio del mouse annuncia "0 kcal" dove non c'è
+        // niente da annunciare.
+        minuti: a?.minuti || null,
         // Le bruciate si disegnano in negativo: sotto la linea dello zero si
         // legge a colpo d'occhio cosa entra e cosa esce.
-        bruciate: a?.kcal ? -a.kcal : 0,
+        bruciate: a?.kcal ? -a.kcal : null,
         mangiate: c?.kcal ?? null,
       };
     });
