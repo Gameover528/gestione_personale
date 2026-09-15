@@ -15,12 +15,16 @@ import { IconButton, bottonePrimarioClass } from "@/core/components/controls";
  */
 export function MieiEserciziList() {
   const [items, setItems] = useState<Esercizio[] | null>(null);
+  // Se la lettura fallisce (es. una tabella non ancora migrata) bisogna
+  // dirlo: restare su "Caricamento…" per sempre sembra che i dati non ci
+  // siano, e manda a cercare nel posto sbagliato.
+  const [errore, setErrore] = useState(false);
   const toast = useToast();
 
   const load = useCallback(() => {
-    listEsercizi().then((tutti) =>
-      setItems(tutti.filter((e) => e.fonte === "personale"))
-    );
+    listEsercizi()
+      .then((tutti) => setItems(tutti.filter((e) => e.fonte === "personale")))
+      .catch(() => setErrore(true));
   }, []);
 
   useEffect(() => {
@@ -46,6 +50,15 @@ export function MieiEserciziList() {
         },
       },
     });
+  }
+
+  if (errore) {
+    return (
+      <p className="text-sm text-destructive">
+        Non sono riuscito a leggere i dati. Riprova; se continua, controlla che le
+        migration del database siano state applicate.
+      </p>
+    );
   }
 
   if (items === null) {

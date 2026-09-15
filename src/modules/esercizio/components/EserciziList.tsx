@@ -22,10 +22,14 @@ import { inputClass } from "@/core/components/controls";
  */
 export function EserciziList() {
   const [tutti, setTutti] = useState<Esercizio[] | null>(null);
+  // Se la lettura fallisce (es. una tabella non ancora migrata) bisogna
+  // dirlo: restare su "Caricamento…" per sempre sembra che i dati non ci
+  // siano, e manda a cercare nel posto sbagliato.
+  const [errore, setErrore] = useState(false);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    listEsercizi().then(setTutti);
+    listEsercizi().then(setTutti).catch(() => setErrore(true));
   }, []);
 
   const elenco = useMemo(() => {
@@ -34,6 +38,15 @@ export function EserciziList() {
     if (query.trim().length < 2) return tutti.slice(0, 40);
     return cercaEsercizi(tutti, query);
   }, [tutti, query]);
+
+  if (errore) {
+    return (
+      <p className="text-sm text-destructive">
+        Non sono riuscito a leggere i dati. Riprova; se continua, controlla che le
+        migration del database siano state applicate.
+      </p>
+    );
+  }
 
   if (tutti === null) {
     return <p className="text-sm text-muted-foreground">Caricamento…</p>;

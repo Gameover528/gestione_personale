@@ -24,13 +24,17 @@ import {
 export function SchedeList() {
   const router = useRouter();
   const [items, setItems] = useState<SchedaRiepilogo[] | null>(null);
+  // Se la lettura fallisce (es. una tabella non ancora migrata) bisogna
+  // dirlo: restare su "Caricamento…" per sempre sembra che i dati non ci
+  // siano, e manda a cercare nel posto sbagliato.
+  const [errore, setErrore] = useState(false);
   const [nuovaAperta, setNuovaAperta] = useState(false);
   const [nome, setNome] = useState("");
   const [avvio, setAvvio] = useState<string | null>(null);
   const toast = useToast();
 
   const load = useCallback(() => {
-    listSchede().then(setItems);
+    listSchede().then(setItems).catch(() => setErrore(true));
   }, []);
 
   useEffect(() => {
@@ -77,6 +81,15 @@ export function SchedeList() {
     } finally {
       setAvvio(null);
     }
+  }
+
+  if (errore) {
+    return (
+      <p className="text-sm text-destructive">
+        Non sono riuscito a leggere i dati. Riprova; se continua, controlla che le
+        migration del database siano state applicate.
+      </p>
+    );
   }
 
   if (items === null) {

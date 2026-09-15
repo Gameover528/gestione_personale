@@ -23,11 +23,15 @@ import {
 
 export function AllenamentiList() {
   const [items, setItems] = useState<AllenamentoRiepilogo[] | null>(null);
+  // Se la lettura fallisce (es. una tabella non ancora migrata) bisogna
+  // dirlo: restare su "Caricamento…" per sempre sembra che i dati non ci
+  // siano, e manda a cercare nel posto sbagliato.
+  const [errore, setErrore] = useState(false);
   const [nuovoAperto, setNuovoAperto] = useState(false);
   const toast = useToast();
 
   const load = useCallback(() => {
-    listAllenamenti().then(setItems);
+    listAllenamenti().then(setItems).catch(() => setErrore(true));
   }, []);
 
   useEffect(() => {
@@ -64,6 +68,15 @@ export function AllenamentiList() {
         },
       },
     });
+  }
+
+  if (errore) {
+    return (
+      <p className="text-sm text-destructive">
+        Non sono riuscito a leggere i dati. Riprova; se continua, controlla che le
+        migration del database siano state applicate.
+      </p>
+    );
   }
 
   if (items === null) {
