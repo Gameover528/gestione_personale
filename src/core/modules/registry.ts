@@ -11,6 +11,7 @@ import { alimentazioneModule } from "@/modules/alimentazione/module.config";
 import { esercizioModule } from "@/modules/esercizio/module.config";
 import { impostazioniModule } from "@/modules/impostazioni/module.config";
 import RiepilogoCosti from "@/core/dashboard/widgets/RiepilogoCosti";
+import BilancioEnergetico from "@/core/dashboard/widgets/BilancioEnergetico";
 
 /**
  * Registro centrale delle macro-aree.
@@ -67,6 +68,25 @@ export const macroAree: MacroAreaConfig[] = [
     icon: HeartPulse,
     dashboardHref: "/alimentazione/dashboard",
     moduli: [alimentazioneModule, esercizioModule],
+    widgets: [
+      {
+        // Sta qui e non dentro un modulo perché somma i due: è l'unico punto in
+        // cui Alimentazione ed Esercizio si incontrano davvero.
+        id: "salute.bilancio-energetico",
+        title: "Bilancio energetico di oggi",
+        descrizione:
+          "Le calorie mangiate meno quelle bruciate allenandoti, confrontate con l'obiettivo.",
+        defaultSpan: 1,
+        component: BilancioEnergetico,
+        anteprima: {
+          tipo: "elenco",
+          righe: [
+            { testo: "1.640 kcal nette", nota: "560 sotto l'obiettivo" },
+            { testo: "2.050 mangiate", nota: "− 410 bruciate" },
+          ],
+        },
+      },
+    ],
   },
   {
     id: "impostazioni",

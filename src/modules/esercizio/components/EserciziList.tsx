@@ -95,7 +95,7 @@ function VoceEsercizio({ esercizio }: { esercizio: Esercizio }) {
 
   return (
     <Link
-      href={`/esercizio/${esercizio.id}`}
+      href={`/esercizio/catalogo/${esercizio.id}`}
       // Senza questo Next precarica ogni riga dei risultati: misurato, sono
       // 14 richieste al worker per una ricerca di cinque lettere, e l'elenco
       // cambia a ogni tasto. La scheda si apre comunque in fretta, e qui si

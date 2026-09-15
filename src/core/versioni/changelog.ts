@@ -33,6 +33,21 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.6.0-dev.2",
+    ambiente: "dev",
+    data: "2026-09-15",
+    titolo: "Registrare gli allenamenti, e il bilancio fra mangiato e bruciato",
+    punti: [
+      "La pagina Esercizio ora sono i tuoi allenamenti: crei una sessione, ci aggiungi gli esercizi e per ognuno le serie. Per la forza chiede ripetizioni e carico, per il cardio durata e distanza, e i campi restano compilati così la serie dopo è un tocco solo.",
+      "Ogni allenamento stima le calorie bruciate da durata, tipo di esercizio e peso corporeo (quello che hai già inserito negli obiettivi nutrizionali). È una stima, e l'app lo dice.",
+      "Nuovo riquadro \"Bilancio energetico di oggi\": le calorie mangiate meno quelle bruciate, confrontate con l'obiettivo. È il motivo per cui Alimentazione ed Esercizio stanno nella stessa area.",
+      "Nuovo riquadro con gli allenamenti degli ultimi 7 giorni: quanti, quanti minuti e quante calorie.",
+      "Eliminando un allenamento compare \"Annulla\": torna indietro con tutte le sue serie.",
+      "Il catalogo degli esercizi si è spostato sotto Esercizio › Catalogo esercizi.",
+      "Nessuna migration nuova: le tabelle erano già nella 0008.",
+    ],
+  },
+  {
     versione: "0.6.0-dev.1",
     ambiente: "dev",
     data: "2026-09-14",

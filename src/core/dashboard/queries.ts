@@ -3,6 +3,9 @@
 import { listBollette, totaleBollettePagate } from "@/modules/bollette/queries";
 import { totaleRatePagate } from "@/modules/abbonamenti/queries";
 import type { Bolletta } from "@/modules/bollette/types";
+import { riepilogoSettimana } from "@/modules/alimentazione/queries";
+import { riepilogoAllenamento } from "@/modules/esercizio/allenamenti";
+import { oggiIso } from "@/lib/utils";
 
 export interface RiepilogoCosti {
   daPagare: { totale: number; count: number; prossime: Bolletta[] };
@@ -38,5 +41,41 @@ export async function riepilogoCosti(limite = 5): Promise<RiepilogoCosti> {
       totale: bollettePagate.totale + ratePagate.totale,
       count: bollettePagate.count + ratePagate.count,
     },
+  };
+}
+
+// ----------------------- Area Salute: bilancio energetico -----------------------
+
+export interface BilancioEnergetico {
+  /** Calorie mangiate oggi. */
+  mangiate: number;
+  /** Calorie bruciate oggi allenandosi (stima). */
+  bruciate: number;
+  /** Obiettivo giornaliero di kcal, se impostato. */
+  obiettivo: number | null;
+}
+
+/**
+ * Mangiato contro bruciato, oggi: e' il motivo per cui Alimentazione ed
+ * Esercizio stanno nella stessa area, e l'unico punto in cui i due moduli si
+ * sommano davvero.
+ *
+ * Come per riepilogoCosti, le due funzioni dei moduli si chiamano da server a
+ * server: una richiesta sola dal browser invece di due.
+ */
+export async function bilancioEnergetico(): Promise<BilancioEnergetico> {
+  const [cibo, allenamento] = await Promise.all([
+    riepilogoSettimana(1),
+    riepilogoAllenamento(1),
+  ]);
+
+  const oggi = oggiIso();
+  const giorno = cibo.giorni.find((g) => g.data === oggi);
+  const obiettivoKcal = cibo.obiettivi.find((o) => o.nutriente === "kcal");
+
+  return {
+    mangiate: Math.round(giorno?.kcal ?? 0),
+    bruciate: allenamento.kcalOggi,
+    obiettivo: obiettivoKcal ? Math.round(obiettivoKcal.valore) : null,
   };
 }

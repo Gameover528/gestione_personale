@@ -22,7 +22,7 @@ export default async function EsercizioDettaglioPage({
     <div className="flex flex-col gap-4">
       <div>
         <Link
-          href="/esercizio"
+          href="/esercizio/catalogo"
           className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />

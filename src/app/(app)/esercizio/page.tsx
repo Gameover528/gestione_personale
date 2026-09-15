@@ -1,14 +1,14 @@
 import { PageHeader } from "@/core/components/ui";
-import { EserciziList } from "@/modules/esercizio/components/EserciziList";
+import { AllenamentiList } from "@/modules/esercizio/components/AllenamentiList";
 
-export default function EsercizioPage() {
+export default function AllenamentiPage() {
   return (
     <div>
       <PageHeader
-        title="Esercizio"
-        description="Cerca un esercizio per vedere quali muscoli lavora, con quale attrezzo e come si esegue."
+        title="Allenamenti"
+        description="Le sessioni che hai svolto, con gli esercizi, le serie e le calorie stimate."
       />
-      <EserciziList />
+      <AllenamentiList />
     </div>
   );
 }
