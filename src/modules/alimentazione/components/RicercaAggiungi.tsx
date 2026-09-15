@@ -28,6 +28,7 @@ import {
 } from "@/core/components/controls";
 import { useRicercaAlimenti } from "./useRicercaAlimenti";
 import { RicercaFeedback } from "./RicercaFeedback";
+import { AvvisoDati, AvvisoDatiEsteso } from "./AvvisoDati";
 import { Search, Plus, Check, ArrowLeft } from "lucide-react";
 import { cn, formatDate, oggiIso, parseNumero } from "@/lib/utils";
 
@@ -561,6 +562,11 @@ export function RicercaAggiungi({
             <p className="text-xs text-muted-foreground">
               {Math.round(sel.per100.kcal)} kcal / 100 g · {fonteLabel(sel.fonte)}
             </p>
+            {/* Qui c'è spazio per dire cosa non torna, invece di limitarsi
+                all'icona: è il momento in cui si decide se registrarlo. */}
+            <div className="mt-2">
+              <AvvisoDatiEsteso valori={sel.per100} />
+            </div>
             <button
               onClick={() => setSel(null)}
               className="mt-1 text-sm text-primary hover:underline"
@@ -669,16 +675,22 @@ function RigaAlimento({
     <>
       <span
         className={cn(
-          "block truncate font-medium",
+          "flex items-center gap-1.5 truncate font-medium",
           // I nomi delle fonti esterne arrivano in minuscolo; quelli scritti
           // dall'utente vanno lasciati come li ha scritti.
           a.fonte !== "piatto" && a.fonte !== "manuale" && "capitalize"
         )}
       >
-        {a.nome}
-        {a.marca ? (
-          <span className="font-normal text-muted-foreground"> · {a.marca}</span>
-        ) : null}
+        {/* L'avviso sta qui, prima ancora di scegliere: se i valori di questo
+            risultato non tornano è meglio saperlo adesso che dopo averlo
+            registrato nel diario. */}
+        <AvvisoDati valori={a.per100} />
+        <span className="truncate">
+          {a.nome}
+          {a.marca ? (
+            <span className="font-normal text-muted-foreground"> · {a.marca}</span>
+          ) : null}
+        </span>
       </span>
       <span className="text-xs text-muted-foreground">
         {Math.round(a.per100.kcal)} kcal / 100 g · {fonteLabel(a.fonte)}

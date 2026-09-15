@@ -17,11 +17,13 @@ import {
   type Pasto,
   type Obiettivo,
   type Nutriente,
+  da100,
   fmtQuantita,
   numeroPorzioni,
   valoriPorzione,
   sommaValori,
 } from "../types";
+import { AvvisoDati } from "./AvvisoDati";
 import { useToast } from "@/core/components/Toast";
 import { IconButton, NumberInput, ToggleChip } from "@/core/components/controls";
 import {
@@ -421,14 +423,20 @@ export function DiarioGiorno({
                         className="flex items-center justify-between gap-3 border-t px-2 py-1 text-sm first:border-t-0 sm:px-4 sm:py-2"
                       >
                         <div className="min-w-0 flex-1 pl-2">
-                          <p className="truncate font-medium">
-                            {r.nome_alimento}
-                            {r.marca ? (
-                              <span className="text-muted-foreground">
-                                {" "}
-                                · {r.marca}
-                              </span>
-                            ) : null}
+                          <p className="flex items-center gap-1.5 truncate font-medium">
+                            {/* Vale anche per le righe registrate prima che
+                                questi controlli esistessero: il controllo si
+                                rifà a ogni lettura, non è un campo salvato. */}
+                            <AvvisoDati valori={da100(r)} />
+                            <span className="truncate">
+                              {r.nome_alimento}
+                              {r.marca ? (
+                                <span className="text-muted-foreground">
+                                  {" "}
+                                  · {r.marca}
+                                </span>
+                              ) : null}
+                            </span>
                           </p>
                           {inEdit ? (
                             <div className="mt-1 flex flex-wrap items-center gap-2">

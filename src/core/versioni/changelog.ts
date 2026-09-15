@@ -86,6 +86,9 @@ export const NON_RILASCIATO: NonRilasciato | null = {
     "Caricamento del catalogo esercizi (d1/seed-esercizi.sql)",
   ],
   modifiche: [
+    // --- Qualità dei dati nutrizionali
+    { categoria: "aggiunto", testo: "Gli alimenti con valori nutrizionali che non tornano mostrano un triangolo di avviso, con scritto cosa non torna: vale nella ricerca, nel diario e fra i piatti, anche per quelli registrati tempo fa." },
+
     // --- Area Salute
     { categoria: "aggiunto", testo: "Nuova area Salute, con le sezioni Cibo ed Esercizio." },
     { categoria: "aggiunto", testo: "Catalogo di 1500 esercizi, cercabili per nome, attrezzo o muscolo." },

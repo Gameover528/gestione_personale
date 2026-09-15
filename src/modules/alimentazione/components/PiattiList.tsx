@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { listPiatti, deletePiatto, getPiatto, ripristinaPiatto } from "../queries";
 import { type PiattoConValori } from "../types";
+import { AvvisoDati } from "./AvvisoDati";
 import { Badge } from "@/core/components/ui";
 import { IconButton } from "@/core/components/controls";
 import { useToast } from "@/core/components/Toast";
@@ -98,14 +99,17 @@ export function PiattiList({ iniziali }: { iniziali: PiattoConValori[] }) {
               className="flex items-center justify-between gap-3 px-2 py-2 sm:px-4"
             >
               <div className="min-w-0 pl-2">
-                <p className="truncate font-medium">
-                  {p.nome}
-                  {p.marca ? (
-                    <span className="font-normal text-muted-foreground">
-                      {" "}
-                      · {p.marca}
-                    </span>
-                  ) : null}
+                <p className="flex items-center gap-1.5 truncate font-medium">
+                  <AvvisoDati valori={p.per100} />
+                  <span className="truncate">
+                    {p.nome}
+                    {p.marca ? (
+                      <span className="font-normal text-muted-foreground">
+                        {" "}
+                        · {p.marca}
+                      </span>
+                    ) : null}
+                  </span>
                 </p>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
                   <span>{Math.round(p.per100.kcal)} kcal / 100 g</span>
