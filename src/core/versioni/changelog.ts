@@ -33,6 +33,22 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.6.0-dev.3",
+    ambiente: "dev",
+    data: "2026-09-15",
+    titolo: "Schede ricorrenti, esercizi tuoi e allenamenti nell'andamento",
+    punti: [
+      "Le schede: prepari un allenamento che si ripete (\"Spinta A: panca 4×8 a 60 kg\") e lo avvii quando ti alleni, con tutte le serie già pronte. I numeri vengono copiati, quindi correggerli durante l'allenamento non tocca la scheda.",
+      "Puoi anche richiamare una scheda dentro un allenamento già aperto, per unirne due o aggiungerla a quello che hai già fatto.",
+      "Quando aggiungi un esercizio scegli quante serie mettere in una volta: non serve più premere quattro volte per quattro serie uguali.",
+      "I numeri di ogni serie si correggono direttamente nell'elenco: tocchi il carico, lo cambi, è salvato.",
+      "Cercando un esercizio vedi la sua immagine e i muscoli che lavora, così non sbagli fra nomi che si somigliano.",
+      "Puoi creare esercizi tuoi scegliendo i muscoli da una tavolozza, con l'anteprima della figura che si accende mentre scegli.",
+      "L'Andamento ora ha due sezioni, Cibo e Allenamento, sotto lo stesso periodo: quante sessioni, quanti minuti e un grafico delle calorie mangiate contro quelle bruciate.",
+      "Richiede la migration 0009 (schede).",
+    ],
+  },
+  {
     versione: "0.6.0-dev.2",
     ambiente: "dev",
     data: "2026-09-15",

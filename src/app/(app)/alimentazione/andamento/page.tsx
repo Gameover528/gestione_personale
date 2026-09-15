@@ -1,12 +1,14 @@
 import { PageHeader } from "@/core/components/ui";
-import { AndamentoAlimentazione } from "@/modules/alimentazione/components/AndamentoAlimentazione";
+import { AndamentoSalute } from "@/core/dashboard/AndamentoSalute";
 import { getObiettivi, statistichePeriodo } from "@/modules/alimentazione/queries";
+import { andamentoAllenamenti } from "@/modules/esercizio/allenamenti";
 
 const GIORNI_INIZIALI = 30;
 
 export default async function AndamentoPage() {
-  const [dati, obiettivi] = await Promise.all([
+  const [cibo, allenamenti, obiettivi] = await Promise.all([
     statistichePeriodo(GIORNI_INIZIALI),
+    andamentoAllenamenti(GIORNI_INIZIALI),
     getObiettivi(),
   ]);
 
@@ -14,11 +16,12 @@ export default async function AndamentoPage() {
     <div>
       <PageHeader
         title="Andamento"
-        description="Calorie e macronutrienti nel tempo, confrontati con i tuoi obiettivi"
+        description="Come sono andati cibo e allenamento nel tempo, confrontati con i tuoi obiettivi"
       />
-      <AndamentoAlimentazione
+      <AndamentoSalute
         giorniIniziali={GIORNI_INIZIALI}
-        datiIniziali={dati}
+        ciboIniziale={cibo}
+        allenamentiIniziali={allenamenti}
         obiettivi={obiettivi}
       />
     </div>

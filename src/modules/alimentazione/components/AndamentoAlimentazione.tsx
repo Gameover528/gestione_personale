@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -14,7 +14,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { statistichePeriodo } from "../queries";
 import {
   NUTRIENTI,
   VALORI_ZERO,
@@ -22,14 +21,7 @@ import {
   type Nutriente,
   type Obiettivo,
 } from "../types";
-import { TabBar } from "@/core/components/controls";
 import { cn, oggiIso, spostaGiorno } from "@/lib/utils";
-
-const PERIODI: { value: string; label: string }[] = [
-  { value: "7", label: "7 giorni" },
-  { value: "30", label: "30 giorni" },
-  { value: "90", label: "90 giorni" },
-];
 
 /** Elenco dei giorni del periodo, oggi compreso, in ordine cronologico. */
 function giorniDelPeriodo(giorni: number): string[] {
@@ -49,26 +41,16 @@ function fmt(nutriente: Nutriente, v: number) {
 }
 
 export function AndamentoAlimentazione({
-  giorniIniziali,
-  datiIniziali,
+  giorni,
+  dati,
   obiettivi,
 }: {
-  giorniIniziali: number;
-  datiIniziali: GiornoValori[];
+  /** Periodo scelto: lo comanda il genitore, che lo condivide con gli allenamenti. */
+  giorni: number;
+  /** Giorni registrati, o null mentre si caricano. Li carica il genitore. */
+  dati: GiornoValori[] | null;
   obiettivi: Obiettivo[];
 }) {
-  const [giorni, setGiorni] = useState(giorniIniziali);
-  const [dati, setDati] = useState<GiornoValori[] | null>(datiIniziali);
-
-  // Il periodo di partenza arriva già calcolato dal server; si ricarica solo
-  // quando l'utente cambia periodo.
-  const periodoMostrato = useRef(giorniIniziali);
-  useEffect(() => {
-    if (periodoMostrato.current === giorni) return;
-    periodoMostrato.current = giorni;
-    setDati(null);
-    statistichePeriodo(giorni).then(setDati);
-  }, [giorni]);
 
   /**
    * Serie per i grafici: un punto per ogni giorno del periodo.
@@ -119,13 +101,6 @@ export function AndamentoAlimentazione({
 
   return (
     <div className="space-y-6">
-      <TabBar
-        items={PERIODI}
-        value={String(giorni)}
-        onChange={(v) => setGiorni(Number(v))}
-        label="Periodo da mostrare"
-      />
-
       {dati === null ? (
         <p className="text-sm text-muted-foreground">Caricamento…</p>
       ) : conDati.length === 0 ? (

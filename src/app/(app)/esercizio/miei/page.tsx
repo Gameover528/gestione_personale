@@ -1,5 +1,5 @@
 import { PageHeader } from "@/core/components/ui";
-import { EserciziList } from "@/modules/esercizio/components/EserciziList";
+import { MieiEserciziList } from "@/modules/esercizio/components/MieiEserciziList";
 
 export default function MieiEserciziPage() {
   return (
@@ -8,7 +8,7 @@ export default function MieiEserciziPage() {
         title="I miei esercizi"
         description="Gli esercizi che ti sei creato, per quello che il catalogo non copre. Compaiono nella ricerca insieme a quelli del catalogo."
       />
-      <EserciziList soloMiei />
+      <MieiEserciziList />
     </div>
   );
 }

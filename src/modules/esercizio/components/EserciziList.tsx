@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, ChevronRight, Dumbbell } from "lucide-react";
+import { Search, ChevronRight } from "lucide-react";
 import { listEsercizi } from "../queries";
 import {
   cercaEsercizi,
@@ -14,13 +14,13 @@ import { NOME_MUSCOLO } from "../muscoli/tipi";
 import { inputClass } from "@/core/components/controls";
 
 /**
- * Elenco e ricerca degli esercizi.
+ * Il catalogo, con la ricerca.
  *
- * Il catalogo si scarica una volta sola all'apertura e poi si filtra qui: 1500
- * righe che non cambiano mai non giustificano una chiamata al worker per ogni
- * lettera digitata (è l'errore che avevamo già fatto con gli alimenti).
+ * Gli esercizi si scaricano una volta sola all'apertura e poi si filtrano qui:
+ * 1500 righe che non cambiano mai non giustificano una chiamata al worker per
+ * ogni lettera digitata (è l'errore che avevamo già fatto con gli alimenti).
  */
-export function EserciziList({ soloMiei = false }: { soloMiei?: boolean }) {
+export function EserciziList() {
   const [tutti, setTutti] = useState<Esercizio[] | null>(null);
   const [query, setQuery] = useState("");
 
@@ -30,13 +30,10 @@ export function EserciziList({ soloMiei = false }: { soloMiei?: boolean }) {
 
   const elenco = useMemo(() => {
     if (!tutti) return [];
-    const base = soloMiei ? tutti.filter((e) => e.fonte === "personale") : tutti;
-    if (query.trim().length < 2) {
-      // Senza ricerca: i propri esercizi per primi, poi un assaggio del catalogo.
-      return soloMiei ? base : base.slice(0, 40);
-    }
-    return cercaEsercizi(base, query);
-  }, [tutti, query, soloMiei]);
+    // Senza ricerca si mostra un assaggio: l'elenco completo sono 1500 righe.
+    if (query.trim().length < 2) return tutti.slice(0, 40);
+    return cercaEsercizi(tutti, query);
+  }, [tutti, query]);
 
   if (tutti === null) {
     return <p className="text-sm text-muted-foreground">Caricamento…</p>;
@@ -46,27 +43,23 @@ export function EserciziList({ soloMiei = false }: { soloMiei?: boolean }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {!soloMiei && (
-        <label className="relative block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Cerca fra 1500 esercizi: nome, attrezzo o muscolo…"
-            aria-label="Cerca un esercizio"
-            className={`${inputClass} w-full pl-9`}
-          />
-        </label>
-      )}
+      <label className="relative block">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Cerca fra 1500 esercizi: nome, attrezzo o muscolo…"
+          aria-label="Cerca un esercizio"
+          className={`${inputClass} w-full pl-9`}
+        />
+      </label>
 
       {elenco.length === 0 ? (
         <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-          {soloMiei
-            ? "Non hai ancora creato esercizi tuoi."
-            : query.trim().length >= 2
-              ? "Nessun esercizio trovato."
-              : "Scrivi almeno due lettere per cercare."}
+          {query.trim().length >= 2
+            ? "Nessun esercizio trovato."
+            : "Scrivi almeno due lettere per cercare."}
         </p>
       ) : (
         <ul className="space-y-2">
@@ -78,7 +71,7 @@ export function EserciziList({ soloMiei = false }: { soloMiei?: boolean }) {
         </ul>
       )}
 
-      {!soloMiei && query.trim().length < 2 && (
+      {query.trim().length < 2 && (
         <p className="text-xs text-muted-foreground">
           {miei > 0
             ? `${miei} esercizi tuoi, più il catalogo condiviso.`
@@ -119,17 +112,5 @@ function VoceEsercizio({ esercizio }: { esercizio: Esercizio }) {
       </div>
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
     </Link>
-  );
-}
-
-/** Riquadro vuoto con invito, usato dalla pagina "Miei esercizi". */
-export function NessunEsercizioProprio() {
-  return (
-    <div className="rounded-lg border border-dashed p-10 text-center">
-      <Dumbbell className="mx-auto h-8 w-8 text-muted-foreground" />
-      <p className="mt-2 text-sm text-muted-foreground">
-        Qui finiscono gli esercizi che ti crei tu, per quello che il catalogo non ha.
-      </p>
-    </div>
   );
 }

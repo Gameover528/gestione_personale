@@ -300,12 +300,18 @@ export interface SerieInput {
 }
 
 /**
- * Aggiunge una serie in coda. L'ordine si calcola qui e non lo manda il client:
- * due schede aperte sullo stesso allenamento darebbero lo stesso numero.
+ * Aggiunge una o piu' serie uguali in coda.
+ *
+ * `quante` esiste perche' le serie di un esercizio sono quasi sempre identiche:
+ * registrare "4 x 8 a 60 kg" deve costare un gesto, non quattro.
+ *
+ * L'ordine si calcola qui e non lo manda il client: due schede aperte sullo
+ * stesso allenamento darebbero lo stesso numero.
  */
 export async function aggiungiSerie(
   allenamentoId: string,
-  input: SerieInput
+  input: SerieInput,
+  quante = 1
 ): Promise<void> {
   const user = await requireSessionUser();
   const db = getDb();
@@ -323,25 +329,65 @@ export async function aggiungiSerie(
     .bind(allenamentoId)
     .first<{ ordine: number }>();
 
-  await db
+  // Limite di sicurezza: il numero arriva dal client e una svista in un campo
+  // numerico non deve poter generare migliaia di righe.
+  const numero = Math.min(Math.max(1, Math.floor(quante)), 20);
+  const partenza = (ultimo?.ordine ?? -1) + 1;
+
+  const stmt = db.prepare(
+    `insert into allenamento_serie
+      (id, allenamento_id, user_id, esercizio_id, esercizio_fonte, esercizio_nome,
+       ordine, ripetizioni, peso_kg, durata_min, distanza_km)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  await db.batch(
+    Array.from({ length: numero }, (_, i) =>
+      stmt.bind(
+        crypto.randomUUID(),
+        allenamentoId,
+        user.id,
+        input.esercizio_id,
+        input.esercizio_fonte,
+        input.esercizio_nome,
+        partenza + i,
+        input.ripetizioni,
+        input.peso_kg,
+        input.durata_min,
+        input.distanza_km
+      )
+    )
+  );
+  revalidatePath("/esercizio", "layout");
+}
+
+/**
+ * Corregge i numeri di una serie gia' registrata: e' il gesto che rende utile
+ * partire da una scheda, dove i carichi sono quelli previsti e quasi mai quelli
+ * effettivamente sollevati.
+ */
+export async function aggiornaSerie(
+  id: string,
+  valori: {
+    ripetizioni: number | null;
+    peso_kg: number | null;
+    durata_min: number | null;
+    distanza_km: number | null;
+  }
+): Promise<void> {
+  const user = await requireSessionUser();
+  await getDb()
     .prepare(
-      `insert into allenamento_serie
-        (id, allenamento_id, user_id, esercizio_id, esercizio_fonte, esercizio_nome,
-         ordine, ripetizioni, peso_kg, durata_min, distanza_km)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `update allenamento_serie
+          set ripetizioni = ?, peso_kg = ?, durata_min = ?, distanza_km = ?
+        where id = ? and user_id = ?`
     )
     .bind(
-      crypto.randomUUID(),
-      allenamentoId,
-      user.id,
-      input.esercizio_id,
-      input.esercizio_fonte,
-      input.esercizio_nome,
-      (ultimo?.ordine ?? -1) + 1,
-      input.ripetizioni,
-      input.peso_kg,
-      input.durata_min,
-      input.distanza_km
+      valori.ripetizioni,
+      valori.peso_kg,
+      valori.durata_min,
+      valori.distanza_km,
+      id,
+      user.id
     )
     .run();
   revalidatePath("/esercizio", "layout");
@@ -416,4 +462,47 @@ export async function riepilogoAllenamento(
       .filter((a) => a.data === oggi)
       .reduce((s, a) => s + (a.kcal ?? 0), 0),
   };
+}
+
+/** Un giorno dell'andamento: quanto ci si e' allenati e quanto si e' bruciato. */
+export interface GiornoAllenamento {
+  data: string;
+  sessioni: number;
+  minuti: number;
+  kcal: number;
+}
+
+/**
+ * Allenamenti giorno per giorno, per i grafici dell'andamento.
+ *
+ * Si parte dall'elenco gia' completo di stime invece di rifare i conti in SQL:
+ * le calorie dipendono dal MET degli esercizi svolti, che sta nel codice e non
+ * nel database. Gli allenamenti di una persona sono poche centinaia all'anno,
+ * quindi aggregare qui non costa niente.
+ */
+export async function andamentoAllenamenti(
+  giorni: number
+): Promise<GiornoAllenamento[]> {
+  const elenco = await listAllenamenti(500);
+  const fine = oggiIso();
+  const inizio = new Date(`${fine}T00:00:00Z`);
+  inizio.setUTCDate(inizio.getUTCDate() - (Math.max(1, giorni) - 1));
+  const dal = inizio.toISOString().slice(0, 10);
+
+  const perGiorno = new Map<string, GiornoAllenamento>();
+  for (const a of elenco) {
+    if (a.data < dal || a.data > fine) continue;
+    const g = perGiorno.get(a.data) ?? {
+      data: a.data,
+      sessioni: 0,
+      minuti: 0,
+      kcal: 0,
+    };
+    g.sessioni += 1;
+    g.minuti += a.durata_min ?? 0;
+    g.kcal += a.kcal ?? 0;
+    perGiorno.set(a.data, g);
+  }
+
+  return [...perGiorno.values()].sort((x, y) => x.data.localeCompare(y.data));
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ChevronRight, Dumbbell } from "lucide-react";
+import { Plus, Trash2, ChevronRight, Dumbbell, ClipboardList } from "lucide-react";
 import {
   listAllenamenti,
   creaAllenamento,
@@ -81,13 +81,21 @@ export function AllenamentiList() {
           onAnnulla={() => setNuovoAperto(false)}
         />
       ) : (
-        <button
-          onClick={() => setNuovoAperto(true)}
-          className={`${bottonePrimarioClass} self-start`}
-        >
-          <Plus className="h-4 w-4" />
-          Nuovo allenamento
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setNuovoAperto(true)}
+            className={bottonePrimarioClass}
+          >
+            <Plus className="h-4 w-4" />
+            Nuovo allenamento
+          </button>
+          {/* Su telefono le schede non stanno in barra: qui è il punto in cui
+              servono, perché è da qui che si parte per allenarsi. */}
+          <Link href="/esercizio/schede" prefetch={false} className={bottoneClass}>
+            <ClipboardList className="h-4 w-4" />
+            Inizia da una scheda
+          </Link>
+        </div>
       )}
 
       {items.length === 0 ? (

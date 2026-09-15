@@ -1,4 +1,4 @@
-import { Dumbbell, ListChecks, Search } from "lucide-react";
+import { Dumbbell, ListChecks, Search, ClipboardList } from "lucide-react";
 import type { ModuleConfig } from "@/core/modules/types";
 import RiepilogoAllenamento from "./widgets/RiepilogoAllenamento";
 
@@ -11,8 +11,15 @@ export const esercizioModule: ModuleConfig = {
     // La pagina principale sono gli allenamenti svolti: è quello che si apre
     // per registrare o rivedere, mentre il catalogo si consulta di rado.
     { label: "Esercizio", href: "/esercizio", icon: Dumbbell },
-    // Catalogo e esercizi propri restano nella sidebar del desktop: in barra i
-    // posti sono cinque e li prendono Riepilogo, Cibo, ＋, Esercizio, Andamento.
+    // Schede, catalogo ed esercizi propri restano nella sidebar del desktop: in
+    // barra i posti sono cinque e li prendono Riepilogo, Cibo, ＋, Esercizio,
+    // Andamento. Su telefono ci si arriva dalla pagina Esercizio.
+    {
+      label: "Schede",
+      href: "/esercizio/schede",
+      icon: ClipboardList,
+      fuoriBarra: true,
+    },
     {
       label: "Catalogo esercizi",
       labelBreve: "Catalogo",
