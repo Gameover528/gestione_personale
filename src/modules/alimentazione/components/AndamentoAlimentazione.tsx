@@ -43,12 +43,19 @@ function fmt(nutriente: Nutriente, v: number) {
 export function AndamentoAlimentazione({
   giorni,
   dati,
+  bruciate,
   obiettivi,
 }: {
   /** Periodo scelto: lo comanda il genitore, che lo condivide con gli allenamenti. */
   giorni: number;
   /** Giorni registrati, o null mentre si caricano. Li carica il genitore. */
   dati: GiornoValori[] | null;
+  /**
+   * Calorie bruciate per giorno. Forma volutamente neutra invece del tipo del
+   * modulo esercizio: qui serve solo "quel giorno, quante", e non vale
+   * legare l'alimentazione a un altro modulo per due campi.
+   */
+  bruciate: { data: string; kcal: number }[] | null;
   obiettivi: Obiettivo[];
 }) {
 
@@ -62,18 +69,55 @@ export function AndamentoAlimentazione({
    */
   const serie = useMemo(() => {
     const perData = new Map((dati ?? []).map((g) => [g.data, g]));
+    const perBruciate = new Map((bruciate ?? []).map((b) => [b.data, b.kcal]));
     return giorniDelPeriodo(giorni).map((data) => {
       const g = perData.get(data);
+      const bruciato = perBruciate.get(data) ?? 0;
+      const mangiato = g?.kcal ?? null;
+
+      /**
+       * Le bruciate si disegnano come barra sospesa che parte dalla cima delle
+       * mangiate e scende: si legge quanto è entrato (la barra che sale) e
+       * quanto ne è stato tolto (quella che torna giù), e dove finisce è il
+       * netto della giornata.
+       *
+       * Quando non si è mangiato — o semplicemente non si è ancora segnato
+       * niente — la partenza è zero e la barra scende sotto la linea, che è
+       * esattamente quello che è successo.
+       */
+      const partenza = mangiato ?? 0;
+
       return {
         data,
         label: etichettaGiorno(data),
-        kcal: g?.kcal ?? null,
+        kcal: mangiato,
+        bruciate: bruciato || null,
+        intervalloBruciate: bruciato ? [partenza, partenza - bruciato] : null,
         proteine: g?.proteine ?? null,
         carboidrati: g?.carboidrati ?? null,
         grassi: g?.grassi ?? null,
       };
     });
-  }, [dati, giorni]);
+  }, [dati, bruciate, giorni]);
+
+  /**
+   * Estremi della scala: in basso il punto più profondo raggiunto dalle
+   * bruciate (zero se non scendono mai sotto), in alto le mangiate o
+   * l'obiettivo, altrimenti la sua linea resta fuori dal grafico proprio
+   * quando lo si rispetta.
+   */
+  const scala = useMemo(() => {
+    let basso = 0;
+    let alto = 0;
+    for (const p of serie) {
+      if (p.kcal !== null) alto = Math.max(alto, p.kcal);
+      if (p.intervalloBruciate) {
+        alto = Math.max(alto, p.intervalloBruciate[0]);
+        basso = Math.min(basso, p.intervalloBruciate[1]);
+      }
+    }
+    return { basso: Math.floor(basso), alto: Math.ceil(alto) };
+  }, [serie]);
 
   /** Giorni effettivamente registrati: la query ne restituisce solo quelli. */
   const conDati = dati ?? [];
@@ -152,7 +196,7 @@ export function AndamentoAlimentazione({
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
               <p className="text-sm font-semibold">Calorie per giorno</p>
               <p className="text-xs text-muted-foreground">
-                i giorni senza registrazioni restano vuoti
+                le bruciate scendono dalla cima delle mangiate
               </p>
             </div>
             <div
@@ -178,12 +222,19 @@ export function AndamentoAlimentazione({
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    // La scala comprende anche l'obiettivo, altrimenti la sua
-                    // linea resta fuori dal grafico proprio quando lo si rispetta.
-                    domain={[0, (max: number) => Math.ceil(Math.max(max, obKcal?.valore ?? 0))]}
+                    domain={[
+                      scala.basso,
+                      Math.ceil(Math.max(scala.alto, obKcal?.valore ?? 0)),
+                    ]}
                   />
                   <Tooltip
-                    formatter={(v: number) => [`${Math.round(v)} kcal`, "Calorie"]}
+                    formatter={(v: number | number[], nome: string, voce) => {
+                      if (nome === "intervalloBruciate") {
+                        const b = (voce?.payload as { bruciate?: number })?.bruciate;
+                        return [`${Math.round(b ?? 0)} kcal`, "Bruciate (stima)"];
+                      }
+                      return [`${Math.round(v as number)} kcal`, "Mangiate"];
+                    }}
                   />
                   {obKcal && obKcal.valore > 0 && (
                     <ReferenceLine
@@ -192,11 +243,23 @@ export function AndamentoAlimentazione({
                       strokeDasharray="4 4"
                     />
                   )}
+                  {/* Lo zero va segnato: senza, una barra che scende sotto non
+                      si distingue da una corta. */}
+                  {scala.basso < 0 && (
+                    <ReferenceLine y={0} stroke="hsl(var(--border))" />
+                  )}
                   <Bar
                     isAnimationActive={false}
                     dataKey="kcal"
                     fill="hsl(var(--primary))"
                     radius={[4, 4, 0, 0]}
+                  />
+                  {/* Barra sospesa: parte dalla cima delle mangiate e scende. */}
+                  <Bar
+                    isAnimationActive={false}
+                    dataKey="intervalloBruciate"
+                    fill="hsl(var(--warning))"
+                    radius={[0, 0, 4, 4]}
                   />
                 </BarChart>
               </ResponsiveContainer>

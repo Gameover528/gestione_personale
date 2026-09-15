@@ -180,3 +180,59 @@ export async function ripristinaEsercizio(e: Esercizio): Promise<void> {
     .run();
   revalidatePath("/esercizio", "layout");
 }
+
+// ----------------------- Preferenze del modulo -----------------------
+
+const CHIAVE_PREFERENZE = "esercizio:preferenze";
+
+export interface PreferenzeEsercizio {
+  /**
+   * Quanti giorni a settimana ci si e' prefissati di allenarsi.
+   *
+   * Serve a dare un metro all'aderenza: "2 giorni su 30" non dice niente,
+   * perche' nessuno si allena tutti i giorni. Con 4 giorni a settimana, su un
+   * mese l'obiettivo diventa ~17 e il confronto ha un senso.
+   *
+   * Zero significa "non me lo sono prefissato": in quel caso l'aderenza non si
+   * mostra, invece di inventare un bersaglio.
+   */
+  giorniSettimana: number;
+}
+
+// Non esportata: un file "use server" puo' esportare solo funzioni async.
+const PREFERENZE_ESERCIZIO_DEFAULT: PreferenzeEsercizio = {
+  giorniSettimana: 0,
+};
+
+export async function getPreferenzeEsercizio(): Promise<PreferenzeEsercizio> {
+  const user = await requireSessionUser();
+  const row = await getDb()
+    .prepare("select value from user_preferences where user_id = ? and key = ?")
+    .bind(user.id, CHIAVE_PREFERENZE)
+    .first<{ value: string }>();
+  if (!row) return PREFERENZE_ESERCIZIO_DEFAULT;
+  try {
+    const salvato = JSON.parse(row.value) as Partial<PreferenzeEsercizio>;
+    const n = Number(salvato.giorniSettimana);
+    return {
+      giorniSettimana: Number.isFinite(n) ? Math.min(7, Math.max(0, Math.round(n))) : 0,
+    };
+  } catch {
+    return PREFERENZE_ESERCIZIO_DEFAULT;
+  }
+}
+
+export async function savePreferenzeEsercizio(
+  pref: PreferenzeEsercizio
+): Promise<void> {
+  const user = await requireSessionUser();
+  const giorniSettimana = Math.min(7, Math.max(0, Math.round(pref.giorniSettimana || 0)));
+  await getDb()
+    .prepare(
+      `insert into user_preferences (user_id, key, value, updated_at)
+       values (?, ?, ?, datetime('now'))
+       on conflict (user_id, key) do update set value = excluded.value, updated_at = excluded.updated_at`
+    )
+    .bind(user.id, CHIAVE_PREFERENZE, JSON.stringify({ giorniSettimana }))
+    .run();
+}

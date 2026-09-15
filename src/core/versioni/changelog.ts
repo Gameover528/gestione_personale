@@ -33,6 +33,17 @@ export interface Rilascio {
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
   {
+    versione: "0.6.0-dev.4",
+    ambiente: "dev",
+    data: "2026-09-15",
+    titolo: "Calorie bruciate nel grafico del cibo, e obiettivo di giorni a settimana",
+    punti: [
+      "Nel grafico delle calorie per giorno le bruciate scendono dalla cima delle mangiate: si vede quanto hai messo dentro e quanto ne hai tolto, e dove finisce la barra è il netto della giornata. Vanno sotto lo zero solo se sopra non c'è niente, anche quando il cibo non è ancora stato segnato.",
+      "Nelle preferenze puoi dire quanti giorni a settimana conti di allenarti: l'Andamento confronta i giorni allenati con quelli che ti eri prefissato (\"5 su 17\") invece che con tutti i giorni del calendario, che non voleva dire niente.",
+      "Tolto il grafico doppione dalla sezione Allenamento: il confronto fra mangiate e bruciate sta ora solo nella sezione Cibo.",
+    ],
+  },
+  {
     versione: "0.6.0-dev.3",
     ambiente: "dev",
     data: "2026-09-15",

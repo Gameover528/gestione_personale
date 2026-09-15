@@ -6,7 +6,7 @@ export default function PreferenzePage() {
     <div>
       <PageHeader
         title="Preferenze moduli"
-        description="Valori di default per Bollette e Alimentazione."
+        description="Valori di default per Bollette, Alimentazione ed Esercizio."
       />
       <PreferenzeModuli />
     </div>

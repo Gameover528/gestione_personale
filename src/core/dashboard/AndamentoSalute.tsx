@@ -31,11 +31,14 @@ const SEZIONI: { value: string; label: string }[] = [
  */
 export function AndamentoSalute({
   giorniIniziali,
+  giorniSettimana,
   ciboIniziale,
   allenamentiIniziali,
   obiettivi,
 }: {
   giorniIniziali: number;
+  /** Giorni a settimana prefissati (0 = nessun obiettivo), da Preferenze moduli. */
+  giorniSettimana: number;
   ciboIniziale: GiornoValori[];
   allenamentiIniziali: GiornoAllenamento[];
   obiettivi: Obiettivo[];
@@ -80,10 +83,19 @@ export function AndamentoSalute({
         <AndamentoAlimentazione
           giorni={giorni}
           dati={cibo}
+          // Il grafico delle calorie mostra anche quelle bruciate: qui bastano
+          // giorno e quantità, non tutto il riepilogo dell'allenamento.
+          bruciate={
+            allenamenti?.map((a) => ({ data: a.data, kcal: a.kcal })) ?? null
+          }
           obiettivi={obiettivi}
         />
       ) : (
-        <AndamentoAllenamenti giorni={giorni} dati={allenamenti} cibo={cibo} />
+        <AndamentoAllenamenti
+          giorni={giorni}
+          dati={allenamenti}
+          giorniSettimana={giorniSettimana}
+        />
       )}
     </div>
   );

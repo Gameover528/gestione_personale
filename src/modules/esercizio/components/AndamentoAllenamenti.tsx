@@ -5,14 +5,12 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import type { GiornoAllenamento } from "../allenamenti";
-import type { GiornoValori } from "@/modules/alimentazione/types";
 import { oggiIso, spostaGiorno } from "@/lib/utils";
 
 function giorniDelPeriodo(giorni: number): string[] {
@@ -28,43 +26,41 @@ function etichettaGiorno(iso: string): string {
 }
 
 /**
- * L'andamento dell'allenamento, e il confronto con quello che si è mangiato.
+ * L'andamento dell'allenamento: quanto ci si è allenati e quanto si è bruciato.
  *
- * Il grafico "mangiate contro bruciate" è la ragione per cui cibo ed esercizio
- * stanno nella stessa area: da soli i due moduli non possono disegnarlo.
+ * Il confronto con le calorie mangiate non sta qui ma nella sezione Cibo, dove
+ * le due barre si leggono insieme: averne una copia anche in questa sezione
+ * voleva dire disegnare lo stesso dato due volte.
  */
 export function AndamentoAllenamenti({
   giorni,
   dati,
-  cibo,
+  giorniSettimana,
 }: {
   giorni: number;
   /** Giorni con allenamenti, o null mentre si caricano. */
   dati: GiornoAllenamento[] | null;
-  /** Giorni con pasti registrati, per il confronto energetico. */
-  cibo: GiornoValori[] | null;
+  /**
+   * Giorni a settimana che ci si è prefissati (0 = nessun obiettivo). Da
+   * Impostazioni › Preferenze moduli.
+   */
+  giorniSettimana: number;
 }) {
   const serie = useMemo(() => {
     const perData = new Map((dati ?? []).map((g) => [g.data, g]));
-    const perCibo = new Map((cibo ?? []).map((g) => [g.data, g]));
     return giorniDelPeriodo(giorni).map((data) => {
       const a = perData.get(data);
-      const c = perCibo.get(data);
       return {
         data,
         label: etichettaGiorno(data),
         // I giorni senza allenamento valgono null e non zero, come già fatto
         // per i pasti: con zero il grafico disegna una barra invisibile su ogni
-        // giorno vuoto e il passaggio del mouse annuncia "0 kcal" dove non c'è
+        // giorno vuoto e il passaggio del mouse annuncia "0 min" dove non c'è
         // niente da annunciare.
         minuti: a?.minuti || null,
-        // Le bruciate si disegnano in negativo: sotto la linea dello zero si
-        // legge a colpo d'occhio cosa entra e cosa esce.
-        bruciate: a?.kcal ? -a.kcal : null,
-        mangiate: c?.kcal ?? null,
       };
     });
-  }, [dati, cibo, giorni]);
+  }, [dati, giorni]);
 
   const conDati = dati ?? [];
   const totali = useMemo(
@@ -92,13 +88,28 @@ export function AndamentoAllenamenti({
 
   const perSettimana = (totali.sessioni / giorni) * 7;
 
+  /**
+   * Quanti giorni di allenamento ci si aspettava nel periodo, secondo
+   * l'obiettivo settimanale. Senza obiettivo si resta sul semplice conteggio:
+   * confrontare i giorni allenati con *tutti* i giorni del calendario darebbe
+   * sempre percentuali basse e senza significato, perché nessuno si allena
+   * sette giorni su sette.
+   */
+  const attesi = giorniSettimana > 0 ? Math.round((giorni / 7) * giorniSettimana) : 0;
+  const aderenza =
+    attesi > 0 ? Math.round((conDati.length / attesi) * 100) : null;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Riquadro
           titolo="Allenamenti"
           valore={String(totali.sessioni)}
-          nota={`${perSettimana.toFixed(1)} a settimana`}
+          nota={
+            giorniSettimana > 0
+              ? `${perSettimana.toFixed(1)} a settimana su ${giorniSettimana}`
+              : `${perSettimana.toFixed(1)} a settimana`
+          }
         />
         <Riquadro
           titolo="Tempo totale"
@@ -123,67 +134,23 @@ export function AndamentoAllenamenti({
         />
         <Riquadro
           titolo="Giorni con allenamento"
-          valore={`${conDati.length} / ${giorni}`}
-          nota={`${Math.round((conDati.length / giorni) * 100)}% del periodo`}
+          valore={
+            attesi > 0 ? `${conDati.length} / ${attesi}` : String(conDati.length)
+          }
+          nota={
+            aderenza === null
+              ? "imposta i giorni a settimana nelle preferenze"
+              : `${aderenza}% di quanto ti eri prefissato`
+          }
         />
       </div>
 
-      <div className="rounded-lg border p-4">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <p className="text-sm font-semibold">Mangiate contro bruciate</p>
-          <p className="text-xs text-muted-foreground">
-            le bruciate sono una stima, disegnate sotto lo zero
-          </p>
-        </div>
-        <div
-          role="img"
-          aria-label={`Confronto fra calorie mangiate e calorie bruciate negli ultimi ${giorni} giorni: ${totali.kcal} kcal bruciate in totale su ${totali.sessioni} allenamenti.`}
-          className="h-64 w-full"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={serie}
-              stackOffset="sign"
-              margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-              <XAxis
-                dataKey="label"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                interval="preserveStartEnd"
-                minTickGap={16}
-              />
-              <YAxis fontSize={12} tickLine={false} axisLine={false} />
-              <Tooltip
-                formatter={(v: number, nome: string) => [
-                  `${Math.abs(Math.round(v))} kcal`,
-                  nome === "mangiate" ? "Mangiate" : "Bruciate",
-                ]}
-              />
-              <Legend
-                formatter={(v: string) =>
-                  v === "mangiate" ? "Mangiate" : "Bruciate (stima)"
-                }
-              />
-              <Bar
-                isAnimationActive={false}
-                dataKey="mangiate"
-                fill="hsl(var(--primary))"
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar
-                isAnimationActive={false}
-                dataKey="bruciate"
-                fill="hsl(var(--warning))"
-                radius={[0, 0, 4, 4]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
+      {/*
+        Il confronto fra mangiate e bruciate sta nella sezione Cibo, dove le
+        calorie si leggono insieme al resto: tenerne una copia anche qui
+        significava disegnare due volte lo stesso dato. Qui resta ciò che
+        riguarda solo l'allenamento.
+      */}
       <div className="rounded-lg border p-4">
         <p className="mb-3 text-sm font-semibold">Minuti di allenamento per giorno</p>
         <div
