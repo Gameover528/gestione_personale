@@ -36,6 +36,33 @@ interface RigaPersonale {
   note: string | null;
 }
 
+/** Riga del catalogo senza le colonne pesanti, per gli elenchi. */
+interface RigaCatalogoLeggera {
+  id: string;
+  nome: string;
+  muscoli: string;
+  muscoli_secondari: string;
+  parti_corpo: string;
+  attrezzi: string;
+  ha_gif: number;
+}
+
+/** Versione da elenco: senza istruzioni, e con un sì/no al posto del link alla GIF. */
+function daCatalogoLeggero(r: RigaCatalogoLeggera): Esercizio {
+  return {
+    id: r.id,
+    fonte: "catalogo",
+    nome: r.nome,
+    muscoli: elenco(r.muscoli),
+    muscoli_secondari: elenco(r.muscoli_secondari),
+    parti_corpo: elenco(r.parti_corpo),
+    attrezzi: elenco(r.attrezzi),
+    istruzioni: [],
+    gif_url: null,
+    ha_gif: !!r.ha_gif,
+  };
+}
+
 function daCatalogo(r: RigaCatalogo): Esercizio {
   return {
     id: r.id,
@@ -71,6 +98,11 @@ function daPersonale(r: RigaPersonale): Esercizio {
  * Si scarica tutto in un colpo perché il catalogo è fisso (1500 righe che non
  * cambiano mai) e la ricerca poi avviene nel browser: una chiamata sola invece
  * di una per ogni lettera digitata. È la lezione già imparata con gli alimenti.
+ *
+ * Ma "tutto" vuol dire tutto quello che serve a cercare, non tutte le colonne:
+ * mandando anche istruzioni e link delle GIF la risposta arrivava a 1,18 MB e
+ * il Worker sforava il limite di CPU (errore 1102). Quelle si leggono nella
+ * scheda del singolo esercizio.
  */
 export async function listEsercizi(): Promise<Esercizio[]> {
   const user = await requireSessionUser();
@@ -83,16 +115,36 @@ export async function listEsercizi(): Promise<Esercizio[]> {
       )
       .bind(user.id)
       .all<RigaPersonale>(),
+    // Niente istruzioni e niente gif_url: l'elenco serve a cercare e a
+    // scegliere, e quelle due colonne pesano 848 KB sui 977 del catalogo —
+    // il 78% solo le istruzioni, che qui non si mostrano mai. Si leggono
+    // nella scheda del singolo esercizio, con getEsercizio.
+    //
+    // Non è un'ottimizzazione di lusso: con tutto il catalogo la risposta era
+    // di 1,18 MB, e serializzarla superava il limite di CPU per richiesta del
+    // Worker (errore 1102) ogni volta che si apriva un allenamento.
     db
       .prepare(
-        "select id, nome, gif_url, muscoli, muscoli_secondari, parti_corpo, attrezzi, istruzioni from esercizi_catalogo order by nome asc"
+        `select id, nome, muscoli, muscoli_secondari, parti_corpo, attrezzi,
+                gif_url is not null as ha_gif
+           from esercizi_catalogo order by nome asc`
       )
-      .all<RigaCatalogo>(),
+      .all<RigaCatalogoLeggera>(),
   ]);
+
+  // I nomi che l'utente ha dato agli esercizi del catalogo sostituiscono quelli
+  // inglesi, ma l'originale resta in `nome_originale`: chi ha ribattezzato
+  // "Barbell Bench Press" in "Panca piana" deve continuare a trovarlo anche
+  // cercando in inglese.
+  const nomi = await leggiNomi(user.id);
+  const rinomina = (e: Esercizio): Esercizio => {
+    const mio = nomi[e.id];
+    return mio ? { ...e, nome: mio, nome_originale: e.nome } : e;
+  };
 
   return [
     ...(personali.results ?? []).map(daPersonale),
-    ...(catalogo.results ?? []).map(daCatalogo),
+    ...(catalogo.results ?? []).map(daCatalogoLeggero).map(rinomina),
   ];
 }
 
@@ -115,7 +167,13 @@ export async function getEsercizio(id: string): Promise<Esercizio | null> {
     )
     .bind(id)
     .first<RigaCatalogo>();
-  return c ? daCatalogo(c) : null;
+  if (!c) return null;
+
+  const e = daCatalogo(c);
+  const rinominato = (await leggiNomi(user.id))[e.id];
+  return rinominato
+    ? { ...e, nome: rinominato, nome_originale: e.nome }
+    : e;
 }
 
 export interface EsercizioInput {
@@ -235,4 +293,56 @@ export async function savePreferenzeEsercizio(
     )
     .bind(user.id, CHIAVE_PREFERENZE, JSON.stringify({ giorniSettimana }))
     .run();
+}
+
+// ----------------------- Nomi personalizzati -----------------------
+
+const CHIAVE_NOMI = "esercizio:nomi";
+
+/**
+ * I nomi che l'utente ha dato agli esercizi del catalogo.
+ *
+ * Il catalogo e' in inglese e condiviso fra tutti, quindi non si tocca: qui si
+ * tiene una mappa "id esercizio -> come lo chiamo io", per utente. Sta nelle
+ * preferenze e non in una tabella sua perche' sono una manciata di voci (si
+ * rinominano gli esercizi che si usano davvero, non 1500) e cosi' non serve
+ * una migration.
+ */
+async function leggiNomi(userId: string): Promise<Record<string, string>> {
+  const row = await getDb()
+    .prepare("select value from user_preferences where user_id = ? and key = ?")
+    .bind(userId, CHIAVE_NOMI)
+    .first<{ value: string }>();
+  if (!row) return {};
+  try {
+    const v = JSON.parse(row.value);
+    return v && typeof v === "object" ? (v as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Rinomina un esercizio del catalogo. Un nome vuoto toglie la
+ * personalizzazione e fa tornare quello originale.
+ */
+export async function rinominaEsercizio(
+  id: string,
+  nome: string
+): Promise<void> {
+  const user = await requireSessionUser();
+  const nomi = await leggiNomi(user.id);
+  const pulito = nome.trim().replace(/\s+/g, " ").slice(0, 80);
+  if (pulito) nomi[id] = pulito;
+  else delete nomi[id];
+
+  await getDb()
+    .prepare(
+      `insert into user_preferences (user_id, key, value, updated_at)
+       values (?, ?, ?, datetime('now'))
+       on conflict (user_id, key) do update set value = excluded.value, updated_at = excluded.updated_at`
+    )
+    .bind(user.id, CHIAVE_NOMI, JSON.stringify(nomi))
+    .run();
+  revalidatePath("/esercizio", "layout");
 }

@@ -336,10 +336,11 @@ function IntestazioneAllenamento({
   const [modifica, setModifica] = useState(false);
   const [nome, setNome] = useState(dati.nome ?? "");
   const [durata, setDurata] = useState(dati.durata_min?.toString() ?? "");
+  const [data, setData] = useState(dati.data);
 
   async function salva() {
     await aggiornaAllenamento(dati.id, {
-      data: dati.data,
+      data: data || dati.data,
       nome: nome.trim() || null,
       durata_min: durata ? Number(durata) : null,
       note: dati.note,
@@ -351,7 +352,19 @@ function IntestazioneAllenamento({
   if (modifica) {
     return (
       <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
+          {/* La data si corregge anche dopo: un allenamento si registra spesso
+              a fine giornata o il giorno dopo, e sbagliarla non deve
+              costringere a rifare tutto da capo. */}
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Data</span>
+            <input
+              type="date"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
+              className={inputClass}
+            />
+          </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Nome</span>
             <input

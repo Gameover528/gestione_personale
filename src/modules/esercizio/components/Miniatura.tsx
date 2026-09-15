@@ -17,10 +17,12 @@ export function Miniatura({
   esercizio,
   lato = 40,
 }: {
-  esercizio: Pick<Esercizio, "id" | "gif_url">;
+  esercizio: Pick<Esercizio, "id" | "gif_url" | "ha_gif">;
   lato?: number;
 }) {
-  if (!esercizio.gif_url) {
+  // Negli elenchi il link non viaggia (pesa 70 KB su 1500 righe): arriva solo
+  // un sì/no, perché l'indirizzo da cui si scarica lo costruiamo noi dall'id.
+  if (!esercizio.gif_url && !esercizio.ha_gif) {
     return (
       <span
         aria-hidden

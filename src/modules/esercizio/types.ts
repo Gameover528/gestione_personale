@@ -1,4 +1,5 @@
 import { normalizzaMuscoli, type Muscolo } from "./muscoli/tipi";
+import { espandi } from "./traduzioni";
 
 /**
  * Un esercizio, da qualunque parte arrivi.
@@ -14,6 +15,12 @@ export interface Esercizio {
   id: string;
   fonte: FonteEsercizio;
   nome: string;
+  /**
+   * Nome originale del catalogo, presente solo quando l'utente l'ha
+   * rinominato: resta cercabile, così chi ha ribattezzato "Barbell Bench
+   * Press" in "Panca piana" continua a trovarlo anche scrivendo in inglese.
+   */
+  nome_originale?: string | null;
   /** Nomi grezzi come li scrive la fonte: la traduzione in gruppi disegnabili è a parte. */
   muscoli: string[];
   muscoli_secondari: string[];
@@ -21,6 +28,8 @@ export interface Esercizio {
   parti_corpo: string[];
   istruzioni: string[];
   gif_url: string | null;
+  /** Negli elenchi il link non viaggia: basta sapere se una GIF esiste. */
+  ha_gif?: boolean;
   note?: string | null;
 }
 
@@ -67,24 +76,55 @@ export function cercaEsercizi(
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
 
-  const punteggio = (e: Esercizio): number => {
-    const nome = e.nome.toLowerCase();
-    if (nome === q) return 0;
-    if (nome.startsWith(q)) return 1;
-    if (new RegExp(`\\b${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(nome)) return 2;
-    if (nome.includes(q)) return 3;
-    // Ultimo criterio: l'attrezzo o il muscolo, così "dumbbell" o "chest"
-    // restituiscono qualcosa anche se non compaiono nel nome.
-    if (e.attrezzi.some((a) => a.toLowerCase().includes(q))) return 4;
-    if ([...e.muscoli, ...e.muscoli_secondari].some((m) => m.toLowerCase().includes(q)))
-      return 5;
-    return 99;
-  };
+  /**
+   * Si cerca per parole e non come unica stringa, e ogni parola viene espansa
+   * nelle sue forme inglesi: il catalogo è in inglese ma chi cerca scrive
+   * "panca piana", non "bench press". Chi scrive già in inglese non perde
+   * niente, perché l'espansione tiene sempre anche la parola originale.
+   */
+  const token = q.split(/\s+/).filter(Boolean).map(espandi);
 
-  return esercizi
-    .map((e) => ({ e, p: punteggio(e) }))
-    .filter((x) => x.p < 99)
-    .sort((a, b) => a.p - b.p || a.e.nome.localeCompare(b.e.nome))
+  /** Quante parole cercate trovano riscontro nel nome, e quante altrove. */
+  function riscontri(e: Esercizio): { nome: number; altrove: number } {
+    const nome = e.nome.toLowerCase();
+    const contorno = [e.nome_originale ?? "", ...e.attrezzi, ...e.muscoli, ...e.muscoli_secondari]
+      .join(" ")
+      .toLowerCase();
+    let inNome = 0;
+    let fuori = 0;
+    for (const forme of token) {
+      if (forme.some((f) => nome.includes(f))) inNome++;
+      else if (forme.some((f) => contorno.includes(f))) fuori++;
+    }
+    return { nome: inNome, altrove: fuori };
+  }
+
+  const valutati = esercizi
+    .map((e) => ({ e, r: riscontri(e) }))
+    .filter((x) => x.r.nome + x.r.altrove > 0);
+
+  // Prima chi soddisfa TUTTE le parole cercate: "panca manubri" deve dare la
+  // panca con manubri, non tutto ciò che contiene "panca". Se nessuno le
+  // soddisfa tutte si ripiega su chi ne prende di più, invece di non dare
+  // niente.
+  const complete = valutati.filter((x) => x.r.nome + x.r.altrove === token.length);
+  const base = complete.length > 0 ? complete : valutati;
+
+  return base
+    .sort((a, b) => {
+      // A parità, conta più un riscontro nel nome che nell'attrezzo.
+      const pa = a.r.nome * 2 + a.r.altrove;
+      const pb = b.r.nome * 2 + b.r.altrove;
+      if (pa !== pb) return pb - pa;
+      const na = a.e.nome.toLowerCase();
+      const nb = b.e.nome.toLowerCase();
+      // A parità di riscontri vince il nome più corto: "Cable Lateral Raise" è
+      // l'esercizio che si cercava, "Assisted Lying Leg Raise With Lateral
+      // Throw Down" contiene le stesse parole ma è un'altra cosa. Le parole in
+      // più sono quasi sempre roba che allontana dal termine cercato.
+      if (na.length !== nb.length) return na.length - nb.length;
+      return na.localeCompare(nb);
+    })
     .slice(0, limite)
     .map((x) => x.e);
 }

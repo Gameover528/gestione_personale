@@ -15,6 +15,7 @@ import { cercaEsercizi, muscoliDisegnabili, type Esercizio } from "../types";
 import { metEsercizio } from "../met";
 import { NOME_MUSCOLO } from "../muscoli/tipi";
 import { Miniatura } from "./Miniatura";
+import { oggiIso } from "@/lib/utils";
 import { useToast } from "@/core/components/Toast";
 import { Card, CardTitle } from "@/core/components/ui";
 import {
@@ -47,6 +48,7 @@ export function SchedaDettaglio({ id }: { id: string }) {
   const [esercizi, setEsercizi] = useState<Esercizio[]>([]);
   const [scelto, setScelto] = useState<Esercizio | null>(null);
   const [avvio, setAvvio] = useState(false);
+  const [data, setData] = useState(oggiIso());
   const toast = useToast();
 
   const load = useCallback(() => {
@@ -67,7 +69,7 @@ export function SchedaDettaglio({ id }: { id: string }) {
   async function handleInizia() {
     setAvvio(true);
     try {
-      const idAllenamento = await iniziaDaScheda(id);
+      const idAllenamento = await iniziaDaScheda(id, data);
       router.push(`/esercizio/allenamento/${idAllenamento}`);
     } finally {
       setAvvio(false);
@@ -96,14 +98,29 @@ export function SchedaDettaglio({ id }: { id: string }) {
               : `${dati.esercizi.length} eserciz${dati.esercizi.length === 1 ? "io" : "i"} · ${serieTotali} serie previste`}
           </p>
         </div>
-        <button
-          onClick={handleInizia}
-          disabled={dati.esercizi.length === 0 || avvio}
-          className={bottonePrimarioClass}
-        >
-          <Play className="h-4 w-4" />
-          {avvio ? "Avvio…" : "Inizia questo allenamento"}
-        </button>
+        {/* La data sta accanto al pulsante e parte da oggi: il caso normale
+            resta un tocco solo, ma si può registrare anche un allenamento di
+            ieri o della settimana scorsa senza doverlo poi correggere. */}
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Giorno</span>
+            <input
+              type="date"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
+              aria-label="Giorno dell'allenamento da creare"
+              className={inputClass}
+            />
+          </label>
+          <button
+            onClick={handleInizia}
+            disabled={dati.esercizi.length === 0 || avvio}
+            className={bottonePrimarioClass}
+          >
+            <Play className="h-4 w-4" />
+            {avvio ? "Avvio…" : "Inizia questo allenamento"}
+          </button>
+        </div>
       </div>
 
       {dati.esercizi.length > 0 && (

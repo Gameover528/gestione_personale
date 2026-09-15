@@ -91,6 +91,9 @@ export const NON_RILASCIATO: NonRilasciato | null = {
 
     // --- Area Salute
     { categoria: "aggiunto", testo: "Nuova area Salute, con le sezioni Cibo ed Esercizio." },
+    { categoria: "aggiunto", testo: "Gli esercizi si cercano in italiano: scrivi \"panca piana\" o \"alzate laterali\" e trovi le voci giuste, anche se il catalogo è in inglese." },
+    { categoria: "aggiunto", testo: "Puoi dare il tuo nome a un esercizio del catalogo: resta trovabile anche col nome originale." },
+    { categoria: "aggiunto", testo: "Un allenamento si può registrare in qualsiasi giorno, e la data si corregge anche dopo." },
     { categoria: "aggiunto", testo: "Catalogo di 1500 esercizi, cercabili per nome, attrezzo o muscolo." },
     { categoria: "aggiunto", testo: "Figura del corpo con i muscoli lavorati illuminati, più dimostrazione animata e istruzioni passo passo." },
     { categoria: "aggiunto", testo: "Registrazione degli allenamenti: serie, ripetizioni, carichi e calorie stimate." },

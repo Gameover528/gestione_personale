@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getEsercizio } from "@/modules/esercizio/queries";
 import { muscoliDisegnabili, nomeAttrezzo } from "@/modules/esercizio/types";
 import { MappaMuscolare } from "@/modules/esercizio/components/MappaMuscolare";
+import { RinominaEsercizio } from "@/modules/esercizio/components/RinominaEsercizio";
 import { Card, CardTitle } from "@/core/components/ui";
 
 export default async function EsercizioDettaglioPage({
@@ -33,6 +34,15 @@ export default async function EsercizioDettaglioPage({
           <p className="mt-1 text-sm text-muted-foreground">
             {attrezzi.join(", ")}
           </p>
+        )}
+        {esercizio.fonte === "catalogo" && (
+          <div className="mt-3">
+            <RinominaEsercizio
+              id={esercizio.id}
+              nome={esercizio.nome}
+              nomeOriginale={esercizio.nome_originale}
+            />
+          </div>
         )}
       </div>
 
