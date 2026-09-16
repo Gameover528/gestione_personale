@@ -76,55 +76,59 @@ export interface NonRilasciato {
   migrazioni?: string[];
 }
 
-export const NON_RILASCIATO: NonRilasciato | null = {
-  aggiornato: "2026-09-15",
-  migrazioni: [
-    "0007 — freno ai tentativi di accesso",
-    "0008 — esercizi e allenamenti",
-    "0009 — schede",
-    "0010 — riparazione tabelle schede",
-    "Caricamento del catalogo esercizi (d1/seed-esercizi.sql)",
-  ],
-  modifiche: [
-    // --- Qualità dei dati nutrizionali
-    { categoria: "aggiunto", testo: "Gli alimenti con valori nutrizionali che non tornano mostrano un triangolo di avviso, con scritto cosa non torna: vale nella ricerca, nel diario e fra i piatti, anche per quelli registrati tempo fa." },
-
-    // --- Area Salute
-    { categoria: "aggiunto", testo: "Nuova area Salute, con le sezioni Cibo ed Esercizio." },
-    { categoria: "aggiunto", testo: "Gli esercizi si cercano in italiano: scrivi \"panca piana\" o \"alzate laterali\" e trovi le voci giuste, anche se il catalogo è in inglese." },
-    { categoria: "aggiunto", testo: "Puoi dare il tuo nome a un esercizio del catalogo: resta trovabile anche col nome originale." },
-    { categoria: "aggiunto", testo: "Un allenamento si può registrare in qualsiasi giorno, e la data si corregge anche dopo." },
-    { categoria: "aggiunto", testo: "Catalogo di 1500 esercizi, cercabili per nome, attrezzo o muscolo." },
-    { categoria: "aggiunto", testo: "Figura del corpo con i muscoli lavorati illuminati, più dimostrazione animata e istruzioni passo passo." },
-    { categoria: "aggiunto", testo: "Registrazione degli allenamenti: serie, ripetizioni, carichi e calorie stimate." },
-    { categoria: "aggiunto", testo: "Schede di allenamento ricorrenti, da avviare o da richiamare dentro una sessione già aperta." },
-    { categoria: "aggiunto", testo: "Esercizi personali, con la mappa muscolare che si accende mentre li componi." },
-    { categoria: "aggiunto", testo: "Riquadro del bilancio energetico: mangiate meno bruciate, confrontate con l'obiettivo." },
-    { categoria: "aggiunto", testo: "Andamento diviso in Cibo e Allenamento, sotto lo stesso periodo." },
-    { categoria: "aggiunto", testo: "Obiettivo di giorni di allenamento a settimana, nelle preferenze." },
-    { categoria: "modificato", testo: "Nel grafico delle calorie le bruciate scendono dalla cima delle mangiate: si legge quanto è entrato e quanto ne è stato tolto." },
-    { categoria: "rimosso", testo: "Tolto dalla sezione Allenamento il grafico che ripeteva lo stesso confronto già presente in Cibo." },
-
-    // --- Uso quotidiano
-    { categoria: "modificato", testo: "Bollette e abbonamenti si usano col pollice: schede al posto della tabella, pulsanti più grandi, filtri raccolti dietro un pulsante." },
-    { categoria: "aggiunto", testo: "Dopo una cancellazione compare \"Annulla\" per qualche secondo, al posto della finestra di conferma." },
-    { categoria: "modificato", testo: "Ogni riquadro della dashboard chiede i dati una volta sola." },
-    { categoria: "modificato", testo: "La sincronizzazione da produzione porta solo i dati del tuo account, senza toccare gli altri profili di prova." },
-
-    // --- Sicurezza
-    { categoria: "sicurezza", testo: "Chiusa una falla nel salvataggio di bollette e diario che permetteva di leggere dati di altri account." },
-    { categoria: "sicurezza", testo: "Il login non lascia più capire se un'email è registrata, e si blocca per qualche minuto dopo 8 tentativi falliti." },
-    { categoria: "sicurezza", testo: "Ogni pagina dichiara al browser regole di sicurezza: non è incorniciabile da altri siti e i moduli non possono inviare dati altrove." },
-    { categoria: "sicurezza", testo: "L'export di backup non resta in nessuna cache e le sessioni scadute vengono ripulite." },
-
-    // --- Correzioni
-    { categoria: "corretto", testo: "Le schede non comparivano: mancavano le loro tabelle sul database." },
-    { categoria: "corretto", testo: "Quando la lettura dei dati fallisce l'app lo dice, invece di restare in caricamento all'infinito." },
-  ],
-};
+export const NON_RILASCIATO: NonRilasciato | null = null;
 
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
+  {
+    versione: "2026.09.15",
+    data: "2026-09-15",
+    migrazioni: [
+      "0007 — freno ai tentativi di accesso",
+      "0008 — esercizi e allenamenti",
+      "0009 — schede",
+      "0010 — riparazione tabelle schede",
+      "Caricamento del catalogo esercizi (d1/seed-esercizi.sql)",
+    ],
+    modifiche: [
+      // --- Qualità dei dati nutrizionali
+      { categoria: "aggiunto", testo: "Gli alimenti con valori nutrizionali che non tornano mostrano un triangolo di avviso, con scritto cosa non torna: vale nella ricerca, nel diario e fra i piatti, anche per quelli registrati tempo fa." },
+      { categoria: "modificato", testo: "Nel diario i carboidrati comprendono le fibre, come fanno le altre app: il riquadro separato delle fibre non c'è più." },
+
+      // --- Area Salute
+      { categoria: "aggiunto", testo: "Nuova area Salute, con le sezioni Cibo ed Esercizio." },
+      { categoria: "aggiunto", testo: "Gli esercizi si cercano in italiano: scrivi \"panca piana\" o \"alzate laterali\" e trovi le voci giuste, anche se il catalogo è in inglese." },
+      { categoria: "aggiunto", testo: "Puoi dare il tuo nome a un esercizio del catalogo: resta trovabile anche col nome originale." },
+      { categoria: "aggiunto", testo: "Un allenamento si può registrare in qualsiasi giorno, e la data si corregge anche dopo." },
+      { categoria: "aggiunto", testo: "Catalogo di 1500 esercizi, cercabili per nome, attrezzo o muscolo." },
+      { categoria: "aggiunto", testo: "Figura del corpo con i muscoli lavorati illuminati, più dimostrazione animata e istruzioni passo passo." },
+      { categoria: "aggiunto", testo: "Registrazione degli allenamenti: serie, ripetizioni, carichi e calorie stimate." },
+      { categoria: "aggiunto", testo: "Schede di allenamento ricorrenti, da avviare o da richiamare dentro una sessione già aperta." },
+      { categoria: "aggiunto", testo: "Esercizi personali, con la mappa muscolare che si accende mentre li componi." },
+      { categoria: "aggiunto", testo: "Riquadro del bilancio energetico: mangiate meno bruciate, confrontate con l'obiettivo." },
+      { categoria: "aggiunto", testo: "Andamento diviso in Cibo e Allenamento, sotto lo stesso periodo." },
+      { categoria: "aggiunto", testo: "Obiettivo di giorni di allenamento a settimana, nelle preferenze." },
+      { categoria: "modificato", testo: "Nel grafico delle calorie le bruciate scendono dalla cima delle mangiate: si legge quanto è entrato e quanto ne è stato tolto." },
+      { categoria: "rimosso", testo: "Tolto dalla sezione Allenamento il grafico che ripeteva lo stesso confronto già presente in Cibo." },
+
+      // --- Uso quotidiano
+      { categoria: "modificato", testo: "Bollette e abbonamenti si usano col pollice: schede al posto della tabella, pulsanti più grandi, filtri raccolti dietro un pulsante." },
+      { categoria: "aggiunto", testo: "Dopo una cancellazione compare \"Annulla\" per qualche secondo, al posto della finestra di conferma." },
+      { categoria: "modificato", testo: "Ogni riquadro della dashboard chiede i dati una volta sola." },
+      { categoria: "modificato", testo: "La sincronizzazione da produzione porta solo i dati del tuo account, senza toccare gli altri profili di prova." },
+
+      // --- Sicurezza
+      { categoria: "sicurezza", testo: "Chiusa una falla nel salvataggio di bollette e diario che permetteva di leggere dati di altri account." },
+      { categoria: "sicurezza", testo: "Il login non lascia più capire se un'email è registrata, e si blocca per qualche minuto dopo 8 tentativi falliti." },
+      { categoria: "sicurezza", testo: "Ogni pagina dichiara al browser regole di sicurezza: non è incorniciabile da altri siti e i moduli non possono inviare dati altrove." },
+      { categoria: "sicurezza", testo: "L'export di backup non resta in nessuna cache e le sessioni scadute vengono ripulite." },
+
+      // --- Correzioni
+      { categoria: "corretto", testo: "Le schede non comparivano: mancavano le loro tabelle sul database." },
+      { categoria: "corretto", testo: "Quando la lettura dei dati fallisce l'app lo dice, invece di restare in caricamento all'infinito." },
+      { categoria: "corretto", testo: "Aprire un allenamento o una scheda non dà più, ogni tanto, la pagina di errore del server: l'elenco degli esercizi non si scarica più per intero a ogni apertura." },
+    ],
+  },
   {
     versione: "2026.09.11",
     data: "2026-09-11",
