@@ -93,7 +93,7 @@ export function RegistroVersioni({
               </div>
               <div className="space-y-3 px-4 py-3">
                 <Modifiche modifiche={r.modifiche} />
-                <Migrazioni elenco={r.migrazioni} />
+                <Migrazioni elenco={r.migrazioni} storico />
               </div>
             </li>
           ))}
@@ -136,11 +136,30 @@ function Modifiche({ modifiche }: { modifiche: Modifica[] }) {
 }
 
 /**
- * Le migration necessarie: si applicano a mano, quindi vanno dette a chi legge
- * e non nascoste nel codice. Due guasti sono già passati di qui.
+ * Le migration necessarie.
+ *
+ * Si applicano a mano, quindi vanno dette a chi pubblica invece di restare
+ * nascoste nel codice: due guasti sono gia' passati di qui. Ma il senso cambia
+ * a seconda di dove si legge, e con esso il tono.
+ *
+ * Sul non rilasciato e' una lista di controllo: c'e' un lavoro da fare prima di
+ * pubblicare, e l'avviso serve a non dimenticarlo. Su un rilascio gia' online
+ * quel lavoro e' fatto, e un triangolo giallo allarmerebbe per niente chi usa
+ * l'app e non ha nessun database da toccare. Li' resta come storia, in una riga
+ * sola: serve ancora a sapere cosa rilanciare ripristinando un backup vecchio o
+ * preparando un ambiente da zero.
  */
-function Migrazioni({ elenco }: { elenco?: string[] }) {
+function Migrazioni({ elenco, storico }: { elenco?: string[]; storico?: boolean }) {
   if (!elenco?.length) return null;
+
+  if (storico) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Ha richiesto interventi sul database: {elenco.join("; ")}.
+      </p>
+    );
+  }
+
   return (
     <div className="flex gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
