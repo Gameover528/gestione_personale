@@ -62,7 +62,13 @@ function applicaHeaderSicurezza(res: NextResponse, csp: string): NextResponse {
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth");
+  // Il manifest e' pubblico per forza: il browser lo scarica *prima* di
+  // installare l'app, quando ancora non c'e' nessuna sessione. Rimandandolo al
+  // login diventava irraggiungibile e l'app non si installava.
+  const isPublic =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/auth") ||
+    pathname === "/manifest.webmanifest";
 
   // Nonce unico per richiesta: passa a Next tramite l'header di richiesta (da
   // cui Next lo estrae per i propri script) e allo stesso tempo nella CSP di

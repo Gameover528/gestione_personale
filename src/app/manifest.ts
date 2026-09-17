@@ -19,12 +19,18 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait",
     background_color: "#f8fafc",
     theme_color: "#2563eb",
+    // Chrome installa solo se trova un'icona da 192 e una da 512 in un formato
+    // che sa rasterizzare: l'SVG resta in cima perche' resta nitido a
+    // qualunque dimensione, i PNG sono la garanzia che i requisiti siano
+    // soddisfatti.
     icons: [
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       {
-        src: "/icon-maskable.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/icon-maskable-512.png",
+        sizes: "512x512",
+        type: "image/png",
         purpose: "maskable",
       },
     ],

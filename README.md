@@ -1,161 +1,132 @@
 # Gestione Personale
 
-Spazio personale **modulare** per gestire diverse aree della vita quotidiana, in un'unica web app privata. Nessuna registrazione pubblica: è pensata per uso proprio (o di pochi familiari), con account creati a mano.
+**Le bollette, gli abbonamenti, quello che mangi e come ti alleni. In un posto solo, sul telefono.**
 
-**App in produzione:** https://gestione-personale.personalmanage.workers.dev
+👉 **[gestione-personale.personalmanage.workers.dev](https://gestione-personale.personalmanage.workers.dev)**
 
----
-
-## Cosa fa
-
-- **Bollette**: registra bollette (luce, gas, acqua, internet, telefono, rifiuti...), scadenze, importi, stato pagamento, upload della ricevuta PDF, divisione della spesa con un'altra famiglia/persona, statistiche (spesa per tipo, andamento mensile).
-- **Alimentazione**: diario dei pasti giorno per giorno, con ricerca alimenti (Open Food Facts + opzionale USDA), obiettivi nutrizionali personali (min/max su calorie, proteine, ecc.) e un **archivio personale di piatti**: possono essere ricette composte da più ingredienti (valori calcolati automaticamente) oppure piatti e prodotti con i valori dell'etichetta inseriti a mano; in entrambi i casi compaiono nei risultati di ricerca quando si aggiunge un pasto. Inoltre: **porzioni** ("1 piatto = 350 g", si registra per porzioni invece che in grammi), lista dei **recenti** con aggiunta in un tap, **copia dei pasti** da un altro giorno, pagina **Andamento** (calorie e macronutrienti su 7/30/90 giorni, medie e aderenza agli obiettivi) e **calcolo degli obiettivi** dai propri dati (Mifflin-St Jeor: peso, altezza, età, attività).
-
-  La ricerca alimenti è in due fasi: i piatti personali (query locale) compaiono subito, Open Food Facts e USDA arrivano dopo; se le fonti esterne non rispondono l'utente vede "servizio non raggiungibile" con un tasto Riprova, non "nessun risultato". Le eliminazioni non chiedono conferma ma offrono **Annulla** in un toast (vedi `src/core/components/Toast.tsx`), che ripristina la riga con id e data di creazione originali.
-- **Dashboard personalizzabile**: widget riordinabili col drag-and-drop, layout salvato per utente.
-- **Installabile come app** (PWA): manifest in `src/app/manifest.ts` con icone in `public/`, scorciatoia diretta ad "Aggiungi un pasto". Non c'è service worker: l'app si installa e parte a schermo pieno, ma non funziona offline. Le icone sono SVG: Chrome le accetta, per iOS conviene aggiungere due PNG (192 e 512 px) in `public/` e referenziarle nel manifest.
-- **Modularità**: l'app è pensata per aggiungere in futuro altri moduli (es. spese generali, manutenzioni casa, ecc.) senza toccare navigazione o dashboard — vedi [Come aggiungere un nuovo modulo](#come-aggiungere-un-nuovo-modulo).
-
-## Com'è fatto (stack)
-
-- **Next.js 15** (App Router, TypeScript, React 19) come framework applicativo.
-- **Cloudflare Workers** come hosting, tramite l'adapter [OpenNext](https://opennext.js.org/cloudflare) (nessun server da gestire, deploy globale).
-- **D1** (SQLite gestito da Cloudflare) per tutti i dati: bollette, diario, piatti, preferenze, utenti e sessioni.
-- **Workers KV** per gli allegati PDF delle bollette.
-- **Autenticazione custom**: niente servizio esterno (tipo Auth0/Supabase Auth) — login email+password con hashing PBKDF2 e sessioni su cookie httpOnly, tutto gestito in `src/lib/auth/`. Non c'è registrazione pubblica: gli account si creano con uno script (vedi sotto).
-- **Tailwind CSS**, **Recharts** (grafici), **dnd-kit** (drag-and-drop).
-
-Tutto il progetto gira sul piano gratuito di Cloudflare: per un uso personale come questo non si pagano costi (Workers, D1 e Workers KV hanno soglie gratuite ampiamente sufficienti).
+Non c'è registrazione pubblica: gli account si creano a mano, uno per persona. Se vuoi provarla, chiedi un accesso.
 
 ---
 
-## Info utili per l'uso quotidiano
+## Perché esiste
 
-**Aggiungere un nuovo account** (es. un familiare):
-```bash
-node scripts/seed-users.mjs "nuovaemail@esempio.it" "passwordSicura"
-npx wrangler d1 execute gestione-personale-db --remote --file=./d1/seed-users.sql
-rm d1/seed-users.sql   # contiene l'hash della password, non va tenuto/commitato
-```
+Le stesse informazioni finivano in cinque posti diversi: la foto della bolletta nella galleria, un foglio di calcolo per capire quanto è costato il gas quest'anno, un'app per il cibo che ogni tre giorni chiede l'abbonamento, un'altra per la palestra che vuole un account nuovo, e in testa il dubbio di aver già pagato o no.
 
-**Pubblicare una modifica al codice**: basta il push, ci pensa la GitHub Action `.github/workflows/deploy.yml` — `develop` va sull'ambiente di sviluppo, `main` in produzione. Il deploy a mano (`npm run deploy` / `npm run deploy:dev`) serve solo per pubblicare senza passare da git. Attenzione: la pipeline **non** applica le migration del database, che restano manuali e vanno eseguite *prima* del push del codice che le richiede.
-
-**Aggiornare il registro delle versioni** (Impostazioni › Versioni): nello stesso commit delle modifiche aggiungi una voce in `src/core/versioni/changelog.ts`, scritta per chi usa l'app e non per chi legge il codice.
-
-- su **sviluppo** ogni pubblicazione è una voce a sé: `0.5.0-dev.1`, `0.5.0-dev.2`, …
-- quando quel lavoro passa in **produzione** si aggiunge *una* voce `0.5.0` che riassume il periodo, con `include: ["0.5.0-dev.1", ...]`: la pagina la mostra espandibile con le versioni di sviluppo che contiene.
-
-L'app sa in quale ambiente gira dalla variabile `AMBIENTE` definita in `wrangler.jsonc` (`dev` nel worker di sviluppo, `prod` in produzione), così ogni ambiente mostra il proprio registro. In sviluppo locale mostra sempre quello di sviluppo.
-
-**Modificare lo schema del database** (aggiungere una colonna/tabella): crea un nuovo file in `d1/migrations/` (es. `0002_qualcosa.sql`), poi applicalo sia in locale che in produzione:
-```bash
-npx wrangler d1 execute gestione-personale-db --local  --file=./d1/migrations/0002_qualcosa.sql
-npx wrangler d1 execute gestione-personale-db --remote --file=./d1/migrations/0002_qualcosa.sql
-```
-
-**Vedere/interrogare i dati reali** (es. controllare una bolletta):
-```bash
-npx wrangler d1 execute gestione-personale-db --remote --command "select * from bollette order by created_at desc limit 5"
-```
-
-**Vedere i log del Worker in produzione** (utile se qualcosa non funziona live):
-```bash
-npx wrangler tail
-```
-
-**Backup dei dati**: D1 non fa backup automatici scaricabili in un click. Per un export manuale periodico:
-```bash
-npx wrangler d1 export gestione-personale-db --remote --output=backup.sql
-```
-
-⚠️ **Attenzione ai due database**: ogni comando `wrangler d1 execute`/`kv key put` va sempre specificato con `--local` (il database di sviluppo, usato da `npm run dev`/`npm run preview`) o `--remote` (quello vero, in produzione). Sono due database completamente separati: una modifica fatta solo in locale non si vede in produzione e viceversa.
+Qui c'è una cosa sola, che si apre con un tocco, che non vende niente e in cui i dati sono tuoi. Serve a rispondere in cinque secondi a domande normali: *l'ho pagata? quanto ho speso? cosa ho mangiato oggi? mi sono allenato abbastanza questa settimana?*
 
 ---
 
-## Sviluppo locale
+## Cosa ci fai
 
-```bash
-npm install
-npm run dev
-```
+### 💶 Consumi e Costi
 
-App su http://localhost:3000. Le variabili D1/KV non passano da `.env`: sono binding definiti in `wrangler.jsonc`, disponibili anche in `next dev` grazie a `initOpenNextCloudflareForDev()` in `next.config.mjs`. Il database locale è vuoto di default (solo schema): per provare l'app serve almeno un utente, creato con `node scripts/seed-users.mjs "email" "password"` e applicato con `npx wrangler d1 execute gestione-personale-db --local --file=./d1/seed-users.sql`.
+**Bollette.** Registri luce, gas, acqua, internet, telefono, rifiuti: importo, scadenza, periodo di competenza, e se è pagata o no. Alla ricevuta PDF ci pensa lei, allegata alla bolletta: quando serve la ritrovi senza cercare nella galleria. Se dividi le spese con un'altra famiglia o un coinquilino, segni la quota e l'app tiene il conto di chi deve cosa.
 
-Comandi utili: `npm run typecheck`, `npm run build`, `npm run preview` (build reale + anteprima sul runtime Workers, più fedele di `npm run dev` per testare prima di un deploy).
+**Abbonamenti.** Netflix, palestra, telefono, assicurazione: li inserisci una volta con la loro cadenza e le rate si generano da sole. Uno si può sospendere e riprendere senza perdere lo storico, e in ogni momento vedi quanto pesano al mese tutti insieme — di solito più di quanto sembrasse.
 
----
+**La dashboard dell'area** apre su quello che conta davvero: quanto c'è da pagare adesso, quanto hai già speso in tutto, e cosa scade per prima.
 
-## Setup da zero (disaster recovery / nuovo account Cloudflare)
+### ❤️ Salute
 
-Se dovessi mai ricreare il progetto da un altro account Cloudflare:
+**Cibo.** Il diario dei pasti, giorno per giorno. Cerchi un alimento e lo trovi: ci sono Open Food Facts e USDA dietro, più i tuoi piatti personali. Un piatto puoi comporlo con gli ingredienti (i valori si calcolano da soli) oppure copiarlo dall'etichetta. Definisci le porzioni una volta — *"1 piatto = 350 g"* — e da lì in poi registri "1 piatto" invece di pesare.
 
-```bash
-npm install
-npx wrangler login
+Gli obiettivi (calorie, proteine, carboidrati, grassi) puoi scriverli a mano o farteli calcolare dai tuoi dati. La pagina **Andamento** mostra come sei andato su 7, 30 o 90 giorni, con le medie e quanto ti sei tenuto agli obiettivi.
 
-npx wrangler d1 create gestione-personale-db
-# copia il "database_id" restituito in wrangler.jsonc → d1_databases[0].database_id
+I valori nutrizionali delle banche dati esterne ogni tanto sono sbagliati. L'app se ne accorge — controlla che calorie e macronutrienti tornino fra loro e che i grammi dichiarati stiano dentro la porzione — e ti mette un triangolo di avviso dicendo cosa non torna, invece di farti sommare numeri falsi senza saperlo.
 
-npx wrangler kv namespace create ALLEGATI
-# copia l'"id" restituito in wrangler.jsonc → kv_namespaces[0].id
+**Esercizio.** Un catalogo di 1500 esercizi che si cerca **in italiano**: scrivi "panca piana" o "alzate laterali" e trovi le voci giuste, anche se il catalogo sotto è in inglese. Di ognuno c'è la figura del corpo con i muscoli lavorati illuminati, la dimostrazione animata e le istruzioni passo passo. Se un nome non ti piace, lo ribattezzi come lo chiami tu.
 
-npx wrangler d1 execute gestione-personale-db --local  --file=./d1/migrations/0001_init.sql
-npx wrangler d1 execute gestione-personale-db --remote --file=./d1/migrations/0001_init.sql
+Registri l'allenamento con serie, ripetizioni e carichi, e le calorie bruciate le stima l'app. Gli allenamenti che ripeti li salvi come **schede**: la prossima volta la richiami intera e cambi solo i pesi. Puoi segnare un allenamento di ieri o della settimana scorsa, non solo di oggi.
 
-node scripts/seed-users.mjs "tuaemail@esempio.it" "passwordSicura"
-npx wrangler d1 execute gestione-personale-db --remote --file=./d1/seed-users.sql
-rm d1/seed-users.sql
-```
+**Il bilancio energetico** è l'unico punto in cui le due cose si incontrano: le calorie mangiate meno quelle bruciate, confrontate con l'obiettivo.
 
-Se serve anche `USDA_API_KEY` (ricerca alimenti USDA, opzionale): `npx wrangler secret put USDA_API_KEY`.
+### 🧩 La tua dashboard
 
-Poi `npm run deploy` come al solito. `scripts/migrate-data.mjs` serve solo per un'eventuale migrazione una tantum da un vecchio progetto Supabase — non serve per un setup pulito.
+Ogni area ha la sua, e la componi tu: scegli i riquadri da un pannello con le anteprime e li trascini nell'ordine che vuoi, anche col dito. Il layout è salvato sul tuo account, quindi è lo stesso sul telefono e sul computer.
 
 ---
 
-## Struttura del progetto
+## 📱 Installala sul telefono
 
-```
-src/
-  app/
-    login/                 pagina di accesso
-    auth/signout/          logout
-    api/allegati/[...path] route protetta che serve i PDF da Workers KV
-    (app)/                 area protetta (richiede login)
-      layout.tsx           shell con sidebar
-      dashboard/           dashboard personalizzabile
-      bollette/            modulo bollette (lista, nuova, [id] modifica)
-  core/
-    modules/               tipi + registro centrale dei moduli
-    components/            Sidebar, UI condivisa
-    dashboard/             griglia widget drag-and-drop + preferenze (D1)
-  lib/
-    cf.ts                  accesso ai binding Cloudflare (D1, KV)
-    auth/                  password hashing, sessioni, login/logout (D1)
-    utils.ts               helper (formattazione € e date)
-  modules/
-    bollette/               modulo Bollette auto-contenuto (D1 + KV per i PDF)
-    alimentazione/           modulo Alimentazione (D1)
-d1/
-  migrations/0001_init.sql  schema D1 (utenti, sessioni, bollette, alimentazione, preferenze)
-scripts/
-  seed-users.mjs            crea account (email + password hashata)
-  migrate-data.mjs           migrazione una tantum da un vecchio progetto Supabase
-wrangler.jsonc               config Worker: binding D1 (DB) e KV (ALLEGATI)
-open-next.config.ts          config adapter OpenNext per Cloudflare
-```
+Non passa dagli store: è una web app, si installa direttamente dal browser e poi si comporta come un'app normale — icona sulla schermata Home, schermo intero, niente barra degli indirizzi.
 
-## Come aggiungere un nuovo modulo
+**Android (Chrome)**
+1. Apri [il link](https://gestione-personale.personalmanage.workers.dev) in Chrome.
+2. Menu **⋮** in alto a destra → **Installa app** (a volte si chiama *Aggiungi a schermata Home*).
+3. Conferma. L'icona compare fra le altre app.
 
-1. Crea `src/modules/<nome>/module.config.ts` che esporta un `ModuleConfig` (id, label, icona, voci `nav`, eventuali `widgets`).
-2. Aggiungi le pagine sotto `src/app/(app)/<nome>/`.
-3. Importa e registra il modulo in `src/core/modules/registry.ts`.
-4. Se il modulo usa nuove tabelle, aggiungi una migration in `d1/migrations/` e applicala (locale + remote).
-5. Le query/mutazioni vanno scritte come Server Action (`"use server"` in cima al file `queries.ts`), filtrando sempre esplicitamente su `user_id` letto dalla sessione (`requireSessionUser()` / `getSessionUser()` in `src/lib/auth/session.ts`) — D1 non ha RLS, l'isolamento per utente è responsabilità del codice, non del database.
+**iPhone / iPad (Safari)**
+1. Apri [il link](https://gestione-personale.personalmanage.workers.dev) **in Safari** — da Chrome su iPhone non si può.
+2. Tasto **Condividi** (il quadrato con la freccia in su) → **Aggiungi a Home**.
+3. Conferma il nome e tocca **Aggiungi**.
 
-La sidebar e l'elenco dei widget della dashboard si aggiornano automaticamente.
+Poi entra una volta dentro l'app installata: l'accesso dura **30 giorni**, quindi non dovrai rifarlo a ogni apertura.
 
-## Note tecniche da ricordare
+Su Android, tenendo premuta l'icona, trovi anche una scorciatoia diretta ad **Aggiungi un pasto**: è la cosa che si fa più spesso e di fretta.
 
-- **`src/app/layout.tsx` deve sempre importare `"./globals.css"`**: alcuni editor/estensioni ("organizza importazioni") possono rimuoverlo per errore scambiandolo per un import inutilizzato. Se lo stile sparisce dall'app, è la prima cosa da controllare.
-- I file generati dagli script (`d1/seed-users.sql`, `d1/migrate-data.sql`, `d1/upload-allegati.sh`, `allegati-migrati/`) contengono dati/segreti reali e sono esclusi da git: vanno cancellati dopo l'uso, non committati.
+> **Nota onesta:** installata parte a schermo pieno ed è più comoda, ma **non funziona senza rete**. Non c'è una copia locale dei dati: senza connessione non si apre.
+
+---
+
+## Guida rapida
+
+### 1. Entra
+Email e password, quelle che ti sono state date. Al primo accesso passa da **Impostazioni › Profilo**: scegli come vuoi essere chiamato, il tema (chiaro, scuro o come il telefono) e il colore dell'app.
+
+### 2. Metti la prima bolletta
+**Consumi e Costi › Bollette › Nuova bolletta.** Tipo, fornitore, importo, scadenza. Se ce l'hai, allega il PDF. Salvi e la vedi nell'elenco con quanto manca alla scadenza.
+
+### 3. Segna il primo pasto
+**Salute › Cibo › Aggiungi.** Scrivi quello che hai mangiato: i tuoi piatti compaiono subito, i risultati dalle banche dati esterne arrivano un attimo dopo. Scegli, indica la quantità, salvi.
+
+### 4. Registra il primo allenamento
+**Salute › Esercizio.** In cima metti la data (anche di ieri), un nome se ti va e la durata, poi **Crea e aggiungi esercizi**. Cerchi gli esercizi in italiano, per ognuno dici quante serie, e compili ripetizioni e carichi. Se è un allenamento che ripeterai, salvalo come scheda.
+
+### 5. Sistemati la dashboard
+Su ogni dashboard c'è il pulsante per scegliere i riquadri. Togli quelli che non guardi mai e metti in alto quelli che apri ogni giorno.
+
+---
+
+## Qualche esempio
+
+**Arriva la bolletta della luce.**
+La fotografi o scarichi il PDF, la registri in trenta secondi con l'allegato, e la lasci "da pagare". Da lì in poi il riquadro in cima alla dashboard ti dice che c'è e fra quanti giorni scade. Quando paghi, la segni pagata e sparisce dalle urgenze — ma resta nelle statistiche.
+
+**"Quanto abbiamo speso di gas quest'anno?"**
+Bollette, filtro sul tipo. Il totale e l'andamento mese per mese sono lì, senza aprire nessun foglio di calcolo.
+
+**Dividi l'affitto con un'altra famiglia.**
+Segni la quota sulla bolletta: l'app tiene separato quanto è tuo e quanto è loro, e quando arriva il momento di fare i conti non devi ricostruire niente a memoria.
+
+**Pranzo fuori.**
+Cerchi il piatto, scegli la porzione, fatto. Se è un posto dove torni, salvatelo una volta come piatto personale: la seconda volta sono due tocchi.
+
+**Compri sempre lo stesso yogurt.**
+La prima volta lo cerchi, le altre è già nei **recenti**: un tocco e va nel diario.
+
+**Ieri ti sei dimenticato di segnare la cena.**
+Apri il giorno di ieri e la aggiungi. Vale anche per gli allenamenti: puoi registrare la palestra di sabato scorso.
+
+**Martedì è giorno di palestra.**
+Richiami la scheda "Petto e tricipiti", cambi due carichi rispetto alla volta scorsa e salvi. Nelle preferenze puoi dire quanti giorni a settimana ti sei prefissato: l'app ti dice se li stai rispettando, invece di darti un numero che non vuol dire niente.
+
+**Vuoi capire se stai mangiando abbastanza proteine.**
+Salute › Cibo › Andamento, 30 giorni. Media giornaliera e quanto spesso hai centrato l'obiettivo.
+
+---
+
+## Cose da sapere
+
+- **È privata.** Nessuna registrazione pubblica, ogni account vede solo i propri dati.
+- **I tuoi dati sono tuoi.** Da **Impostazioni › Backup dati** li scarichi quando vuoi.
+- **I valori degli alimenti arrivano da banche dati pubbliche** e a volte sono sbagliati: per questo c'è il controllo automatico che ti avvisa. Un dato con l'avviso conviene correggerlo a mano.
+- **Il registro delle versioni** (Impostazioni › Versioni) racconta cosa è cambiato e quando, scritto in italiano e non in gergo.
+- **Non funziona offline.**
+
+---
+
+## Sotto il cofano, in breve
+
+Next.js 15 e React 19, ospitata su Cloudflare Workers, dati su D1 (SQLite) e allegati su Workers KV. Autenticazione scritta in casa, senza servizi esterni. Gira interamente sul piano gratuito di Cloudflare.
+
+📖 **Setup, deploy, migrazioni, struttura del progetto e come aggiungere un modulo: [`docs/sviluppo.md`](docs/sviluppo.md).**

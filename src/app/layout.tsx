@@ -11,7 +11,9 @@ export const metadata: Metadata = {
   applicationName: "Gestione Personale",
   icons: {
     icon: "/icon.svg",
-    apple: "/icon.svg",
+    // Safari non sa leggere un SVG qui: senza un PNG l'icona sulla schermata
+    // Home dell'iPhone diventa una miniatura della pagina.
+    apple: "/apple-touch-icon.png",
   },
   appleWebApp: {
     capable: true,

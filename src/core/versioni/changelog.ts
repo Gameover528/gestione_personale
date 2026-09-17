@@ -76,7 +76,14 @@ export interface NonRilasciato {
   migrazioni?: string[];
 }
 
-export const NON_RILASCIATO: NonRilasciato | null = null;
+export const NON_RILASCIATO: NonRilasciato | null = {
+  aggiornato: "2026-09-17",
+  modifiche: [
+    { categoria: "corretto", testo: "L'app si installa davvero sul telefono: il file che il browser legge per installarla era protetto dal login, e quindi irraggiungibile." },
+    { categoria: "corretto", testo: "Su iPhone l'icona sulla schermata Home e' quella dell'app, non una miniatura della pagina." },
+    { categoria: "modificato", testo: "Nel registro delle versioni gli interventi sul database dei rilasci gia' pubblicati sono una riga di storia e non piu' un avviso: riguardavano chi pubblica, non chi usa l'app." },
+  ],
+};
 
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
