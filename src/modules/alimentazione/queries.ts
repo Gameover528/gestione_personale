@@ -355,19 +355,35 @@ export async function getObiettivi(): Promise<Obiettivo[]> {
   }));
 }
 
+/**
+ * Sostituisce gli obiettivi con quelli passati: quello che non c'è nella lista
+ * viene tolto.
+ *
+ * La cancellazione non è un dettaglio. Il form manda solo i nutrienti con un
+ * valore maggiore di zero, perché svuotare un campo è il modo in cui si smette
+ * di seguire un nutriente. Prima qui si facevano solo inserimenti, quindi la
+ * riga vecchia restava: il campo si svuotava a schermo, si salvava, e
+ * ricaricando l'obiettivo era tornato. Sembrava che non salvasse.
+ *
+ * Cancellazione e inserimenti stanno in un solo `batch`, che D1 esegue come
+ * transazione: non esiste un istante in cui gli obiettivi sono spariti.
+ */
 export async function saveObiettivi(list: Obiettivo[]): Promise<void> {
   const user = await requireSessionUser();
   const db = getDb();
-  const statements = list.map((o) =>
+  await db.batch([
     db
-      .prepare(
-        `insert into obiettivi_nutrizionali (user_id, nutriente, valore, tipo)
-         values (?, ?, ?, ?)
-         on conflict (user_id, nutriente) do update set valore = excluded.valore, tipo = excluded.tipo`
-      )
-      .bind(user.id, o.nutriente, o.valore, o.tipo)
-  );
-  if (statements.length > 0) await db.batch(statements);
+      .prepare("delete from obiettivi_nutrizionali where user_id = ?")
+      .bind(user.id),
+    ...list.map((o) =>
+      db
+        .prepare(
+          `insert into obiettivi_nutrizionali (user_id, nutriente, valore, tipo)
+           values (?, ?, ?, ?)`
+        )
+        .bind(user.id, o.nutriente, o.valore, o.tipo)
+    ),
+  ]);
   invalidaAlimentazione();
 }
 

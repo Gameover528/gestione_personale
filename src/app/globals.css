@@ -15,6 +15,29 @@
   --destructive: 0 72% 51%;
   --success: 142 71% 45%;
   --warning: 38 92% 50%;
+
+  /*
+    Colori delle serie nei grafici.
+
+    Stanno a parte da --primary apposta: --primary segue il colore che l'utente
+    sceglie per l'app, e un grafico con piu' serie ci finiva dentro. Con il tema
+    ambra, "carboidrati" (primary) e "grassi" (warning) diventavano due gialli
+    indistinguibili; col tema verde si accavallavano proteine e carboidrati.
+    Un grafico deve restare leggibile qualunque colore uno scelga, quindi le
+    serie non seguono il tema.
+
+    Non sono nemmeno --success/--warning/--destructive: quelli dicono uno stato
+    (va bene, attenzione, errore) e riusarli per "la terza serie" fa leggere un
+    giudizio dove c'e' solo un'etichetta. Restano alla linea dell'obiettivo.
+
+    I tre valori sono blu / arancio / verde acqua, scelti perche' restano
+    distinguibili anche a chi non vede bene i colori: verificati sui due temi
+    con il controllo delle distanze percettive (deuteranopia, protanopia,
+    tritanopia) e sul contrasto rispetto allo sfondo.
+  */
+  --serie-1: 213 68% 50%;
+  --serie-2: 17 82% 56%;
+  --serie-3: 159 73% 40%;
 }
 
 .dark {
@@ -30,6 +53,13 @@
   --destructive: 0 63% 55%;
   --success: 142 60% 50%;
   --warning: 38 92% 55%;
+
+  /* Stesse tre tinte, ma ricalibrate sul fondo scuro: non sono un
+     ribaltamento automatico di quelle chiare, sono state verificate come
+     insieme contro lo sfondo scuro. */
+  --serie-1: 213 77% 56%;
+  --serie-2: 17 70% 50%;
+  --serie-3: 159 73% 36%;
 }
 
 * {

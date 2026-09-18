@@ -122,7 +122,14 @@ export function AndamentoAlimentazione({
   /** Giorni effettivamente registrati: la query ne restituisce solo quelli. */
   const conDati = dati ?? [];
 
-  /** Medie calcolate solo sui giorni registrati. */
+  /**
+   * Medie calcolate solo sui giorni registrati, non su tutto il periodo.
+   *
+   * Un giorno che non hai segnato non è un giorno in cui non hai mangiato:
+   * contarlo come zero abbasserebbe la media di chi salta qualche giorno, e
+   * direbbe una cosa falsa. Il divisore quindi non è il periodo, ed è per
+   * questo che la casella dice a chiare lettere su quanti giorni sta contando.
+   */
   const medie = useMemo(() => {
     const out = { ...VALORI_ZERO };
     if (conDati.length === 0) return out;
@@ -160,7 +167,11 @@ export function AndamentoAlimentazione({
             <Riquadro
               titolo="Media calorie"
               valore={`${Math.round(medie.kcal)} kcal`}
-              nota={`Su ${conDati.length} giorni registrati`}
+              nota={
+                conDati.length === giorni
+                  ? `Su tutti i ${giorni} giorni`
+                  : `Sui ${conDati.length} giorni con dati, non sui ${giorni} del periodo`
+              }
             />
             <Riquadro
               titolo="Giorni registrati"
@@ -251,14 +262,14 @@ export function AndamentoAlimentazione({
                   <Bar
                     isAnimationActive={false}
                     dataKey="kcal"
-                    fill="hsl(var(--primary))"
+                    fill="hsl(var(--serie-1))"
                     radius={[4, 4, 0, 0]}
                   />
                   {/* Barra sospesa: parte dalla cima delle mangiate e scende. */}
                   <Bar
                     isAnimationActive={false}
                     dataKey="intervalloBruciate"
-                    fill="hsl(var(--warning))"
+                    fill="hsl(var(--serie-2))"
                     radius={[0, 0, 4, 4]}
                   />
                 </BarChart>
@@ -296,7 +307,7 @@ export function AndamentoAlimentazione({
                     type="monotone"
                     dataKey="proteine"
                     name="Proteine"
-                    stroke="hsl(var(--success))"
+                    stroke="hsl(var(--serie-1))"
                     dot={{ r: 2 }}
                     activeDot={{ r: 4 }}
                     strokeWidth={2}
@@ -306,7 +317,7 @@ export function AndamentoAlimentazione({
                     type="monotone"
                     dataKey="carboidrati"
                     name="Carboidrati"
-                    stroke="hsl(var(--primary))"
+                    stroke="hsl(var(--serie-2))"
                     dot={{ r: 2 }}
                     activeDot={{ r: 4 }}
                     strokeWidth={2}
@@ -316,7 +327,7 @@ export function AndamentoAlimentazione({
                     type="monotone"
                     dataKey="grassi"
                     name="Grassi"
-                    stroke="hsl(var(--warning))"
+                    stroke="hsl(var(--serie-3))"
                     dot={{ r: 2 }}
                     activeDot={{ r: 4 }}
                     strokeWidth={2}

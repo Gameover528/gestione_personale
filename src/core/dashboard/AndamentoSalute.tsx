@@ -15,8 +15,10 @@ const PERIODI: { value: string; label: string }[] = [
   { value: "90", label: "90 giorni" },
 ];
 
+// Il valore resta "cibo" (è solo una chiave interna); l'etichetta dice
+// "Alimentazione", che è il nome della sezione ovunque nell'app.
 const SEZIONI: { value: string; label: string }[] = [
-  { value: "cibo", label: "Cibo" },
+  { value: "cibo", label: "Alimentazione" },
   { value: "allenamento", label: "Allenamento" },
 ];
 
@@ -64,18 +66,24 @@ export function AndamentoSalute({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3">
-        <TabBar
-          items={PERIODI}
-          value={String(giorni)}
-          onChange={(v) => setGiorni(Number(v))}
-          label="Periodo da mostrare"
-        />
+      {/*
+        Cosa guardare a sinistra, per quanto tempo a destra: una riga sola,
+        perché sono due scelte dello stesso gesto e impilate occupavano due
+        righe piene sopra i grafici. Su schermo stretto tornano su due righe da
+        sole (flex-wrap), col periodo sotto.
+      */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <TabBar
           items={SEZIONI}
           value={sezione}
           onChange={setSezione}
           label="Cosa mostrare"
+        />
+        <TabBar
+          items={PERIODI}
+          value={String(giorni)}
+          onChange={(v) => setGiorni(Number(v))}
+          label="Periodo da mostrare"
         />
       </div>
 

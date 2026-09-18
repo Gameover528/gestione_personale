@@ -83,6 +83,10 @@ export const NON_RILASCIATO: NonRilasciato | null = {
     { categoria: "corretto", testo: "Solo per chi sviluppa: in locale l'app ora risponde ai clic e si aggiorna da sola a ogni modifica. Le regole di sicurezza bloccavano il server di sviluppo di Next; in produzione non cambia nulla." },
 
     // --- Alimentazione
+    { categoria: "corretto", testo: "Gli obiettivi nutrizionali si potevano togliere: svuotare un campo e salvare lo cancellava a schermo, ma ricaricando l'obiettivo era tornato." },
+    { categoria: "modificato", testo: "Nei grafici i colori delle serie non seguono piu' il colore scelto per l'app: con certi temi due linee finivano per essere dello stesso colore." },
+    { categoria: "modificato", testo: "In Andamento il periodo (7, 30, 90 giorni) sta sulla stessa riga della scelta fra Alimentazione e Allenamento, a destra." },
+    { categoria: "modificato", testo: "La media delle calorie dice ora su quanti giorni e' calcolata: conta solo quelli con qualcosa di segnato, perche' un giorno non compilato non e' un giorno a digiuno." },
     { categoria: "modificato", testo: "\"Copia giorno\" e \"Obiettivi\" si aprono in una finestra sopra il diario: non si perde piu' il giorno che stavi guardando." },
     { categoria: "aggiunto", testo: "Prima di copiare un giorno vedi l'elenco di cosa verrebbe copiato, pasto per pasto, e il pulsante dice quante voci sono." },
     { categoria: "modificato", testo: "In Aggiungi si parte dalla ricerca: sotto la casella vuota ci sono gli ultimi alimenti che hai segnato, che lasciano il posto ai risultati appena scrivi." },
