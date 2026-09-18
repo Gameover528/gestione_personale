@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { addPasto, createPiatto, updatePasto } from "../queries";
+import { addPasto, createPiatto, listPiatti, updatePasto } from "../queries";
 import {
   NUTRIENTI,
   PASTI,
@@ -25,23 +25,42 @@ import {
   NumberInput,
   TabBar,
   inputClass,
+  bottoneClass,
+  bottonePrimarioClass,
 } from "@/core/components/controls";
 import { useRicercaAlimenti } from "./useRicercaAlimenti";
 import { RicercaFeedback } from "./RicercaFeedback";
 import { AvvisoDati, AvvisoDatiEsteso } from "./AvvisoDati";
-import { Search, Plus, Check, ArrowLeft } from "lucide-react";
+import { PiattoEditor } from "./PiattoEditor";
+import { Modale } from "@/core/components/Modale";
+import { Search, Plus, Check, ArrowLeft, PencilLine } from "lucide-react";
 import { cn, formatDate, oggiIso, parseNumero } from "@/lib/utils";
 
-type Modo = "recenti" | "cerca" | "piatti" | "manuale";
+/**
+ * Due schede, non quattro.
+ *
+ * "Recenti" e "A mano" erano schede a sé, e questo costringeva a scegliere da
+ * dove partire prima ancora di aver scritto una lettera: la pagina si apriva
+ * sui recenti e la casella di ricerca non era nemmeno in vista. Ora i recenti
+ * stanno sotto la ricerca vuota, dove sono un suggerimento e non una
+ * destinazione, e "a mano" è il "+" accanto alla casella.
+ */
+type Modo = "cerca" | "piatti";
 
 const TABS: { value: Modo; label: string }[] = [
-  { value: "recenti", label: "Recenti" },
   { value: "cerca", label: "Cerca" },
   { value: "piatti", label: "I miei piatti" },
-  { value: "manuale", label: "A mano" },
 ];
 
-const MODI: Modo[] = ["recenti", "cerca", "piatti", "manuale"];
+const MODI: Modo[] = ["cerca", "piatti"];
+
+/** Le due forme di piatto che la finestra del "+" sa creare. */
+type TipoNuovo = "singolo" | "composto";
+
+const TIPI_NUOVO: { value: TipoNuovo; label: string }[] = [
+  { value: "singolo", label: "Piatto singolo" },
+  { value: "composto", label: "Piatto composto" },
+];
 
 type Esito = "ok" | "duplicato" | "errore";
 
@@ -89,9 +108,12 @@ export function RicercaAggiungi({
 
   const [modo, setModo] = useState<Modo>(() => {
     const t = params.get("tab") as Modo | null;
-    if (t && MODI.includes(t)) return t;
-    return recentiIniziali.length > 0 ? "recenti" : "cerca";
+    return t && MODI.includes(t) ? t : "cerca";
   });
+
+  /** La finestra per creare un piatto a mano. `nuovo=1` la apre all'arrivo. */
+  const [nuovoAperto, setNuovoAperto] = useState(() => params.get("nuovo") === "1");
+  const [tipoNuovo, setTipoNuovo] = useState<TipoNuovo>("singolo");
 
   // I recenti arrivano dal server e si aggiornano da soli dopo un inserimento,
   // perche' le azioni di scrittura invalidano le pagine dell'area.
@@ -125,6 +147,31 @@ export function RicercaAggiungi({
     setSel(null);
     setError(null);
     setDuplicato(null);
+  }
+
+  /**
+   * Ricerca ancora vuota: sotto la casella si mostrano i recenti.
+   * Due caratteri è la stessa soglia che usa l'hook per partire.
+   */
+  const vuota = ricerca.q.trim().length < 2;
+
+  /**
+   * Un composto appena creato passa subito alla scelta della quantità.
+   *
+   * L'editor restituisce solo l'id, quindi il piatto completo si rilegge:
+   * è una chiamata sola su un gesto raro, e la sola alternativa sarebbe
+   * ricostruire a mano qui i valori che l'editor ha già calcolato.
+   */
+  async function apriPiattoAppenaCreato(id: string) {
+    setNuovoAperto(false);
+    try {
+      const piatti = await listPiatti();
+      const p = piatti.find((x) => x.id === id);
+      if (p) seleziona(piattoComeAlimento(p));
+      else setError("Piatto creato, ma non sono riuscito a rileggerlo.");
+    } catch {
+      setError("Piatto creato, ma non sono riuscito a rileggerlo.");
+    }
   }
 
   /** Prepara il form di dettaglio per l'alimento scelto. */
@@ -426,84 +473,106 @@ export function RicercaAggiungi({
         label="Come aggiungere l'alimento"
       />
 
-      {modo === "recenti" && !sel && (
-        <>
-          {recenti.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Niente di recente: cerca un alimento o inseriscilo a mano.
-            </p>
-          ) : (
-            <ul className="divide-y rounded-lg border">
-              {recenti.map((r, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <button
-                    onClick={() => seleziona(r)}
-                    className="min-w-0 flex-1 px-4 py-3 text-left text-sm hover:bg-accent"
-                  >
-                    <RigaAlimento a={r} ultimaVolta />
-                  </button>
-                  <button
-                    onClick={() => aggiuntaRapida(r)}
-                    disabled={salvando}
-                    aria-label={`Aggiungi ${r.nome} con l'ultima quantità usata`}
-                    title="Aggiungi con l'ultima quantita' usata"
-                    className="mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border text-muted-foreground transition hover:bg-accent hover:text-foreground disabled:opacity-50"
-                  >
-                    <Plus className="h-5 w-5" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
-
       {modo === "cerca" && !sel && (
         <>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (ricerca.q.trim().length >= 2) ricerca.cerca(ricerca.q.trim());
-            }}
-            role="search"
-          >
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                autoFocus
-                value={ricerca.q}
-                onChange={(e) => ricerca.setQ(e.target.value)}
-                placeholder="Cerca un alimento (es. latte, pasta, pollo)…"
-                aria-label="Cerca un alimento"
-                className={cn(inputClass, "w-full pl-9")}
-              />
-            </div>
-          </form>
-          <p className="text-xs text-muted-foreground">
-            I tuoi piatti salvati compaiono per primi, subito; gli alimenti di
-            Open Food Facts e USDA arrivano un attimo dopo.
-          </p>
+          <div className="flex items-center gap-2">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (ricerca.q.trim().length >= 2) ricerca.cerca(ricerca.q.trim());
+              }}
+              role="search"
+              className="min-w-0 flex-1"
+            >
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  autoFocus
+                  value={ricerca.q}
+                  onChange={(e) => ricerca.setQ(e.target.value)}
+                  placeholder="Cerca un alimento (es. latte, pasta, pollo)…"
+                  aria-label="Cerca un alimento"
+                  className={cn(inputClass, "w-full pl-9")}
+                />
+              </div>
+            </form>
+            {/*
+              Quello che prima era la scheda "A mano": sta accanto alla
+              casella perché è dove si finisce quando la ricerca non trova
+              niente, non un modo di partire.
+            */}
+            <button
+              onClick={() => setNuovoAperto(true)}
+              aria-label="Crea un piatto a mano"
+              title="Crea un piatto a mano"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
 
-          {ricerca.risultati.length > 0 && (
-            <ul className="divide-y rounded-lg border">
-              {ricerca.risultati.map((r, i) => (
-                <li key={`${r.fonte}-${i}-${r.nome}`}>
-                  <button
-                    onClick={() => seleziona(r)}
-                    className="w-full px-4 py-3 text-left text-sm hover:bg-accent"
-                  >
-                    <RigaAlimento a={r} />
-                  </button>
-                </li>
-              ))}
-            </ul>
+          {vuota ? (
+            /* Ricerca vuota: al posto del nulla, quello che segni di solito. */
+            recenti.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Scrivi cosa hai mangiato, oppure usa il <strong>+</strong> per
+                crearlo a mano.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Ultimi che hai segnato</p>
+                <ul className="divide-y overflow-hidden rounded-lg border">
+                  {recenti.map((r, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <button
+                        onClick={() => seleziona(r)}
+                        className="min-w-0 flex-1 px-4 py-3 text-left text-sm hover:bg-accent"
+                      >
+                        <RigaAlimento a={r} ultimaVolta />
+                      </button>
+                      <button
+                        onClick={() => aggiuntaRapida(r)}
+                        disabled={salvando}
+                        aria-label={`Aggiungi ${r.nome} con l'ultima quantità usata`}
+                        title="Aggiungi con l'ultima quantita' usata"
+                        className="mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border text-muted-foreground transition hover:bg-accent hover:text-foreground disabled:opacity-50"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground">
+                I tuoi piatti salvati compaiono per primi, subito; gli alimenti
+                di Open Food Facts e USDA arrivano un attimo dopo.
+              </p>
+
+              {ricerca.risultati.length > 0 && (
+                <ul className="divide-y overflow-hidden rounded-lg border">
+                  {ricerca.risultati.map((r, i) => (
+                    <li key={`${r.fonte}-${i}-${r.nome}`}>
+                      <button
+                        onClick={() => seleziona(r)}
+                        className="w-full px-4 py-3 text-left text-sm hover:bg-accent"
+                      >
+                        <RigaAlimento a={r} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <RicercaFeedback
+                stato={ricerca.stato}
+                cercato={ricerca.cercato}
+                risultati={ricerca.risultati.length}
+                onRiprova={ricerca.riprova}
+              />
+            </>
           )}
-          <RicercaFeedback
-            stato={ricerca.stato}
-            cercato={ricerca.cercato}
-            risultati={ricerca.risultati.length}
-            onRiprova={ricerca.riprova}
-          />
         </>
       )}
 
@@ -533,13 +602,57 @@ export function RicercaAggiungi({
         </>
       )}
 
-      {modo === "manuale" && !sel && (
-        <FormManuale
-          onContinua={(a) => {
-            seleziona(a, true);
-            setSalvaComePiatto(true);
-          }}
-        />
+      {nuovoAperto && (
+        <Modale
+          titolo="Crea un piatto"
+          sottotitolo={`Finirà nel diario di ${formatDate(data)}, ${PASTI.find((p) => p.value === pasto)?.label.toLowerCase()}.`}
+          icona={PencilLine}
+          larghezza={tipoNuovo === "composto" ? "larga" : "media"}
+          onChiudi={() => setNuovoAperto(false)}
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <TabBar
+                items={TIPI_NUOVO}
+                value={tipoNuovo}
+                onChange={setTipoNuovo}
+                label="Che tipo di piatto"
+              />
+              <p className="text-xs text-muted-foreground">
+                {tipoNuovo === "singolo"
+                  ? "Un alimento solo, con i valori dell'etichetta."
+                  : "Una ricetta fatta di ingredienti: i valori si calcolano da soli, e il piatto resta fra i tuoi."}
+              </p>
+            </div>
+
+            {tipoNuovo === "singolo" ? (
+              <FormManuale
+                onContinua={(a) => {
+                  setNuovoAperto(false);
+                  seleziona(a, true);
+                  // Spenta di default: un piatto scritto al volo di solito si
+                  // mangia una volta e basta. La spunta per tenerlo e' nella
+                  // scheda della quantita', subito prima di confermare.
+                  setSalvaComePiatto(false);
+                }}
+                onAnnulla={() => setNuovoAperto(false)}
+              />
+            ) : (
+              /*
+                Un composto si salva sempre fra i piatti: comporlo costa
+                fatica e buttarlo dopo un pasto non avrebbe senso. Qui
+                l'editor non cambia pagina, restituisce l'id.
+              */
+              <PiattoEditor
+                piatti={piattiIniziali}
+                tipoFisso="composto"
+                etichettaSalva="Salva e continua"
+                onAnnulla={() => setNuovoAperto(false)}
+                onSalvato={apriPiattoAppenaCreato}
+              />
+            )}
+          </div>
+        </Modale>
       )}
 
       {sel && (
@@ -712,8 +825,10 @@ function quantitaLeggibile(a: AlimentoRicerca, grammi: number): string {
 /** Inserimento di un alimento non presente in nessun archivio. */
 function FormManuale({
   onContinua,
+  onAnnulla,
 }: {
   onContinua: (a: AlimentoRicerca) => void;
+  onAnnulla: () => void;
 }) {
   const [nome, setNome] = useState("");
   const [marca, setMarca] = useState("");
@@ -810,12 +925,14 @@ function FormManuale({
         />
       </div>
       {errore && <p className="text-sm text-destructive">{errore}</p>}
-      <button
-        onClick={continua}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-      >
-        Continua
-      </button>
+      <div className="flex gap-3">
+        <button onClick={continua} className={bottonePrimarioClass}>
+          Continua
+        </button>
+        <button onClick={onAnnulla} className={bottoneClass}>
+          Annulla
+        </button>
+      </div>
     </div>
   );
 }

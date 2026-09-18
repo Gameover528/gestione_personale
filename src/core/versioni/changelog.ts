@@ -77,8 +77,15 @@ export interface NonRilasciato {
 }
 
 export const NON_RILASCIATO: NonRilasciato | null = {
-  aggiornato: "2026-09-17",
+  aggiornato: "2026-09-18",
   modifiche: [
+    // --- Alimentazione
+    { categoria: "modificato", testo: "\"Copia giorno\" e \"Obiettivi\" si aprono in una finestra sopra il diario: non si perde piu' il giorno che stavi guardando." },
+    { categoria: "aggiunto", testo: "Prima di copiare un giorno vedi l'elenco di cosa verrebbe copiato, pasto per pasto, e il pulsante dice quante voci sono." },
+    { categoria: "modificato", testo: "In Aggiungi si parte dalla ricerca: sotto la casella vuota ci sono gli ultimi alimenti che hai segnato, che lasciano il posto ai risultati appena scrivi." },
+    { categoria: "modificato", testo: "La scheda \"A mano\" e' diventata un \"+\" accanto alla ricerca: apre una finestra dove scegli se creare un alimento singolo o una ricetta fatta di ingredienti, e in entrambi i casi finisce subito nel diario." },
+    { categoria: "corretto", testo: "I riquadri dei pasti nel diario avevano gli angoli sporgenti: l'intestazione grigia usciva dalla cornice arrotondata." },
+    { categoria: "modificato", testo: "Le voci di menu si chiamano \"Diario\" e \"Dashboard\": dicono cosa si trova dietro, invece di nominare l'argomento." },
     { categoria: "corretto", testo: "L'app si installa davvero sul telefono: il file che il browser legge per installarla era protetto dal login, e quindi irraggiungibile." },
     { categoria: "corretto", testo: "Su iPhone l'icona sulla schermata Home e' quella dell'app, non una miniatura della pagina." },
     { categoria: "modificato", testo: "Nel registro delle versioni gli interventi sul database dei rilasci gia' pubblicati sono una riga di storia e non piu' un avviso: riguardavano chi pubblica, non chi usa l'app." },

@@ -9,6 +9,7 @@ import {
   ripristinaPasto,
   updatePasto,
   copiaGiorno,
+  listPasti,
 } from "../queries";
 import {
   PASTI,
@@ -24,7 +25,9 @@ import {
   sommaValori,
 } from "../types";
 import { AvvisoDati } from "./AvvisoDati";
+import { ObiettiviForm } from "./ObiettiviForm";
 import { useToast } from "@/core/components/Toast";
+import { Modale } from "@/core/components/Modale";
 import { IconButton, NumberInput, ToggleChip } from "@/core/components/controls";
 import {
   Trash2,
@@ -38,6 +41,7 @@ import {
   Search,
   ChefHat,
   PencilLine,
+  Target,
 } from "lucide-react";
 import { cn, formatDate, parseNumero, spostaGiorno } from "@/lib/utils";
 
@@ -143,17 +147,52 @@ export function DiarioGiorno({
     return obiettivi.find((o) => o.nutriente === n);
   }
 
+  const [obiettiviAperti, setObiettiviAperti] = useState(false);
+
   // ---- Copia da un altro giorno ----
   const [copiaAperta, setCopiaAperta] = useState(false);
   const [copiaDa, setCopiaDa] = useState(spostaGiorno(giorno, -1));
   const [copiaPasti, setCopiaPasti] = useState<Pasto[]>(PASTI.map((p) => p.value));
   const [copiando, setCopiando] = useState(false);
+  /** Cosa c'è nel giorno scelto: `null` finché non è stato letto. */
+  const [origine, setOrigine] = useState<PastoDiario[] | null>(null);
 
   function apriCopia() {
     setCopiaDa(spostaGiorno(giorno, -1));
     setCopiaPasti(PASTI.map((p) => p.value));
-    setCopiaAperta((v) => !v);
+    setOrigine(null);
+    setCopiaAperta(true);
   }
+
+  /**
+   * Legge il giorno di partenza per farlo vedere prima di copiarlo.
+   *
+   * Senza, l'unico modo di sapere cosa si stava portando via era premere
+   * "Copia" e guardare il risultato: se il giorno era quello sbagliato restava
+   * da disfare a mano. `annullato` evita che una risposta lenta sovrascriva
+   * quella di una data scelta dopo.
+   */
+  useEffect(() => {
+    if (!copiaAperta || copiaDa === giorno) {
+      setOrigine(null);
+      return;
+    }
+    let annullato = false;
+    setOrigine(null);
+    listPasti(copiaDa)
+      .then((righe) => {
+        if (!annullato) setOrigine(righe);
+      })
+      .catch(() => {
+        if (!annullato) setOrigine([]);
+      });
+    return () => {
+      annullato = true;
+    };
+  }, [copiaAperta, copiaDa, giorno]);
+
+  /** Le righe che finirebbero davvero nel giorno corrente. */
+  const daCopiare = (origine ?? []).filter((r) => copiaPasti.includes(r.pasto));
 
   function togglePastoCopia(p: Pasto) {
     setCopiaPasti((prev) =>
@@ -247,17 +286,18 @@ export function DiarioGiorno({
             e ripeterla qui rubava una riga proprio alla pagina che si apre
             piu' spesso. "Obiettivi" invece non sta in nessuno dei due.
 
-            Niente precaricamento: si aprono una volta ogni tanto, mentre
-            questa pagina si riapre a ogni alimento registrato e ogni
-            inserimento invalida la cache del router.
+            Si apre in una finestra e non piu' come pagina a se': sistemare un
+            obiettivo e' una parentesi di dieci secondi, e prima costava
+            perdere il giorno che si stava guardando e tornare indietro.
+            L'indirizzo /alimentazione/obiettivi resta valido per chi ce l'ha.
           */}
-          <Link
-            href="/alimentazione/obiettivi"
-            prefetch={false}
-            className="rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
+          <button
+            onClick={() => setObiettiviAperti(true)}
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
           >
+            <Target className="h-4 w-4" />
             Obiettivi
-          </Link>
+          </button>
           <Link
             href={hrefAggiungi()}
             /* Solo da lg: sotto, l'azione e' il "+" al centro della barra. */
@@ -271,57 +311,94 @@ export function DiarioGiorno({
 
       {/* Copia i pasti di un altro giorno in quello corrente */}
       {copiaAperta && (
-        <div className="space-y-3 rounded-lg border p-4">
-          <p className="text-sm font-medium">
-            Porta in questo giorno ({formatDate(giorno)}) i pasti di:
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <input
-              type="date"
-              value={copiaDa}
-              onChange={(e) => setCopiaDa(e.target.value)}
-              aria-label="Giorno da cui copiare"
-              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+        <Modale
+          titolo="Copia un altro giorno"
+          sottotitolo={`Le righe scelte vengono aggiunte a ${formatDate(giorno)}.`}
+          icona={CopyPlus}
+          onChiudi={() => setCopiaAperta(false)}
+        >
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-sm font-medium">Giorno da cui copiare</span>
+                <input
+                  type="date"
+                  value={copiaDa}
+                  onChange={(e) => setCopiaDa(e.target.value)}
+                  className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                />
+              </label>
+              <button
+                onClick={() => setCopiaDa(spostaGiorno(giorno, -1))}
+                className="mt-6 text-sm text-primary hover:underline"
+              >
+                il giorno prima
+              </button>
+            </div>
+
+            <div>
+              <p className="mb-2 text-sm font-medium">Quali pasti</p>
+              <div className="flex flex-wrap gap-2">
+                {PASTI.map((p) => (
+                  <ToggleChip
+                    key={p.value}
+                    attivo={copiaPasti.includes(p.value)}
+                    onClick={() => togglePastoCopia(p.value)}
+                  >
+                    {p.label}
+                  </ToggleChip>
+                ))}
+              </div>
+            </div>
+
+            {/*
+              Cosa si sta portando via, prima di portarlo via: senza questo
+              elenco l'unico modo di accorgersi di aver scelto il giorno
+              sbagliato era copiare e poi disfare.
+            */}
+            <AnteprimaCopia
+              giorno={copiaDa}
+              uguale={copiaDa === giorno}
+              origine={origine}
+              righe={daCopiare}
             />
-            <button
-              onClick={() => setCopiaDa(spostaGiorno(giorno, -1))}
-              className="text-sm text-primary hover:underline"
-            >
-              il giorno prima
-            </button>
-            <div className="flex flex-wrap gap-2">
-              {PASTI.map((p) => (
-                <ToggleChip
-                  key={p.value}
-                  attivo={copiaPasti.includes(p.value)}
-                  onClick={() => togglePastoCopia(p.value)}
-                >
-                  {p.label}
-                </ToggleChip>
-              ))}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={eseguiCopia}
+                disabled={copiando || daCopiare.length === 0}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+              >
+                {copiando
+                  ? "Copia…"
+                  : daCopiare.length === 1
+                    ? "Copia 1 voce"
+                    : `Copia ${daCopiare.length} voci`}
+              </button>
+              <button
+                onClick={() => setCopiaAperta(false)}
+                className="rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent"
+              >
+                Annulla
+              </button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={eseguiCopia}
-              disabled={copiando || copiaPasti.length === 0 || copiaDa === giorno}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
-            >
-              {copiando ? "Copia…" : "Copia"}
-            </button>
-            <button
-              onClick={() => setCopiaAperta(false)}
-              className="rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent"
-            >
-              Annulla
-            </button>
-            {copiaDa === giorno && (
-              <span className="text-sm text-muted-foreground">
-                Scegli un giorno diverso da quello corrente.
-              </span>
-            )}
-          </div>
-        </div>
+        </Modale>
+      )}
+
+      {obiettiviAperti && (
+        <Modale
+          titolo="Obiettivi nutrizionali"
+          icona={Target}
+          onChiudi={() => setObiettiviAperti(false)}
+        >
+          {/*
+            `embedded` toglie il pulsante "Indietro", che qui non ha senso, ed
+            e' lo stesso modo in cui il form e' gia' incastonato nelle
+            preferenze dei moduli. I valori se li legge da solo.
+          */}
+          <ObiettiviForm embedded />
+        </Modale>
       )}
 
       {/* Totali del giorno vs obiettivi */}
@@ -393,8 +470,9 @@ export function DiarioGiorno({
               <ChefHat className="h-4 w-4" />
               Scegli un tuo piatto
             </Link>
+            {/* `nuovo=1` apre subito la finestra per crearne uno a mano. */}
             <Link
-              href={`${hrefAggiungi()}&tab=manuale`}
+              href={`${hrefAggiungi()}&nuovo=1`}
               className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
             >
               <PencilLine className="h-4 w-4" />
@@ -412,8 +490,13 @@ export function DiarioGiorno({
             const righe = pasti.filter((x) => x.pasto === p.value);
             if (righe.length === 0) return null;
             const totPasto = sommaValori(righe.map(valoriPorzione));
+            // `overflow-hidden` non e' decorazione: l'intestazione grigia qui
+            // sotto e' un rettangolo squadrato appoggiato dentro un riquadro
+            // con gli angoli tondi, e senza ritaglio dipinge sopra gli angoli
+            // facendoli sembrare sporgenti. Vale anche per l'ultima riga in
+            // basso, che oggi non si vede solo perche' non ha sfondo.
             return (
-              <div key={p.value} className="rounded-lg border">
+              <div key={p.value} className="overflow-hidden rounded-lg border">
                 <div className="flex items-center justify-between border-b bg-muted px-4 py-2">
                   <span className="text-sm font-semibold">{p.label}</span>
                   <span className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -536,6 +619,95 @@ export function DiarioGiorno({
         Su telefono l'azione principale e' il "+" al centro della barra in
         basso: un pulsante flottante qui gli finirebbe sopra.
       */}
+    </div>
+  );
+}
+
+/**
+ * L'elenco di quello che la copia porterebbe via.
+ *
+ * Distingue i tre casi che sembrano uguali e non lo sono: sto ancora leggendo,
+ * quel giorno e' vuoto, oppure i pasti che hai spuntato non contengono niente.
+ * Dire "nessuna riga" in tutti e tre lascerebbe a indovinare quale sia.
+ */
+function AnteprimaCopia({
+  giorno,
+  uguale,
+  origine,
+  righe,
+}: {
+  giorno: string;
+  uguale: boolean;
+  origine: PastoDiario[] | null;
+  righe: PastoDiario[];
+}) {
+  const cornice = "rounded-md border bg-muted/40 p-3 text-sm";
+
+  if (uguale) {
+    return (
+      <p className={cn(cornice, "text-muted-foreground")}>
+        Scegli un giorno diverso da quello che stai guardando.
+      </p>
+    );
+  }
+  if (origine === null) {
+    return (
+      <p className={cn(cornice, "text-muted-foreground")}>
+        Leggo il {formatDate(giorno)}…
+      </p>
+    );
+  }
+  if (origine.length === 0) {
+    return (
+      <p className={cn(cornice, "text-muted-foreground")}>
+        Il {formatDate(giorno)} non ha niente di segnato.
+      </p>
+    );
+  }
+  if (righe.length === 0) {
+    return (
+      <p className={cn(cornice, "text-muted-foreground")}>
+        Nei pasti scelti non c&apos;è niente. Prova a spuntarne altri.
+      </p>
+    );
+  }
+
+  const totale = sommaValori(righe.map(valoriPorzione));
+
+  return (
+    <div className="overflow-hidden rounded-md border">
+      <div className="flex items-center justify-between border-b bg-muted px-3 py-2 text-sm">
+        <span className="font-medium">Verrà copiato</span>
+        <span className="text-muted-foreground">
+          {Math.round(totale.kcal)} kcal
+        </span>
+      </div>
+      {/* Oltre una certa lunghezza scorre: la finestra non deve allungarsi
+          all'infinito su un giorno pieno. */}
+      <ul className="max-h-48 divide-y overflow-y-auto">
+        {PASTI.filter((p) => righe.some((r) => r.pasto === p.value)).map((p) => (
+          <li key={p.value} className="px-3 py-2">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">
+              {p.label}
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {righe
+                .filter((r) => r.pasto === p.value)
+                .map((r) => (
+                  <li
+                    key={r.id}
+                    className="flex items-baseline justify-between gap-3 text-sm"
+                  >
+                    <span className="min-w-0 truncate">{r.nome_alimento}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {fmtQuantita(r)}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -327,7 +327,9 @@ export function AndamentoAlimentazione({
           </div>
 
           {/* Medie vs obiettivi */}
-          <div className="rounded-lg border">
+          {/* overflow-hidden: senza, l'intestazione grigia squadrata dipinge
+              sopra gli angoli tondi del riquadro e li fa sembrare sporgenti. */}
+          <div className="overflow-hidden rounded-lg border">
             <div className="border-b bg-muted px-4 py-2 text-sm font-semibold">
               Media giornaliera rispetto agli obiettivi
             </div>

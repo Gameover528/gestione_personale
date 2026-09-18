@@ -108,7 +108,7 @@ export function Sidebar({
         {areaAttiva.dashboardHref && (
           <NavLink
             href={areaAttiva.dashboardHref}
-            label="Riepilogo"
+            label="Dashboard"
             active={attivo === areaAttiva.dashboardHref}
             icon={<LayoutDashboard className="h-4 w-4" />}
           />

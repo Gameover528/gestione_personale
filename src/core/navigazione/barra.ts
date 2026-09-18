@@ -41,7 +41,7 @@ export function vociBarra(area: MacroAreaConfig, ruolo?: Ruolo): VoceBarra[] {
 
   if (area.dashboardHref) {
     voci.push({
-      label: "Riepilogo",
+      label: "Dashboard",
       href: area.dashboardHref,
       icon: LayoutDashboard,
     });

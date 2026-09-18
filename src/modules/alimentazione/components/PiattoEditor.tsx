@@ -27,6 +27,8 @@ import {
   NumberInput,
   TabBar,
   inputClass,
+  bottoneClass,
+  bottonePrimarioClass,
 } from "@/core/components/controls";
 import { Search, Trash2 } from "lucide-react";
 import { cn, parseNumero } from "@/lib/utils";
@@ -87,10 +89,28 @@ function valoriDaCampi(c: CampiValori): ValoriNutrizionali {
 export function PiattoEditor({
   initial,
   piatti,
+  tipoFisso,
+  etichettaSalva,
+  onSalvato,
+  onAnnulla,
 }: {
   initial?: PiattoConIngredienti;
   /** I propri piatti: la ricerca degli ingredienti li propone senza chiamate. */
   piatti: PiattoConValori[];
+  /**
+   * Blocca il tipo e nasconde la scelta. Serve a chi la scelta l'ha già
+   * offerta per conto suo — la finestra di "Aggiungi", che in cima ha il suo
+   * interruttore fra piatto singolo e composto.
+   */
+  tipoFisso?: TipoPiatto;
+  etichettaSalva?: string;
+  /**
+   * Cosa fare dopo il salvataggio. Senza, l'editor porta all'elenco dei piatti
+   * come ha sempre fatto: dentro una finestra invece il salvataggio non deve
+   * cambiare pagina, deve restituire l'id a chi l'ha aperta.
+   */
+  onSalvato?: (id: string) => void;
+  onAnnulla?: () => void;
 }) {
   const router = useRouter();
   // Un piatto non puo' essere ingrediente di se stesso.
@@ -98,7 +118,9 @@ export function PiattoEditor({
 
   const [nome, setNome] = useState(initial?.nome ?? "");
   const [marca, setMarca] = useState(initial?.marca ?? "");
-  const [tipo, setTipo] = useState<TipoPiatto>(initial?.tipo ?? "composto");
+  const [tipo, setTipo] = useState<TipoPiatto>(
+    tipoFisso ?? initial?.tipo ?? "composto"
+  );
 
   const [porzioneNome, setPorzioneNome] = useState(initial?.porzione_nome ?? "");
   const [porzioneG, setPorzioneG] = useState(
@@ -247,8 +269,18 @@ export function PiattoEditor({
       porzione_g: grammiPorzione > 0 ? grammiPorzione : null,
     };
     try {
-      if (initial) await updatePiatto(initial.id, input, ingredienti);
-      else await createPiatto(input, ingredienti);
+      let id: string;
+      if (initial) {
+        await updatePiatto(initial.id, input, ingredienti);
+        id = initial.id;
+      } else {
+        id = await createPiatto(input, ingredienti);
+      }
+      if (onSalvato) {
+        setSalvando(false);
+        onSalvato(id);
+        return;
+      }
       router.push("/alimentazione/piatti");
       router.refresh();
     } catch {
@@ -285,26 +317,30 @@ export function PiattoEditor({
         </label>
       </div>
 
-      {/* Tipo di piatto */}
-      <div className="space-y-2">
-        <span className="text-sm font-medium">Come sono definiti i valori</span>
-        <TabBar
-          items={TIPI}
-          value={tipo}
-          onChange={setTipo}
-          label="Tipo di piatto"
-        />
-        <p className="text-xs text-muted-foreground">
-          {tipo === "composto"
-            ? "Il piatto è una ricetta: i valori si calcolano dagli ingredienti."
-            : "Il piatto ha i suoi valori nutrizionali, presi da un'etichetta o già noti."}
-        </p>
-      </div>
+      {/* Tipo di piatto — nascosto quando chi ci ospita l'ha già chiesto. */}
+      {!tipoFisso && (
+        <div className="space-y-2">
+          <span className="text-sm font-medium">Come sono definiti i valori</span>
+          <TabBar
+            items={TIPI}
+            value={tipo}
+            onChange={setTipo}
+            label="Tipo di piatto"
+          />
+          <p className="text-xs text-muted-foreground">
+            {tipo === "composto"
+              ? "Il piatto è una ricetta: i valori si calcolano dagli ingredienti."
+              : "Il piatto ha i suoi valori nutrizionali, presi da un'etichetta o già noti."}
+          </p>
+        </div>
+      )}
 
       {tipo === "composto" ? (
         <>
           {/* Ingredienti */}
-          <div className="rounded-lg border">
+          {/* overflow-hidden: senza, l'intestazione grigia squadrata dipinge
+              sopra gli angoli tondi del riquadro e li fa sembrare sporgenti. */}
+          <div className="overflow-hidden rounded-lg border">
             <div className="flex items-center justify-between border-b bg-muted px-4 py-2">
               <span className="text-sm font-semibold">Ingredienti</span>
               <span className="text-sm text-muted-foreground">
@@ -524,13 +560,13 @@ export function PiattoEditor({
         <button
           onClick={handleSave}
           disabled={salvando}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+          className={bottonePrimarioClass}
         >
-          {salvando ? "Salvataggio…" : "Salva piatto"}
+          {salvando ? "Salvataggio…" : (etichettaSalva ?? "Salva piatto")}
         </button>
         <button
-          onClick={() => router.push("/alimentazione/piatti")}
-          className="rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent"
+          onClick={onAnnulla ?? (() => router.push("/alimentazione/piatti"))}
+          className={bottoneClass}
         >
           Annulla
         </button>

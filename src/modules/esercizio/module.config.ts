@@ -12,7 +12,7 @@ export const esercizioModule: ModuleConfig = {
     // per registrare o rivedere, mentre il catalogo si consulta di rado.
     { label: "Esercizio", href: "/esercizio", icon: Dumbbell },
     // Schede, catalogo ed esercizi propri restano nella sidebar del desktop: in
-    // barra i posti sono cinque e li prendono Riepilogo, Cibo, ＋, Esercizio,
+    // barra i posti sono cinque e li prendono Dashboard, Diario, ＋, Esercizio,
     // Andamento. Su telefono ci si arriva dalla pagina Esercizio.
     {
       label: "Schede",
