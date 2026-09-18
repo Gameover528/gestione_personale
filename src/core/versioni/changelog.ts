@@ -78,7 +78,13 @@ export interface NonRilasciato {
 
 export const NON_RILASCIATO: NonRilasciato | null = {
   aggiornato: "2026-09-18",
+  migrazioni: ["0011 — registro del peso"],
   modifiche: [
+    // --- Peso
+    { categoria: "aggiunto", testo: "Nuova sezione Peso: segni quanto pesi, con una nota se serve, e vedi l'andamento nel tempo invece del solo numero di oggi." },
+    { categoria: "modificato", testo: "Le calorie bruciate di un allenamento usano il peso di quel periodo e non quello attuale: prima, dimagrendo, i numeri degli allenamenti passati cambiavano da soli." },
+    { categoria: "modificato", testo: "Il calcolo degli obiettivi usa l'ultima pesata, e il peso che scrivi li' viene registrato come pesata di oggi: il peso sta in un posto solo." },
+
     // --- Sviluppo
     { categoria: "corretto", testo: "Solo per chi sviluppa: in locale l'app ora risponde ai clic e si aggiorna da sola a ogni modifica. Le regole di sicurezza bloccavano il server di sviluppo di Next; in produzione non cambia nulla." },
 

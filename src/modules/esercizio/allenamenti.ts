@@ -5,6 +5,8 @@ import { getDb } from "@/lib/cf";
 import { requireSessionUser } from "@/lib/auth/session";
 import { oggiIso } from "@/lib/utils";
 import { getDatiCorporei } from "@/modules/alimentazione/queries";
+import { listPesate } from "@/modules/peso/queries";
+import { pesoAllaData } from "@/modules/peso/types";
 import { metMedio, kcalStimate } from "./met";
 import type { FonteEsercizio } from "./types";
 
@@ -52,13 +54,23 @@ export interface AllenamentoRiepilogo extends Allenamento {
 }
 
 /**
- * Peso corporeo e MET servono a entrambe le funzioni di lettura: si prendono
- * una volta sola e si passano, invece di rileggere le preferenze per ogni
- * allenamento dell'elenco.
+ * Il peso corporeo da usare per stimare le calorie, allenamento per
+ * allenamento.
+ *
+ * Non è più un numero solo. Con il peso "attuale" del profilo, le bruciate di
+ * un allenamento di due mesi fa venivano ricalcolate ogni volta con il peso di
+ * oggi: chi cala di otto chili si vedeva riscrivere all'indietro tutta la
+ * storia. Ora ogni allenamento usa la pesata più vicina alla sua data, e il
+ * peso del profilo resta come ripiego per chi il registro non lo compila.
+ *
+ * Si legge tutto in una volta e si restituisce una funzione, perché serve una
+ * volta per ogni riga di un elenco: rileggere il registro per ognuna sarebbe
+ * una query per allenamento.
  */
-async function pesoCorporeo(): Promise<number | null> {
-  const dati = await getDatiCorporei();
-  return dati?.peso_kg ?? null;
+async function pesoPerData(): Promise<(data: string) => number | null> {
+  const [pesate, dati] = await Promise.all([listPesate(), getDatiCorporei()]);
+  const ripiego = dati?.peso_kg ?? null;
+  return (data: string) => pesoAllaData(pesate, data) ?? ripiego;
 }
 
 /**
@@ -129,7 +141,7 @@ export async function listAllenamenti(limite = 30): Promise<AllenamentoRiepilogo
     .bind(user.id, ...righe.map((r) => r.id))
     .all<{ allenamento_id: string; esercizio_id: string }>();
 
-  const peso = await pesoCorporeo();
+  const peso = await pesoPerData();
   const attributi = await attributiEsercizi([
     ...new Set((usati ?? []).map((u) => u.esercizio_id)),
   ]);
@@ -150,7 +162,7 @@ export async function listAllenamenti(limite = 30): Promise<AllenamentoRiepilogo
       ...r,
       esercizi: Number(r.esercizi ?? 0),
       serie: Number(r.serie ?? 0),
-      kcal: kcalStimate(metMedio(es), peso, r.durata_min),
+      kcal: kcalStimate(metMedio(es), peso(r.data), r.durata_min),
     };
   });
 }
@@ -181,7 +193,7 @@ export async function getAllenamento(
     .all<Serie>();
 
   const serie = results ?? [];
-  const peso = await pesoCorporeo();
+  const peso = await pesoPerData();
   const attributi = await attributiEsercizi([
     ...new Set(serie.map((s) => s.esercizio_id)),
   ]);
@@ -189,7 +201,7 @@ export async function getAllenamento(
     .map((x) => attributi.get(x))
     .filter((x): x is { attrezzi: string[]; parti_corpo: string[] } => !!x);
 
-  return { ...a, serie, kcal: kcalStimate(metMedio(es), peso, a.durata_min) };
+  return { ...a, serie, kcal: kcalStimate(metMedio(es), peso(a.data), a.durata_min) };
 }
 
 export interface AllenamentoInput {

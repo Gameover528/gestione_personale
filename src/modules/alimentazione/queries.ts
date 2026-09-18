@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/cf";
 import { requireSessionUser } from "@/lib/auth/session";
 import { oggiIso, spostaGiorno } from "@/lib/utils";
+import { salvaPesata, ultimaPesata } from "@/modules/peso/queries";
 
 import {
   da100,
@@ -899,7 +900,14 @@ export async function ripristinaPiatto(
 // ----------------------- Dati corporei (calcolo obiettivi) -----------------------
 const CHIAVE_CORPO = "alimentazione:corpo";
 
-/** Dati usati per proporre gli obiettivi, salvati tra le preferenze utente. */
+/**
+ * Dati usati per proporre gli obiettivi, salvati tra le preferenze utente.
+ *
+ * Il peso però lo comanda il registro delle pesate, quando ce n'è almeno una:
+ * altrimenti ci sarebbero due pesi in due posti, e chi si pesa ogni settimana
+ * si ritroverebbe gli obiettivi calcolati su un numero fermo a mesi fa. Quello
+ * salvato qui resta come ripiego per chi il registro non lo usa.
+ */
 export async function getDatiCorporei(): Promise<DatiCorporei | null> {
   const user = await requireSessionUser();
   const row = await getDb()
@@ -908,12 +916,22 @@ export async function getDatiCorporei(): Promise<DatiCorporei | null> {
     .first<{ value: string }>();
   if (!row) return null;
   try {
-    return JSON.parse(row.value) as DatiCorporei;
+    const dati = JSON.parse(row.value) as DatiCorporei;
+    const ultima = await ultimaPesata();
+    return ultima ? { ...dati, peso_kg: ultima.peso_kg } : dati;
   } catch {
     return null;
   }
 }
 
+/**
+ * Salva i dati corporei e, con essi, una pesata di oggi.
+ *
+ * Il campo "peso" del calcolatore è a tutti gli effetti una pesata: scriverlo
+ * solo nelle preferenze lo avrebbe lasciato fuori dal registro, e alla lettura
+ * successiva sarebbe stato scavalcato dall'ultima pesata vera, facendo
+ * sembrare che il salvataggio non avesse funzionato.
+ */
 export async function saveDatiCorporei(dati: DatiCorporei): Promise<void> {
   const user = await requireSessionUser();
   await getDb()
@@ -924,6 +942,10 @@ export async function saveDatiCorporei(dati: DatiCorporei): Promise<void> {
     )
     .bind(user.id, CHIAVE_CORPO, JSON.stringify(dati))
     .run();
+
+  if (dati.peso_kg > 0) {
+    await salvaPesata({ data: oggiIso(), peso_kg: dati.peso_kg, nota: null });
+  }
   invalidaAlimentazione();
 }
 

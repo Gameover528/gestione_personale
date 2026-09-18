@@ -9,6 +9,7 @@ import { bolletteModule } from "@/modules/bollette/module.config";
 import { abbonamentiModule } from "@/modules/abbonamenti/module.config";
 import { alimentazioneModule } from "@/modules/alimentazione/module.config";
 import { esercizioModule } from "@/modules/esercizio/module.config";
+import { pesoModule } from "@/modules/peso/module.config";
 import { impostazioniModule } from "@/modules/impostazioni/module.config";
 import RiepilogoCosti from "@/core/dashboard/widgets/RiepilogoCosti";
 import BilancioEnergetico from "@/core/dashboard/widgets/BilancioEnergetico";
@@ -67,7 +68,7 @@ export const macroAree: MacroAreaConfig[] = [
     label: "Salute",
     icon: HeartPulse,
     dashboardHref: "/alimentazione/dashboard",
-    moduli: [alimentazioneModule, esercizioModule],
+    moduli: [alimentazioneModule, esercizioModule, pesoModule],
     widgets: [
       {
         // Sta qui e non dentro un modulo perché somma i due: è l'unico punto in
