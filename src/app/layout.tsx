@@ -77,11 +77,24 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        {/*
+          `suppressHydrationWarning` sul nonce, non per pigrizia: React il nonce
+          non lo rimanda al client apposta, perché leggerlo dal DOM è il primo
+          passo per riusarlo in un'iniezione. Quindi il server scrive
+          nonce="abc…" e il client si aspetta nonce="": uno scarto voluto, che
+          però in sviluppo accendeva un avviso rosso fisso. Un avviso che c'è
+          sempre non avverte più di niente e copre quelli veri.
+        */}
+        <script
+          nonce={nonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }}
+        />
         {css && (
           <style
             id={ID_STILE_TEMA}
             nonce={nonce}
+            suppressHydrationWarning
             dangerouslySetInnerHTML={{ __html: css }}
           />
         )}
