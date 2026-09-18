@@ -21,14 +21,38 @@ const COOKIE_NAME = "session";
  *   meno pericolosa di quella di script.
  * - HSTS: dice al browser di usare sempre HTTPS per questo dominio.
  */
+
+/**
+ * Vero solo sotto `next dev`. Next sostituisce questa espressione con una
+ * costante quando compila, quindi in produzione il ramo di sviluppo sparisce
+ * dal bundle: non è una condizione valutata a ogni richiesta, e nessuno può
+ * riattivarla dall'esterno.
+ */
+const SVILUPPO = process.env.NODE_ENV === "development";
+
 function costruisciCsp(nonce: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    /*
+      In sviluppo serve `unsafe-eval`, e non è un cedimento: il server di
+      sviluppo di Next costruisce i moduli e applica le modifiche a caldo
+      valutando stringhe come codice. Senza, la CSP le blocca, React non si
+      aggancia alla pagina e l'app resta un documento morto — i clic non fanno
+      niente e funziona solo quello che i form sanno fare da soli inviandosi.
+      Ci è già costato una verifica intera fatta a vuoto.
+
+      Il nonce e `strict-dynamic` restano anche qui, così quello che si prova
+      in locale è la stessa politica che va in produzione, meno questa deroga.
+      In produzione la riga è esattamente quella di prima.
+    */
+    SVILUPPO
+      ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
+      : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "connect-src 'self'",
+    // Sempre in sviluppo: il ricaricamento a caldo passa da un websocket.
+    SVILUPPO ? "connect-src 'self' ws: wss:" : "connect-src 'self'",
     "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
