@@ -16,9 +16,12 @@ export interface UtenteInfo {
 /** Elenco di tutti gli account. Riservato ad admin/superadmin. */
 export async function listUtenti(): Promise<UtenteInfo[]> {
   await requireAdminUser();
+  // Le richieste da approvare per prime: sono le uniche righe che chiedono di
+  // fare qualcosa, e in fondo a un elenco che cresce non le vedrebbe nessuno.
   const { results } = await getDb()
     .prepare(
-      "select id, email, created_at, ruolo, stato from users order by created_at asc"
+      `select id, email, created_at, ruolo, stato from users
+        order by case when stato = 'in_attesa' then 0 else 1 end, created_at asc`
     )
     .all<UtenteInfo>();
   return results ?? [];

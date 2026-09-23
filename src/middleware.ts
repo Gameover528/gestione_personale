@@ -51,6 +51,18 @@ function costruisciCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
+    /*
+      Turnstile (il filtro anti-bot della registrazione) disegna il suo widget
+      dentro un iframe che viene da Cloudflare. Senza questa riga `frame-src`
+      ricadrebbe su `default-src 'self'` e l'iframe verrebbe bloccato, quindi
+      nessuno riuscirebbe a registrarsi. Lo script invece passa gia': lo
+      carichiamo noi con il nonce, e `strict-dynamic` copre quelli che tira su
+      da se'.
+
+      `frame-ancestors 'none'` piu' sotto resta: questo apre a un riquadro
+      *dentro* le nostre pagine, non al contrario.
+    */
+    "frame-src https://challenges.cloudflare.com",
     // Sempre in sviluppo: il ricaricamento a caldo passa da un websocket.
     SVILUPPO ? "connect-src 'self' ws: wss:" : "connect-src 'self'",
     "manifest-src 'self'",
@@ -91,8 +103,20 @@ export async function middleware(request: NextRequest) {
   // login diventava irraggiungibile e l'app non si installava.
   const isPublic =
     pathname.startsWith("/login") ||
+    pathname.startsWith("/registrati") ||
     pathname.startsWith("/auth") ||
     pathname === "/manifest.webmanifest";
+
+  /** La schermata di attesa: serve una sessione, ma non un account approvato. */
+  const isAttesa = pathname.startsWith("/in-attesa");
+
+  /**
+   * Le rotte di sessione (in pratica la disconnessione) non vanno mai
+   * dirottate: chi aspetta l'approvazione deve poter uscire, e mandandolo
+   * sulla schermata di attesa invece che a /auth/signout resterebbe chiuso
+   * dentro finché non scade il cookie. Trovato provando, non ragionando.
+   */
+  const isAuth = pathname.startsWith("/auth");
 
   // Nonce unico per richiesta: passa a Next tramite l'header di richiesta (da
   // cui Next lo estrae per i propri script) e allo stesso tempo nella CSP di
@@ -104,27 +128,47 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set("Content-Security-Policy", csp);
 
   const sessionId = request.cookies.get(COOKIE_NAME)?.value;
-  let authenticated = false;
+  // Tre esiti, non due: nessuna sessione valida, sessione di un account
+  // approvato, sessione di uno che aspetta ancora l'approvazione.
+  let stato: string | null = null;
 
   if (sessionId) {
     const { env } = await getCloudflareContext({ async: true });
     const row = await env.DB.prepare(
-      `select 1 from sessions s
+      `select u.stato as stato from sessions s
        join users u on u.id = s.user_id
-       where s.id = ? and s.expires_at > datetime('now') and u.stato = 'attivo'`
+       where s.id = ? and s.expires_at > datetime('now')
+         and u.stato in ('attivo', 'in_attesa')`
     )
       .bind(sessionId)
-      .first();
-    authenticated = !!row;
+      .first<{ stato: string }>();
+    stato = row?.stato ?? null;
   }
 
-  if (!authenticated && !isPublic) {
+  const authenticated = stato === "attivo";
+  const inAttesa = stato === "in_attesa";
+
+  // Chi aspetta vede la sua schermata e nient'altro: non le pagine dell'app, e
+  // nemmeno di nuovo il modulo di registrazione, che lo farebbe registrare due
+  // volte pensando che la prima non fosse andata a buon fine.
+  if (inAttesa && !isAttesa && !isAuth) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/in-attesa";
+    return applicaHeaderSicurezza(NextResponse.redirect(url), csp);
+  }
+
+  if (!authenticated && !isPublic && !(inAttesa && isAttesa)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return applicaHeaderSicurezza(NextResponse.redirect(url), csp);
   }
 
-  if (authenticated && pathname.startsWith("/login")) {
+  if (
+    authenticated &&
+    (pathname.startsWith("/login") ||
+      pathname.startsWith("/registrati") ||
+      isAttesa)
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/consumi-costi"; // tenuto in sync a mano con DEFAULT_AREA_HREF in registry.ts (evitiamo di importare la registry, pesante, nel middleware)
     return applicaHeaderSicurezza(NextResponse.redirect(url), csp);

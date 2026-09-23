@@ -15,6 +15,7 @@ import {
   registraFallimentoLogin,
   azzeraLimiteLogin,
 } from "./rateLimit";
+import { verificaTurnstile } from "./turnstile";
 import { DEFAULT_AREA_HREF } from "@/core/modules/registry";
 
 export interface LoginResult {
@@ -33,7 +34,10 @@ const HASH_CIVETTA =
 
 const ERRORE_CREDENZIALI = "Credenziali non valide";
 
-/** Login: nessuna registrazione pubblica, gli account si creano con lo script di seed. */
+/**
+ * Login. Gli account arrivano da `registratiAction` o dallo script di seed, e
+ * in entrambi i casi possono essere in attesa di approvazione.
+ */
 export async function loginAction(
   _prevState: LoginResult,
   formData: FormData
@@ -89,12 +93,125 @@ export async function loginAction(
 
   await azzeraLimiteLogin(chiave);
   await createSession(user.id);
-  redirect(DEFAULT_AREA_HREF);
+
+  // Chi aspetta l'approvazione entra lo stesso, ma nella sua schermata: è il
+  // modo di sapere a che punto è senza doverlo chiedere a qualcuno.
+  redirect(user.stato === "in_attesa" ? "/in-attesa" : DEFAULT_AREA_HREF);
 }
 
 export async function logoutAction(): Promise<void> {
   await destroySession();
   redirect("/login");
+}
+
+export interface RegistrazioneResult {
+  error?: string;
+}
+
+/**
+ * Registrazione libera, ma con l'ultima parola a chi amministra.
+ *
+ * L'account nasce `in_attesa`: esiste, ha una sessione e una schermata che
+ * dice di aspettare, e non vede un solo dato dell'app finché qualcuno non lo
+ * approva. Le due difese sono diverse e servono a cose diverse — Turnstile
+ * ferma i programmi automatici, l'approvazione ferma le persone che non
+ * conosci — e nessuna delle due da sola basterebbe.
+ *
+ * La sessione si crea subito, prima dell'approvazione, di proposito: senza,
+ * chi si registra non avrebbe modo di sapere a che punto è, e riproverebbe a
+ * iscriversi convinto che la prima volta non fosse andata.
+ */
+export async function registratiAction(
+  _prevState: RegistrazioneResult,
+  formData: FormData
+): Promise<RegistrazioneResult> {
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
+  const conferma = String(formData.get("passwordConferma") || "");
+  const nome = String(formData.get("nome") || "").trim();
+  const token = String(formData.get("cf-turnstile-response") || "");
+
+  // Controllo volutamente permissivo: qui non si sta verificando che la
+  // casella esista — per quello servirebbe un'email di conferma, che senza un
+  // dominio proprio non si può mandare — ma solo che non sia una riga vuota o
+  // palesemente non un indirizzo.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    return { error: "Indirizzo email non valido" };
+  }
+  if (password.length < 8) {
+    return { error: "La password deve avere almeno 8 caratteri" };
+  }
+  if (password !== conferma) {
+    return { error: "Le due password non coincidono" };
+  }
+  if (nome.length < 2) {
+    return { error: "Scrivi come ti chiami: serve a chi deve approvarti" };
+  }
+
+  const h = await headers();
+  const ip =
+    h.get("cf-connecting-ip") ||
+    h.get("x-forwarded-for")?.split(",")[0].trim() ||
+    null;
+
+  // Stesso freno del login, chiave separata: un IP che tempesta di
+  // registrazioni non deve potersi bloccare da solo anche l'accesso, e
+  // viceversa.
+  const chiave = ip ? `reg:${ip}` : `reg:${email}`;
+  const limite = await controllaLimiteLogin(chiave);
+  if (limite.bloccato) {
+    return {
+      error: `Troppe registrazioni da qui. Riprova tra circa ${limite.riprovaTraMin} minuti.`,
+    };
+  }
+
+  if (!(await verificaTurnstile(token, ip))) {
+    await registraFallimentoLogin(chiave);
+    return {
+      error: "Non è stato possibile verificare che tu non sia un programma automatico. Ricarica la pagina e riprova.",
+    };
+  }
+
+  const db = getDb();
+  const esistente = await db
+    .prepare("select 1 from users where email = ?")
+    .bind(email)
+    .first();
+
+  /*
+    Email già presente: lo si dice, e non è una svista.
+
+    Il primo tentativo era rispondere come se fosse andata bene, per non
+    trasformare il modulo in uno strumento per scoprire chi ha un account qui —
+    la stessa ragione per cui il login risponde sempre "Credenziali non valide".
+    Ma qui non funziona: una registrazione riuscita porta alla schermata di
+    attesa, un doppione no, e quella differenza si vede a occhio nudo. Restava
+    una discrezione finta, pagata con un modulo che a chi ha solo sbagliato a
+    digitare sembra rotto.
+
+    Fra le due, meglio quella onesta: si dice com'è e si indica la strada. Il
+    freno per IP resta, così l'elenco delle email registrate non si può
+    comunque ricavare provandole a raffica.
+  */
+  if (esistente) {
+    await registraFallimentoLogin(chiave);
+    return {
+      error:
+        "Questo indirizzo ha già un accesso. Entra dalla pagina di accesso, o usa un altro indirizzo.",
+    };
+  }
+
+  const id = crypto.randomUUID();
+  await db
+    .prepare(
+      `insert into users (id, email, password_hash, nome, ruolo, stato)
+       values (?, ?, ?, ?, 'utilizzatore', 'in_attesa')`
+    )
+    .bind(id, email, await hashPassword(password), nome)
+    .run();
+
+  await createSession(id);
+  redirect("/in-attesa");
 }
 
 export interface ImpostazioneResult {

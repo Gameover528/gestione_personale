@@ -23,6 +23,7 @@ const LABEL_RUOLO: Record<Ruolo, string> = {
 
 const LABEL_STATO: Record<StatoAccount, string> = {
   attivo: "Attivo",
+  in_attesa: "Da approvare",
   sospeso: "Sospeso",
   bloccato: "Bloccato",
 };
@@ -138,7 +139,11 @@ export function UtentiSettings({
                   </Badge>
                   <Badge
                     variant={
-                      u.stato === "attivo" ? "success" : u.stato === "sospeso" ? "warning" : "destructive"
+                      u.stato === "attivo"
+                        ? "success"
+                        : u.stato === "sospeso" || u.stato === "in_attesa"
+                          ? "warning"
+                          : "destructive"
                     }
                   >
                     {LABEL_STATO[u.stato]}
@@ -171,7 +176,30 @@ export function UtentiSettings({
                     >
                       Password temporanea
                     </button>
-                    {u.stato === "attivo" ? (
+                    {/*
+                      Chi si è registrato da sé ha due sole risposte sensate,
+                      e sono diverse da "riattiva": o lo si fa entrare, o lo si
+                      manda via. "Sospendi" qui non vorrebbe dire niente,
+                      perché non è mai stato dentro.
+                    */}
+                    {u.stato === "in_attesa" ? (
+                      <>
+                        <button
+                          disabled={inCorso}
+                          onClick={() => cambiaStato(u.id, "attivo")}
+                          className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+                        >
+                          Approva
+                        </button>
+                        <button
+                          disabled={inCorso}
+                          onClick={() => cambiaStato(u.id, "bloccato")}
+                          className="rounded-md border border-destructive/40 px-3 py-1 text-xs font-medium text-destructive transition hover:bg-destructive/10 disabled:opacity-50"
+                        >
+                          Rifiuta
+                        </button>
+                      </>
+                    ) : u.stato === "attivo" ? (
                       <>
                         <button
                           disabled={inCorso}

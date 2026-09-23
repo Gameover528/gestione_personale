@@ -80,6 +80,11 @@ export const NON_RILASCIATO: NonRilasciato | null = {
   aggiornato: "2026-09-18",
   migrazioni: ["0011 — registro del peso"],
   modifiche: [
+    // --- Accessi
+    { categoria: "aggiunto", testo: "Chi vuole provare l'app può chiedere un accesso da sé: la richiesta resta in attesa finché un amministratore non la approva, e fino ad allora l'account non vede nessun dato." },
+    { categoria: "aggiunto", testo: "In Impostazioni › Utenti le richieste da approvare compaiono per prime, con Approva e Rifiuta." },
+    { categoria: "sicurezza", testo: "Il modulo di registrazione è protetto dal filtro anti-bot di Cloudflare e dallo stesso freno del login: troppe richieste dallo stesso indirizzo di rete vengono rallentate." },
+
     // --- Peso
     { categoria: "aggiunto", testo: "Nuova sezione Peso: segni quanto pesi, con una nota se serve, e vedi l'andamento nel tempo invece del solo numero di oggi." },
     { categoria: "modificato", testo: "Le calorie bruciate di un allenamento usano il peso di quel periodo e non quello attuale: prima, dimagrendo, i numeri degli allenamenti passati cambiavano da soli." },

@@ -118,13 +118,36 @@ Il campo `migrazioni` elenca cosa va applicato al database perché quel rilascio
 
 ## Account
 
+Ci sono tre modi di far nascere un account:
+
+1. **Registrazione pubblica** (`/registrati`): chiunque può chiedere un accesso. L'account nasce `in_attesa` e non vede un solo dato finché un amministratore non lo approva da **Impostazioni › Utenti**. Contro i programmi automatici c'è Turnstile (sotto).
+2. **Creazione da Impostazioni › Utenti**, che crea account già attivi.
+3. **Da terminale**, per il primo account di un ambiente nuovo:
+
 ```bash
 node scripts/seed-users.mjs "nuovaemail@esempio.it" "passwordSicura"
 npx wrangler d1 execute gestione-personale-db --remote --file=./d1/seed-users.sql
 rm d1/seed-users.sql
 ```
 
-Chi ha il ruolo di amministratore può poi gestire gli altri da **Impostazioni › Utenti**, reset password compreso.
+Gli stati di un account sono `attivo`, `in_attesa`, `sospeso`, `bloccato`. Solo `attivo` vede l'app: `getSessionUser()` risponde "nessun utente" per tutti gli altri, ed è da quella funzione che dipendono tutte le query.
+
+### Turnstile: il passo da fare a mano
+
+Senza chiavi vere il filtro anti-bot **usa quelle di prova di Cloudflare, che accettano qualunque cosa**. Va bene in locale, non in produzione. Per attivarlo davvero:
+
+1. Su dash.cloudflare.com → **Turnstile** → crea un widget per il dominio dell'app. Escono una *site key* (pubblica) e una *secret key*.
+2. La site key va nelle `vars` di `wrangler.jsonc` come `TURNSTILE_SITEKEY`: finisce nell'HTML, è pubblica per costruzione.
+3. Il segreto va fra i segreti del Worker, **mai** nel file di configurazione:
+
+```bash
+npx wrangler secret put TURNSTILE_SECRET            # produzione
+npx wrangler secret put TURNSTILE_SECRET --env dev  # sviluppo
+```
+
+`turnstileConfigurato()` in `src/lib/auth/turnstile.ts` dice se ci sono chiavi vere: serve a non credere di essere protetti quando non lo si è.
+
+La CSP consente l'iframe del widget con `frame-src https://challenges.cloudflare.com`; lo script lo carichiamo noi col nonce della richiesta.
 
 ---
 

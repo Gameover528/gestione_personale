@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
 import { loginAction, type LoginResult } from "@/lib/auth/actions";
 
@@ -62,6 +63,13 @@ export default function LoginPage() {
             {isPending ? "Attendere..." : "Accedi"}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Non hai un accesso?{" "}
+          <Link href="/registrati" className="text-primary hover:underline">
+            Chiedilo
+          </Link>
+        </p>
       </div>
     </div>
   );

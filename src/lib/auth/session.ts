@@ -80,13 +80,47 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
   if (!row) return null;
 
-  // Un account sospeso/bloccato perde la sessione immediatamente, ovunque.
+  /*
+    Chi aspetta l'approvazione la sessione la tiene: gli serve per vedere la
+    schermata di attesa e per ritrovarla se torna domani. Non passa comunque di
+    qui, perché questa funzione risponde "nessun utente" a tutto ciò che non è
+    attivo, ed è da questa funzione che dipendono tutte le query dell'app.
+  */
+  if (row.stato === "in_attesa") return null;
+
+  // Un account sospeso o bloccato perde la sessione immediatamente, ovunque.
   if (row.stato !== "attivo") {
     await getDb().prepare("delete from sessions where id = ?").bind(id).run();
     return null;
   }
 
   return row;
+}
+
+/**
+ * L'utente della sessione corrente **solo se** sta aspettando l'approvazione.
+ *
+ * È una funzione a parte, e non un parametro di `getSessionUser`, apposta:
+ * così le 95 chiamate sparse per l'app non possono, per distrazione o per una
+ * riga sbagliata, ritrovarsi in mano un utente non approvato. Qui ci arriva
+ * solo la schermata di attesa.
+ */
+export async function getUtenteInAttesa(): Promise<SessionUser | null> {
+  const cookieStore = await cookies();
+  const id = cookieStore.get(COOKIE_NAME)?.value;
+  if (!id) return null;
+
+  const row = await getDb()
+    .prepare(
+      `select u.id as id, u.email as email, u.nome as nome, u.ruolo as ruolo, u.stato as stato
+       from sessions s
+       join users u on u.id = s.user_id
+       where s.id = ? and s.expires_at > datetime('now') and u.stato = 'in_attesa'`
+    )
+    .bind(id)
+    .first<SessionUser>();
+
+  return row ?? null;
 }
 
 /**
