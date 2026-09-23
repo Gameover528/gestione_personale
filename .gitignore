@@ -44,3 +44,6 @@ cloudflare-env.d.ts
 
 # configurazione locale di Claude Code (impostazioni personali e anteprima browser)
 /.claude/
+# Segreti per lo sviluppo locale (wrangler li legge da qui): mai nel repo.
+.dev.vars
+.dev.vars.*

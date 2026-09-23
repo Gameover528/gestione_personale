@@ -48,6 +48,22 @@ export async function verificaTurnstile(
 ): Promise<boolean> {
   if (!token) return false;
 
+  /*
+    Chiavi mancanti fuori dallo sviluppo: si rifiuta.
+
+    È il caso che fa più danno di tutti, perché non si vede: senza chiavi il
+    codice ripiegherebbe su quelle di prova, che accettano qualunque cosa, e la
+    registrazione resterebbe spalancata ai programmi automatici con l'aria di
+    essere protetta. È già successo per davvero: le `vars` di wrangler non si
+    ereditano fra ambienti, e l'ambiente di sviluppo era rimasto senza chiave.
+
+    Fra una registrazione chiusa e una registrazione finta-protetta, si sceglie
+    quella che si nota subito.
+  */
+  if (process.env.NODE_ENV === "production" && !turnstileConfigurato()) {
+    return false;
+  }
+
   const corpo = new FormData();
   corpo.append("secret", process.env.TURNSTILE_SECRET || SEGRETO_PROVA);
   corpo.append("response", token);

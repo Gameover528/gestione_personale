@@ -168,7 +168,8 @@ export async function registratiAction(
   if (!(await verificaTurnstile(token, ip))) {
     await registraFallimentoLogin(chiave);
     return {
-      error: "Non è stato possibile verificare che tu non sia un programma automatico. Ricarica la pagina e riprova.",
+      error:
+        "Non è stato possibile verificare che tu non sia un programma automatico. Ricarica la pagina e riprova; se continua, le registrazioni sono chiuse e devi farti creare l'accesso da chi amministra.",
     };
   }
 

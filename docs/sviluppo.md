@@ -132,20 +132,36 @@ rm d1/seed-users.sql
 
 Gli stati di un account sono `attivo`, `in_attesa`, `sospeso`, `bloccato`. Solo `attivo` vede l'app: `getSessionUser()` risponde "nessun utente" per tutti gli altri, ed è da quella funzione che dipendono tutte le query.
 
-### Turnstile: il passo da fare a mano
+### Turnstile
 
-Senza chiavi vere il filtro anti-bot **usa quelle di prova di Cloudflare, che accettano qualunque cosa**. Va bene in locale, non in produzione. Per attivarlo davvero:
+Il filtro anti-bot della registrazione. Tre cose che si sbagliano facilmente, tutte e tre incontrate sul serio.
 
-1. Su dash.cloudflare.com → **Turnstile** → crea un widget per il dominio dell'app. Escono una *site key* (pubblica) e una *secret key*.
-2. La site key va nelle `vars` di `wrangler.jsonc` come `TURNSTILE_SITEKEY`: finisce nell'HTML, è pubblica per costruzione.
-3. Il segreto va fra i segreti del Worker, **mai** nel file di configurazione:
+**1. Le `vars` non si ereditano fra ambienti.** `TURNSTILE_SITEKEY` va ripetuta sia nelle `vars` di primo livello sia in `env.dev.vars` di `wrangler.jsonc`. Se manca su un ambiente, lì il codice ripiega sulla chiave di prova, che genera un token finto — e il segreto vero lo rifiuta: la registrazione non funziona per nessuno. Wrangler lo segnala, ma è una riga facile da non leggere.
+
+**2. Il segreto non sta nel file di configurazione.** Va messo per ogni ambiente:
 
 ```bash
 npx wrangler secret put TURNSTILE_SECRET            # produzione
 npx wrangler secret put TURNSTILE_SECRET --env dev  # sviluppo
 ```
 
-`turnstileConfigurato()` in `src/lib/auth/turnstile.ts` dice se ci sono chiavi vere: serve a non credere di essere protetti quando non lo si è.
+In locale i segreti non ci sono: si mettono in un file **`.dev.vars`** nella radice (escluso da git), che `wrangler dev` e `npm run preview` leggono da soli:
+
+```
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+```
+
+Quella è la chiave di prova che accetta tutto. Senza `.dev.vars`, in `npm run preview` la registrazione viene **rifiutata**: fuori dallo sviluppo, quando le chiavi mancano, `verificaTurnstile` dice di no invece di lasciare passare. È voluto — una registrazione chiusa si nota, una finta-protetta no.
+
+**3. Ogni hostname va dichiarato sul widget.** Cloudflare accetta solo nomi completi, niente caratteri jolly. Se manca, il widget non compare e in console si legge **errore 110200**. Vanno aggiunti tutti:
+
+- `gestione-personale.personalmanage.workers.dev`
+- `gestione-personale-dev.personalmanage.workers.dev`
+- `localhost` (per `npm run preview`)
+
+Nota: `workers.dev` è nella *public suffix list*, e ci sono segnalazioni di hostname `*.workers.dev` che Turnstile non accetta come dovrebbe. Se dopo averli aggiunti l'errore 110200 resta sui siti pubblicati, la strada è un dominio proprio.
+
+`turnstileConfigurato()` in `src/lib/auth/turnstile.ts` dice se ci sono chiavi vere: serve a non credersi protetti quando non lo si è.
 
 La CSP consente l'iframe del widget con `frame-src https://challenges.cloudflare.com`; lo script lo carichiamo noi col nonce della richiesta.
 

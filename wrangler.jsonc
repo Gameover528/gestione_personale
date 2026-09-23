@@ -15,7 +15,8 @@
 	},
 	// Ambiente mostrato dalla pagina Impostazioni > Versioni (registro per ambiente).
 	"vars": {
-		"AMBIENTE": "prod"
+		"AMBIENTE": "prod",
+		"TURNSTILE_SITEKEY":"0x4AAAAAAFA9g7oPuGgMDcRU"
 	},
 	// Ambiente di default (nessun --env): PRODUZIONE.
 	"d1_databases": [
@@ -36,8 +37,13 @@
 	"env": {
 		"dev": {
 			"name": "gestione-personale-dev",
+			// Le `vars` NON si ereditano dall'ambiente di default: vanno
+			// ripetute qui. Senza TURNSTILE_SITEKEY il codice ripiega sulla
+			// chiave di prova, che produce un token finto — e il segreto vero
+			// lo rifiuta, quindi su sviluppo non si registrerebbe nessuno.
 			"vars": {
-				"AMBIENTE": "dev"
+				"AMBIENTE": "dev",
+				"TURNSTILE_SITEKEY": "0x4AAAAAAFA9g7oPuGgMDcRU"
 			},
 			"d1_databases": [
 				{
