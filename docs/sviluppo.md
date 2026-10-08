@@ -197,6 +197,63 @@ Non c'è service worker: l'app si installa e parte a schermo pieno, ma non funzi
 
 ---
 
+## Server MCP
+
+`/api/mcp` espone all'app due attrezzi di **sola lettura** per una chat: `leggi_diario` e `leggi_peso`. Gli attrezzi stanno in `src/lib/mcp/attrezzi.ts`, il protocollo in `src/app/api/mcp/route.ts`.
+
+L'accesso è protetto da **OAuth**: chi collega una chat passa dalla pagina del consenso dentro l'app, e ne esce un token legato al suo account. Il giro è descritto sotto.
+
+Per lo sviluppo c'è una scorciatoia che salta tutto, da mettere in `.dev.vars` (escluso da git, e un Worker pubblicato non ce l'ha):
+
+```
+MCP_LOCALE=1
+MCP_UTENTE=tuaemail@esempio.it
+```
+
+Con quelle due, le chiamate passano senza token e per l'utente indicato. Senza, serve il token: è il comportamento di produzione. **Non vanno mai messe in `wrangler.jsonc`.**
+
+### Il giro OAuth
+
+Cinque pezzi, tutti sull'app:
+
+| pezzo | dove |
+|---|---|
+| «questa risorsa è protetta, si entra da lì» | `/.well-known/oauth-protected-resource/...` |
+| «io rilascio i permessi, ecco come» | `/.well-known/oauth-authorization-server` |
+| la pagina del consenso | `/oauth/authorize` |
+| lo scambio codice → token | `/oauth/token` |
+| vedere e staccare i collegamenti | Impostazioni › Profilo |
+
+Il client è **uno solo, scritto nel codice e senza segreto** (`gestione-personale-chat`): è un client pubblico, e la sicurezza si regge su tre cose — il consenso dell'utente, l'elenco chiuso degli indirizzi di ritorno, e PKCE con S256, che è obbligatorio.
+
+Codici e token sono salvati **come impronta SHA-256**, mai in chiaro. Il codice d'autorizzazione vive 60 secondi e si consuma al primo tentativo, riuscito o no. Il token d'accesso dura un'ora, quello di rinnovo sei mesi e **si sostituisce a ogni uso**: se qualcuno ne copia uno, il secondo che lo usa trova la porta chiusa, e la cosa si nota.
+
+### Per collegare una chat
+
+Su claude.ai → Impostazioni → Connettori → Aggiungi connettore personalizzato:
+
+- **URL**: `https://<dominio>/api/mcp`
+- **Autenticazione**: *Accedi ora*
+- **Client OAuth**: *Usa il tuo client OAuth*, identificativo `gestione-personale-chat`, nessun segreto
+
+Il connettore manda al consenso dentro l'app; da lì in poi la chat legge con il token.
+
+Per provarlo: `npm run preview`, poi
+
+```bash
+curl -s -X POST http://localhost:8788/api/mcp -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+Per collegarlo a una chat serve un ponte, perché i client parlano con i server locali via stdio:
+
+```bash
+npx mcp-remote http://localhost:8788/api/mcp
+```
+
+Note di protocollo: trasporto *Streamable HTTP* ridotto all'osso — si risponde a una POST con un singolo oggetto JSON, niente SSE e niente sessioni. `GET` e `DELETE` rispondono 405, come la specifica prevede per chi non offre flussi. L'intestazione `Origin` viene controllata (la specifica lo impone: senza, una pagina web qualunque potrebbe parlare col server locale).
+
+---
+
 ## Setup da zero (nuovo account Cloudflare)
 
 ```bash

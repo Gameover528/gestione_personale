@@ -78,12 +78,16 @@ export interface NonRilasciato {
 
 export const NON_RILASCIATO: NonRilasciato | null = {
   aggiornato: "2026-09-18",
-  migrazioni: ["0011 — registro del peso"],
+  migrazioni: ["0011 — registro del peso", "0012 — collegamento delle chat"],
   modifiche: [
     // --- Accessi
     { categoria: "aggiunto", testo: "Chi vuole provare l'app può chiedere un accesso da sé: la richiesta resta in attesa finché un amministratore non la approva, e fino ad allora l'account non vede nessun dato." },
     { categoria: "aggiunto", testo: "In Impostazioni › Utenti le richieste da approvare compaiono per prime, con Approva e Rifiuta." },
     { categoria: "sicurezza", testo: "Il modulo di registrazione è protetto dal filtro anti-bot di Cloudflare e dallo stesso freno del login: troppe richieste dallo stesso indirizzo di rete vengono rallentate." },
+
+    // --- Chat collegate
+    { categoria: "aggiunto", testo: "Puoi collegare una chat di Claude al tuo account e chiederle cosa hai mangiato o come sta andando il peso: legge e basta, non scrive e non vede il resto dell'app." },
+    { categoria: "aggiunto", testo: "In Impostazioni › Profilo vedi le chat collegate, quando hanno letto l'ultima volta, e le stacchi quando vuoi." },
 
     // --- Peso
     { categoria: "aggiunto", testo: "Nuova sezione Peso: segni quanto pesi, con una nota se serve, e vedi l'andamento nel tempo invece del solo numero di oggi." },
