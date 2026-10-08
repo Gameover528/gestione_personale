@@ -143,6 +143,21 @@ export async function POST(req: Request) {
     });
   }
 
+  /*
+    Le credenziali servono per TUTTO l'endpoint, non solo per le chiamate che
+    leggono dati.
+
+    All'inizio avevo lasciato passare initialize, ping e tools/list ragionando
+    che non toccano niente. Ragionamento sbagliato, e il difetto non si vedeva
+    in locale: e' il 401 della prima richiesta che dice al client "qui ci si
+    autentica". Vedendo 200, Claude concludeva che il server fosse aperto, non
+    mostrava mai la pagina del consenso, e poi le letture fallivano una per
+    una. Collegato all'apparenza, inutile nei fatti.
+  */
+  const chi = await chiChiama(req);
+  if ("rifiuto" in chi) return chi.rifiuto;
+  const userId = chi.userId;
+
   let msg: Messaggio;
   try {
     msg = (await req.json()) as Messaggio;
@@ -158,12 +173,6 @@ export async function POST(req: Request) {
 
   const params = msg.params ?? {};
 
-  /*
-    initialize, ping e tools/list si rispondono senza credenziali: servono al
-    client per capire con chi sta parlando, e il giro del consenso comincia
-    proprio da li'. Nessuno dei tre tocca un dato. tools/call invece legge, e
-    li' il token serve.
-  */
   switch (msg.method) {
     case "initialize": {
       // Si risponde con la versione chiesta dal client se la conosciamo,
@@ -203,9 +212,6 @@ export async function POST(req: Request) {
         return errore(msg.id, -32602, `Attrezzo sconosciuto: ${nome}`);
       }
 
-      const chi = await chiChiama(req);
-      if ("rifiuto" in chi) return chi.rifiuto;
-      const userId = chi.userId;
 
       const argomenti = (params.arguments ?? {}) as Record<string, unknown>;
       try {
