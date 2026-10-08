@@ -3,6 +3,7 @@ import { Badge } from "@/core/components/ui";
 import { formatDate } from "@/lib/utils";
 import { etichettaAmbiente } from "./ambiente";
 import {
+  dataBuild,
   perCategoria,
   type Ambiente,
   type Categoria,
@@ -65,9 +66,11 @@ export function RegistroVersioni({
           <header className="flex flex-wrap items-center gap-2 border-b bg-primary/10 px-4 py-2">
             <span className="font-semibold">Non ancora in produzione</span>
             <Badge variant="default">solo sviluppo</Badge>
-            <span className="ml-auto text-sm text-muted-foreground">
-              aggiornato il {formatDate(nonRilasciato.aggiornato)}
-            </span>
+            {dataBuild() && (
+              <span className="ml-auto text-sm text-muted-foreground">
+                pubblicato il {formatDate(dataBuild() as string)}
+              </span>
+            )}
           </header>
           <div className="space-y-3 px-4 py-3">
             <Modifiche modifiche={nonRilasciato.modifiche} />

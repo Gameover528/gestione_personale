@@ -69,15 +69,29 @@ export interface Rilascio {
  * Quello che sta su sviluppo e non è ancora andato in produzione.
  * `null` quando dev e produzione sono allineati.
  */
+/**
+ * Quello che sta su sviluppo e non è ancora in produzione.
+ *
+ * Non ha una data scritta a mano: ce l'aveva, ed è rimasta ferma per tre
+ * settimane mentre le voci qui sotto crescevano, raccontando a chi leggeva una
+ * cosa falsa. La data che conta è quella della build, che la pagina prende da
+ * sé — un campo che bisogna ricordarsi di aggiornare è un campo che prima o poi
+ * mente.
+ */
 export interface NonRilasciato {
-  /** Data dell'ultima modifica aggiunta qui. */
-  aggiornato: string;
   modifiche: Modifica[];
   migrazioni?: string[];
 }
 
+/**
+ * Quando è stato compilato il codice in esecuzione, cioè quando è stato
+ * pubblicato. Arriva da next.config.mjs, sostituita al momento della build.
+ */
+export function dataBuild(): string | null {
+  return process.env.DATA_BUILD ?? null;
+}
+
 export const NON_RILASCIATO: NonRilasciato | null = {
-  aggiornato: "2026-09-18",
   migrazioni: ["0011 — registro del peso", "0012 — collegamento delle chat"],
   modifiche: [
     // --- Accessi
