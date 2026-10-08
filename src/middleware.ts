@@ -105,7 +105,24 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/registrati") ||
     pathname.startsWith("/auth") ||
-    pathname === "/manifest.webmanifest";
+    pathname === "/manifest.webmanifest" ||
+    /*
+      Il server MCP non parla con un browser e non ha cookie: se passasse di
+      qui si vedrebbe rimandare al login. Lasciarlo passare non lo espone,
+      perché si chiude da solo: senza MCP_LOCALE="1" e MCP_UTENTE risponde 404
+      a tutto, e quelle due variabili vivono in .dev.vars, che non finisce in
+      git e che un Worker pubblicato non ha.
+    */
+    pathname === "/api/mcp" ||
+    /*
+      Il giro di autorizzazione OAuth: i due documenti che descrivono dove
+      autenticarsi e lo scambio del codice. Devono rispondere a chi non e'
+      ancora nessuno — e' tutto il loro scopo. La pagina del consenso
+      (/oauth/authorize) invece NON e' qui: li' serve sapere chi sta
+      autorizzando, e il rimando al login e' il comportamento voluto.
+    */
+    pathname.startsWith("/.well-known/oauth-") ||
+    pathname === "/oauth/token";
 
   /** La schermata di attesa: serve una sessione, ma non un account approvato. */
   const isAttesa = pathname.startsWith("/in-attesa");

@@ -17,6 +17,7 @@ import {
 } from "@/core/theme/tipi";
 import { COLORI_PRESET } from "@/core/theme/palette";
 import { Card, CardTitle } from "@/core/components/ui";
+import { ChatCollegate } from "./ChatCollegate";
 import { TabBar, inputClass } from "@/core/components/controls";
 import { useToast } from "@/core/components/Toast";
 import { cn } from "@/lib/utils";
@@ -353,6 +354,8 @@ export function ProfiloSettings({
           {revoking ? "Disconnessione…" : "Disconnetti altri dispositivi"}
         </button>
       </Card>
+
+      <ChatCollegate />
     </div>
   );
 }
