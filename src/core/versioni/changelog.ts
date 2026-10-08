@@ -125,6 +125,7 @@ export const NON_RILASCIATO: NonRilasciato | null = {
     { categoria: "corretto", testo: "L'app si installa davvero sul telefono: il file che il browser legge per installarla era protetto dal login, e quindi irraggiungibile." },
     { categoria: "corretto", testo: "Su iPhone l'icona sulla schermata Home e' quella dell'app, non una miniatura della pagina." },
     { categoria: "modificato", testo: "Nel registro delle versioni gli interventi sul database dei rilasci gia' pubblicati sono una riga di storia e non piu' un avviso: riguardavano chi pubblica, non chi usa l'app." },
+    { categoria: "corretto", testo: "La pagina Versioni dice quando e' stato pubblicato quello che stai guardando: prima mostrava una data scritta a mano, rimasta indietro di tre settimane rispetto alle modifiche elencate sotto." },
   ],
 };
 
