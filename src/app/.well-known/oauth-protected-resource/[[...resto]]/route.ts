@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AMBITO, PERCORSO_MCP } from "@/lib/oauth/config";
+import { AMBITI, PERCORSO_MCP } from "@/lib/oauth/config";
 
 /**
  * «Questa risorsa è protetta, e si entra da lì.»
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
     {
       resource: `${base}${PERCORSO_MCP}`,
       authorization_servers: [base],
-      scopes_supported: [AMBITO],
+      scopes_supported: AMBITI,
       bearer_methods_supported: ["header"],
     },
     {

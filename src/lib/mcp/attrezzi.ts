@@ -18,6 +18,8 @@ export interface Attrezzo {
   nome: string;
   titolo: string;
   descrizione: string;
+  /** Vero se modifica qualcosa: serve a non mostrarlo a chi ha solo lettura. */
+  scrive?: boolean;
   schema: Record<string, unknown>;
   esegui: (
     userId: string,
@@ -241,4 +243,86 @@ const peso: Attrezzo = {
   },
 };
 
-export const ATTREZZI: Attrezzo[] = [diario, peso];
+// --------------------------- Cerca fra le proprie cose ---------------------------
+
+interface RigaTrovata {
+  nome: string;
+  marca: string | null;
+  kcal_100: number;
+  proteine_100: number;
+  carboidrati_100: number;
+  grassi_100: number;
+  fibre_100: number;
+  quanta: number;
+}
+
+const cerca: Attrezzo = {
+  nome: "cerca_alimento",
+  titolo: "Cerca fra i tuoi alimenti",
+  descrizione:
+    "Cerca per nome fra gli alimenti che hai già segnato in passato, e restituisce i loro valori per 100 g. Usalo prima di aggiungere qualcosa al diario: i valori che torna sono quelli che hai già verificato tu, mentre inventarli è il modo più facile di sbagliare.",
+  schema: {
+    type: "object",
+    required: ["testo"],
+    properties: {
+      testo: { type: "string", description: "Parte del nome da cercare." },
+    },
+  },
+  async esegui(userId, argomenti) {
+    const q = String(argomenti.testo ?? "").trim();
+    if (q.length < 2) {
+      return { testo: "Scrivi almeno due lettere.", dati: { risultati: [] } };
+    }
+
+    /*
+      Si cerca nello storico del diario, non in un catalogo: quello che hai già
+      mangiato è esattamente quello che probabilmente stai per rimangiare, e
+      sono valori che a suo tempo hai scelto tu. Si raggruppa per nome perché
+      lo stesso alimento compare decine di volte, e si ordina per quante.
+    */
+    const { results } = await getDb()
+      .prepare(
+        `select nome_alimento as nome, marca,
+                max(kcal_100) as kcal_100, max(proteine_100) as proteine_100,
+                max(carboidrati_100) as carboidrati_100, max(grassi_100) as grassi_100,
+                max(fibre_100) as fibre_100, count(*) as quanta
+           from diario_pasti
+          where user_id = ? and lower(nome_alimento) like ?
+          group by lower(nome_alimento), coalesce(marca,'')
+          order by quanta desc
+          limit 10`
+      )
+      .bind(userId, `%${q.toLowerCase()}%`)
+      .all<RigaTrovata>();
+
+    const righe = results ?? [];
+    if (righe.length === 0) {
+      return {
+        testo: `Niente che somigli a "${q}" fra quello che hai già segnato. Se vuoi aggiungerlo lo stesso, servono i valori per 100 g presi dall'etichetta: calorie, proteine, carboidrati e grassi, e devono tornare fra loro.`,
+        dati: { risultati: [] },
+      };
+    }
+
+    return {
+      testo: righe
+        .map(
+          (r) =>
+            `· ${r.nome}${r.marca ? ` (${r.marca})` : ""} — per 100 g: ${Math.round(Number(r.kcal_100))} kcal, P ${fmt1(Number(r.proteine_100))}, C ${fmt1(Number(r.carboidrati_100))}, G ${fmt1(Number(r.grassi_100))} · segnato ${r.quanta} ${r.quanta === 1 ? "volta" : "volte"}`
+        )
+        .join("\n"),
+      dati: {
+        risultati: righe.map((r) => ({
+          nome: r.nome,
+          marca: r.marca,
+          kcal_100: Number(r.kcal_100),
+          proteine_100: Number(r.proteine_100),
+          carboidrati_100: Number(r.carboidrati_100),
+          grassi_100: Number(r.grassi_100),
+          fibre_100: Number(r.fibre_100),
+        })),
+      },
+    };
+  },
+};
+
+export const ATTREZZI: Attrezzo[] = [diario, peso, cerca];

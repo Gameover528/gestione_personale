@@ -1,7 +1,12 @@
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { requireSessionUser } from "@/lib/auth/session";
-import { CLIENT_ID, redirectUriAmmesso } from "@/lib/oauth/config";
+import {
+  AMBITO_SCRITTURA,
+  CLIENT_ID,
+  ambitiRichiesti,
+  redirectUriAmmesso,
+} from "@/lib/oauth/config";
 import { autorizza } from "../azioni";
 
 /**
@@ -45,6 +50,8 @@ export default async function AutorizzaPage({
   const challenge = uno("code_challenge");
   const metodo = uno("code_challenge_method");
   const responseType = uno("response_type");
+  const ambiti = ambitiRichiesti(uno("scope"));
+  const scrive = ambiti.includes(AMBITO_SCRITTURA);
 
   /*
     I controlli si fanno PRIMA di mostrare qualunque cosa, e in quest'ordine:
@@ -84,24 +91,47 @@ export default async function AutorizzaPage({
           </div>
           <h1 className="text-xl font-semibold">Dare accesso a una chat?</h1>
           <p className="text-sm text-muted-foreground">
-            Stai per permettere a un&apos;applicazione di chat di leggere alcuni
-            tuoi dati di questa app.
+            {scrive
+              ? "Stai per permettere a un'applicazione di chat di leggere alcuni tuoi dati e di scrivere nel diario e nel registro del peso."
+              : "Stai per permettere a un'applicazione di chat di leggere alcuni tuoi dati di questa app."}
           </p>
         </div>
 
+        {/*
+          L'elenco cambia con quello che si sta concedendo: una pagina che
+          promette "non potra' scrivere" mentre sta concedendo la scrittura
+          sarebbe peggio di nessuna pagina.
+        */}
         <div className="rounded-md border bg-muted/40 p-4 text-sm">
           <p className="font-medium">Potrà:</p>
           <ul className="mt-2 space-y-1 text-muted-foreground">
             <li>· leggere il tuo diario alimentare</li>
             <li>· leggere il tuo registro del peso</li>
+            {scrive && (
+              <>
+                <li>· aggiungere pasti al diario e pesate al registro</li>
+                <li>· togliere soltanto quello che ha aggiunto lei</li>
+              </>
+            )}
           </ul>
           <p className="mt-3 font-medium">Non potrà:</p>
           <ul className="mt-2 space-y-1 text-muted-foreground">
-            <li>· scrivere, modificare o cancellare niente</li>
+            {scrive ? (
+              <li>· toccare quello che hai scritto tu dall&apos;app</li>
+            ) : (
+              <li>· scrivere, modificare o cancellare niente</li>
+            )}
             <li>· vedere bollette, abbonamenti o il tuo account</li>
             <li>· vedere i dati di altre persone</li>
           </ul>
         </div>
+
+        {scrive && (
+          <p className="mt-4 rounded-md border border-warning/40 bg-warning/10 p-3 text-xs">
+            Una chat può sbagliare le quantità. Quello che aggiunge resta
+            segnato come arrivato da lì, così nel diario lo riconosci.
+          </p>
+        )}
 
         <p className="mt-4 text-xs text-muted-foreground">
           Stai autorizzando come <strong>{utente.email}</strong>. Puoi staccare
@@ -117,6 +147,7 @@ export default async function AutorizzaPage({
           <input type="hidden" name="redirect_uri" value={redirectUri} />
           <input type="hidden" name="state" value={state} />
           <input type="hidden" name="code_challenge" value={challenge} />
+          <input type="hidden" name="scope" value={ambiti.join(" ")} />
           <button
             type="submit"
             name="decisione"

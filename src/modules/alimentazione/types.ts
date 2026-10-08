@@ -111,6 +111,11 @@ export function fonteLabel(fonte: string | null | undefined): string {
       return "piatto mio";
     case "manuale":
       return "inserito a mano";
+    case "chat":
+      // Si dice da dove viene: un valore arrivato da una chat non e' stato
+      // verificato da nessuno, e distinguerlo e' meta' del motivo per cui
+      // la scrittura da chat e' accettabile.
+      return "da una chat";
     default:
       return fonte ?? "";
   }

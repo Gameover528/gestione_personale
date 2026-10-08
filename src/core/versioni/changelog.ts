@@ -92,7 +92,11 @@ export function dataBuild(): string | null {
 }
 
 export const NON_RILASCIATO: NonRilasciato | null = {
-  migrazioni: ["0011 — registro del peso", "0012 — collegamento delle chat"],
+  migrazioni: [
+    "0011 — registro del peso",
+    "0012 — collegamento delle chat",
+    "0013 — permesso di scrittura per le chat",
+  ],
   modifiche: [
     // --- Accessi
     { categoria: "aggiunto", testo: "Chi vuole provare l'app può chiedere un accesso da sé: la richiesta resta in attesa finché un amministratore non la approva, e fino ad allora l'account non vede nessun dato." },
@@ -102,6 +106,8 @@ export const NON_RILASCIATO: NonRilasciato | null = {
     // --- Chat collegate
     { categoria: "aggiunto", testo: "Puoi collegare una chat di Claude al tuo account e chiederle cosa hai mangiato o come sta andando il peso: legge e basta, non scrive e non vede il resto dell'app." },
     { categoria: "aggiunto", testo: "In Impostazioni › Profilo vedi le chat collegate, quando hanno letto l'ultima volta, e le stacchi quando vuoi." },
+    { categoria: "aggiunto", testo: "Una chat può anche segnare pasti e pesate, se glielo concedi: è un permesso a parte, e i collegamenti già fatti restano in sola lettura finché non li rifai." },
+    { categoria: "sicurezza", testo: "Quello che una chat aggiunge al diario deve avere valori nutrizionali coerenti, o viene rifiutato: è lo stesso controllo usato per i dati delle banche dati esterne. Resta segnato come arrivato da una chat, e solo quello può essere tolto da lì." },
 
     // --- Peso
     { categoria: "aggiunto", testo: "Nuova sezione Peso: segni quanto pesi, con una nota se serve, e vedi l'andamento nel tempo invece del solo numero di oggi." },

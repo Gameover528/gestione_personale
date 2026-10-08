@@ -67,7 +67,8 @@ export async function pkceCorrisponde(
 export async function creaCodice(
   userId: string,
   codeChallenge: string,
-  redirectUri: string
+  redirectUri: string,
+  ambito: string
 ): Promise<string> {
   const codice = segreto();
   const db = getDb();
@@ -84,10 +85,10 @@ export async function creaCodice(
     db.prepare("delete from oauth_codici where scadenza <= datetime('now')"),
     db
       .prepare(
-        `insert into oauth_codici (impronta, user_id, code_challenge, redirect_uri, scadenza)
-         values (?, ?, ?, ?, datetime('now', '+${CODICE_SECONDI} seconds'))`
+        `insert into oauth_codici (impronta, user_id, code_challenge, redirect_uri, ambito, scadenza)
+         values (?, ?, ?, ?, ?, datetime('now', '+${CODICE_SECONDI} seconds'))`
       )
-      .bind(await impronta(codice), userId, codeChallenge, redirectUri),
+      .bind(await impronta(codice), userId, codeChallenge, redirectUri, ambito),
   ]);
   return codice;
 }
@@ -96,6 +97,7 @@ export interface CodiceRisolto {
   userId: string;
   codeChallenge: string;
   redirectUri: string;
+  ambito: string;
 }
 
 /**
@@ -113,7 +115,7 @@ export async function consumaCodice(
 
   const riga = await db
     .prepare(
-      `select user_id, code_challenge, redirect_uri, scadenza > datetime('now') as valido
+      `select user_id, code_challenge, redirect_uri, ambito, scadenza > datetime('now') as valido
          from oauth_codici where impronta = ?`
     )
     .bind(h)
@@ -121,6 +123,7 @@ export async function consumaCodice(
       user_id: string;
       code_challenge: string;
       redirect_uri: string;
+      ambito: string;
       valido: number;
     }>();
 
@@ -131,6 +134,7 @@ export async function consumaCodice(
     userId: riga.user_id,
     codeChallenge: riga.code_challenge,
     redirectUri: riga.redirect_uri,
+    ambito: riga.ambito,
   };
 }
 
@@ -140,6 +144,7 @@ export interface CoppiaToken {
   accesso: string;
   rinnovo: string;
   scadeFra: number;
+  ambito: string;
 }
 
 /**
@@ -151,7 +156,8 @@ export interface CoppiaToken {
  */
 export async function creaToken(
   userId: string,
-  sessione: string
+  sessione: string,
+  ambito: string
 ): Promise<CoppiaToken> {
   const accesso = segreto();
   const rinnovo = segreto();
@@ -160,19 +166,19 @@ export async function creaToken(
   await db.batch([
     db
       .prepare(
-        `insert into oauth_token (impronta, user_id, tipo, sessione, scadenza)
-         values (?, ?, 'accesso', ?, datetime('now', '+${ACCESSO_SECONDI} seconds'))`
+        `insert into oauth_token (impronta, user_id, tipo, sessione, ambito, scadenza)
+         values (?, ?, 'accesso', ?, ?, datetime('now', '+${ACCESSO_SECONDI} seconds'))`
       )
-      .bind(await impronta(accesso), userId, sessione),
+      .bind(await impronta(accesso), userId, sessione, ambito),
     db
       .prepare(
-        `insert into oauth_token (impronta, user_id, tipo, sessione, scadenza)
-         values (?, ?, 'rinnovo', ?, datetime('now', '+${RINNOVO_GIORNI} days'))`
+        `insert into oauth_token (impronta, user_id, tipo, sessione, ambito, scadenza)
+         values (?, ?, 'rinnovo', ?, ?, datetime('now', '+${RINNOVO_GIORNI} days'))`
       )
-      .bind(await impronta(rinnovo), userId, sessione),
+      .bind(await impronta(rinnovo), userId, sessione, ambito),
   ]);
 
-  return { accesso, rinnovo, scadeFra: ACCESSO_SECONDI };
+  return { accesso, rinnovo, scadeFra: ACCESSO_SECONDI, ambito };
 }
 
 /**
@@ -182,12 +188,14 @@ export async function creaToken(
  * chat ha letto l'ultima volta: un collegamento fermo da mesi è il primo
  * candidato da staccare.
  */
-export async function utenteDaAccesso(token: string): Promise<string | null> {
+export async function utenteDaAccesso(
+  token: string
+): Promise<{ userId: string; ambito: string } | null> {
   const db = getDb();
   const h = await impronta(token);
   const riga = await db
     .prepare(
-      `select t.user_id as user_id
+      `select t.user_id as user_id, t.ambito as ambito
          from oauth_token t
          join users u on u.id = t.user_id
         where t.impronta = ? and t.tipo = 'accesso'
@@ -195,14 +203,14 @@ export async function utenteDaAccesso(token: string): Promise<string | null> {
           and u.stato = 'attivo'`
     )
     .bind(h)
-    .first<{ user_id: string }>();
+    .first<{ user_id: string; ambito: string }>();
   if (!riga) return null;
 
   await db
     .prepare("update oauth_token set ultimo_uso = datetime('now') where impronta = ?")
     .bind(h)
     .run();
-  return riga.user_id;
+  return { userId: riga.user_id, ambito: riga.ambito };
 }
 
 /**
@@ -217,11 +225,11 @@ export async function rinnova(token: string): Promise<CoppiaToken | null> {
   const h = await impronta(token);
   const riga = await db
     .prepare(
-      `select user_id, sessione from oauth_token
+      `select user_id, sessione, ambito from oauth_token
         where impronta = ? and tipo = 'rinnovo' and scadenza > datetime('now')`
     )
     .bind(h)
-    .first<{ user_id: string; sessione: string }>();
+    .first<{ user_id: string; sessione: string; ambito: string }>();
   if (!riga) return null;
 
   await db
@@ -229,7 +237,9 @@ export async function rinnova(token: string): Promise<CoppiaToken | null> {
     .bind(riga.sessione)
     .run();
 
-  return creaToken(riga.user_id, riga.sessione);
+  // L'ambito si conserva: un rinnovo non è l'occasione per allargare i
+  // permessi, quelli si cambiano solo rifacendo il consenso.
+  return creaToken(riga.user_id, riga.sessione, riga.ambito);
 }
 
 export function nuovaSessione(): string {

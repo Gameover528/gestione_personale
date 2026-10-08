@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireSessionUser } from "@/lib/auth/session";
-import { redirectUriAmmesso } from "@/lib/oauth/config";
+import { ambitiRichiesti, redirectUriAmmesso } from "@/lib/oauth/config";
 import { creaCodice } from "@/lib/oauth/token";
 
 /**
@@ -20,6 +20,8 @@ export async function autorizza(formData: FormData): Promise<void> {
   const redirectUri = String(formData.get("redirect_uri") || "");
   const state = String(formData.get("state") || "");
   const challenge = String(formData.get("code_challenge") || "");
+  // Si rinormalizza: l'ambito arriva da un campo nascosto, cioe' dal client.
+  const ambito = ambitiRichiesti(String(formData.get("scope") || "")).join(" ");
   const decisione = String(formData.get("decisione") || "");
 
   // Indirizzo non ammesso: non si rimanda niente da nessuna parte.
@@ -42,7 +44,7 @@ export async function autorizza(formData: FormData): Promise<void> {
     redirect(u.toString());
   }
 
-  const codice = await creaCodice(utente.id, challenge, redirectUri);
+  const codice = await creaCodice(utente.id, challenge, redirectUri, ambito);
   u.searchParams.set("code", codice);
   redirect(u.toString());
 }

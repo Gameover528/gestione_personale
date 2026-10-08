@@ -228,6 +228,16 @@ Il client è **uno solo, scritto nel codice e senza segreto** (`gestione-persona
 
 Codici e token sono salvati **come impronta SHA-256**, mai in chiaro. Il codice d'autorizzazione vive 60 secondi e si consuma al primo tentativo, riuscito o no. Il token d'accesso dura un'ora, quello di rinnovo sei mesi e **si sostituisce a ogni uso**: se qualcuno ne copia uno, il secondo che lo usa trova la porta chiusa, e la cosa si nota.
 
+### Scrittura
+
+Gli attrezzi che modificano stanno in `src/lib/mcp/scrittura.ts` e sono dietro un **permesso a parte** (`scrittura`): un collegamento nato per leggere non comincia a scrivere perché è cambiato il codice, e per averlo si rifà il consenso chiedendo `scope=lettura scrittura`. Chi ha solo la lettura non vede nemmeno gli attrezzi di scrittura nell'elenco.
+
+Tre difese, nell'ordine in cui scattano:
+
+1. **I valori devono tornare.** Per aggiungere un alimento servono anche proteine, carboidrati e grassi, e le calorie devono essere coerenti entro il 10% — lo stesso `valida()` usato sui dati di Open Food Facts. In app è un avviso, qui è un rifiuto: davanti all'app c'è una persona che vede il triangolo, davanti all'attrezzo no.
+2. **Provenienza visibile.** Tutto nasce con `fonte = 'chat'`, e il diario lo mostra come «da una chat».
+3. **Si disfa solo il proprio.** `annulla_aggiunta` filtra su `fonte = 'chat'`: una riga scritta dall'app non si cancella da lì, qualunque id le si passi.
+
 ### Per collegare una chat
 
 Su claude.ai → Impostazioni → Connettori → Aggiungi connettore personalizzato:

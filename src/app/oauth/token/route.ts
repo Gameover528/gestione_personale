@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AMBITO, CLIENT_ID } from "@/lib/oauth/config";
+import { CLIENT_ID } from "@/lib/oauth/config";
 import {
   consumaCodice,
   creaToken,
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
         refresh_token: coppia.rinnovo,
         token_type: "Bearer",
         expires_in: coppia.scadeFra,
-        scope: AMBITO,
+        scope: coppia.ambito,
       },
       { headers: { "Cache-Control": "no-store" } }
     );
@@ -77,14 +77,16 @@ export async function POST(req: Request) {
     return errore("invalid_grant");
   }
 
-  const coppia = await creaToken(risolto.userId, nuovaSessione());
+  // L'ambito e' quello deciso al consenso, non quello richiesto adesso: chi
+  // scambia il codice non puo' chiedere piu' di quello che l'utente ha dato.
+  const coppia = await creaToken(risolto.userId, nuovaSessione(), risolto.ambito);
   return NextResponse.json(
     {
       access_token: coppia.accesso,
       refresh_token: coppia.rinnovo,
       token_type: "Bearer",
       expires_in: coppia.scadeFra,
-      scope: AMBITO,
+      scope: coppia.ambito,
     },
     { headers: { "Cache-Control": "no-store" } }
   );

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AMBITO } from "@/lib/oauth/config";
+import { AMBITI } from "@/lib/oauth/config";
 
 /**
  * Il biglietto da visita di chi rilascia i permessi (RFC 8414).
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
       code_challenge_methods_supported: ["S256"],
       // Client pubblico: non manda nessuna password al token endpoint.
       token_endpoint_auth_methods_supported: ["none"],
-      scopes_supported: [AMBITO],
+      scopes_supported: AMBITI,
     },
     { headers: { "Cache-Control": "public, max-age=3600" } }
   );

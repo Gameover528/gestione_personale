@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/cf";
 import { ATTREZZI } from "@/lib/mcp/attrezzi";
-import { PERCORSO_MCP } from "@/lib/oauth/config";
+import { ATTREZZI_SCRITTURA } from "@/lib/mcp/scrittura";
+import { AMBITO_LETTURA, PERCORSO_MCP, puoScrivere } from "@/lib/oauth/config";
 import { utenteDaAccesso } from "@/lib/oauth/token";
 
 /**
@@ -74,20 +75,21 @@ function scorciatoiaLocale(): boolean {
  */
 async function chiChiama(
   req: Request
-): Promise<{ userId: string } | { rifiuto: NextResponse }> {
+): Promise<{ userId: string; ambito: string } | { rifiuto: NextResponse }> {
   const intestazione = req.headers.get("authorization") ?? "";
   const token = intestazione.toLowerCase().startsWith("bearer ")
     ? intestazione.slice(7).trim()
     : "";
 
   if (token) {
-    const userId = await utenteDaAccesso(token);
-    if (userId) return { userId };
+    const chi = await utenteDaAccesso(token);
+    if (chi) return chi;
   }
 
   if (scorciatoiaLocale()) {
     const userId = await utenteConfigurato();
-    if (userId) return { userId };
+    // La scorciatoia di sviluppo da' tutto: serve a provare, non a proteggere.
+    if (userId) return { userId, ambito: "lettura scrittura" };
   }
 
   const base = new URL(req.url).origin;
@@ -158,6 +160,16 @@ export async function POST(req: Request) {
   if ("rifiuto" in chi) return chi.rifiuto;
   const userId = chi.userId;
 
+  /*
+    Gli attrezzi disponibili dipendono dal permesso concesso. Chi ha collegato
+    la chat quando c'era solo la lettura non vede nemmeno quelli che scrivono:
+    meglio che non esistano, piuttosto che offrirli e poi rifiutarli — un
+    attrezzo che compare e non funziona fa provare e riprovare.
+  */
+  const disponibili = puoScrivere(chi.ambito)
+    ? [...ATTREZZI, ...ATTREZZI_SCRITTURA]
+    : ATTREZZI;
+
   let msg: Messaggio;
   try {
     msg = (await req.json()) as Messaggio;
@@ -194,22 +206,39 @@ export async function POST(req: Request) {
 
     case "tools/list":
       return risposta(msg.id, {
-        tools: ATTREZZI.map((a) => ({
+        tools: disponibili.map((a) => ({
           name: a.nome,
           title: a.titolo,
           description: a.descrizione,
           inputSchema: a.schema,
-          // Dichiarare che non si tocca niente non è decorazione: il client
-          // può usarlo per non chiedere conferma su una semplice lettura.
-          annotations: { readOnlyHint: true, openWorldHint: false },
+          /*
+            Dire la verità su cosa fa un attrezzo serve al client per decidere
+            se chiedere conferma: una lettura può passare liscia, una scrittura
+            no. Mentire qui per far scorrere le cose sarebbe il modo più
+            efficace di togliere la persona dal giro.
+          */
+          annotations: {
+            readOnlyHint: !a.scrive,
+            destructiveHint: a.nome === "annulla_aggiunta",
+            openWorldHint: false,
+          },
         })),
       });
 
     case "tools/call": {
       const nome = String(params.name ?? "");
-      const attrezzo = ATTREZZI.find((a) => a.nome === nome);
+      const attrezzo = disponibili.find((a) => a.nome === nome);
       if (!attrezzo) {
-        return errore(msg.id, -32602, `Attrezzo sconosciuto: ${nome}`);
+        // Se esiste ma non è concesso, lo si dice: altrimenti chi collega la
+        // chat non capisce che deve rifare il consenso.
+        const esisteMaNonConcesso = ATTREZZI_SCRITTURA.some((x) => x.nome === nome);
+        return errore(
+          msg.id,
+          -32602,
+          esisteMaNonConcesso
+            ? `"${nome}" richiede il permesso di scrittura: questo collegamento ha solo la lettura. Va rifatto, chiedendo anche "scrittura".`
+            : `Attrezzo sconosciuto: ${nome}`
+        );
       }
 
 
@@ -229,7 +258,7 @@ export async function POST(req: Request) {
           content: [
             {
               type: "text",
-              text: `Lettura non riuscita: ${e instanceof Error ? e.message : "errore sconosciuto"}`,
+              text: `Non ha funzionato: ${e instanceof Error ? e.message : "errore sconosciuto"}`,
             },
           ],
           isError: true,

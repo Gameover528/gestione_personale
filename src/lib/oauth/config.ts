@@ -50,8 +50,36 @@ export const CODICE_SECONDI = 60;
 export const ACCESSO_SECONDI = 60 * 60;
 export const RINNOVO_GIORNI = 180;
 
-/** Cosa si può chiedere. Per ora si legge e basta. */
-export const AMBITO = "lettura";
+/**
+ * I permessi che si possono chiedere.
+ *
+ * Due e non uno, perché leggere e scrivere sono promesse diverse: la pagina
+ * del consenso dice per iscritto cosa potrà fare la chat, e un collegamento
+ * nato per leggere non deve mettersi a scrivere perché nel frattempo è
+ * cambiato il codice. Chi vuole scrivere rifà il consenso.
+ *
+ * "scrittura" non include "lettura" per modo di dire: la si chiede insieme,
+ * perché per aggiungere un pasto sensato bisogna prima cercare fra i propri.
+ */
+export const AMBITO_LETTURA = "lettura";
+export const AMBITO_SCRITTURA = "scrittura";
+export const AMBITI = [AMBITO_LETTURA, AMBITO_SCRITTURA];
+
+/**
+ * Normalizza quello che chiede il client: tiene solo i permessi che
+ * conosciamo, e se non ne chiede nessuno di validi dà la sola lettura — la
+ * scrittura non si concede mai per difetto.
+ */
+export function ambitiRichiesti(scope: string | null | undefined): string[] {
+  const chiesti = (scope ?? "").split(/\s+/).filter((x) => AMBITI.includes(x));
+  return chiesti.includes(AMBITO_SCRITTURA)
+    ? [AMBITO_LETTURA, AMBITO_SCRITTURA]
+    : [AMBITO_LETTURA];
+}
+
+export function puoScrivere(ambito: string | null | undefined): boolean {
+  return (ambito ?? "").split(/\s+/).includes(AMBITO_SCRITTURA);
+}
 
 /** Il percorso del server MCP: la risorsa che si sta proteggendo. */
 export const PERCORSO_MCP = "/api/mcp";
