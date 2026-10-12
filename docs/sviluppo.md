@@ -71,11 +71,16 @@ npx wrangler d1 execute gestione-personale-db-dev --remote --file=./d1/migration
 npx wrangler d1 execute gestione-personale-db --remote --file=./d1/migrations/0011_qualcosa.sql
 ```
 
-Non c'è una tabella che tenga il conto di cosa è già passato: il controllo si fa guardando lo schema.
+Non c'è una tabella che tenga il conto di cosa è già passato, e va bene così: la domanda vera non è «l'ho lanciata?» ma «il suo effetto c'è?». Una migration registrata ma passata a metà risponderebbe sì alla prima e no alla seconda.
 
 ```bash
-npx wrangler d1 execute gestione-personale-db --remote --command "select name from sqlite_master where type='table' order by name"
+npm run migrazioni            # tutti e tre i database
+npm run migrazioni local dev  # solo quelli indicati
 ```
+
+Legge i file in `d1/migrations/`, ricava le tabelle e le colonne che dovrebbero esistere, interroga i database e dice **cosa manca e su quale**, con il comando pronto da incollare. Esce con codice 1 se manca qualcosa, quindi si può mettere davanti a un merge.
+
+Controlla tabelle e colonne, non indici, tipi o dati caricati: il catalogo esercizi non caricato, per dire, non lo vede.
 
 **Una migration può passare a metà.** È successo con la `0009`: alcune istruzioni erano andate, altre no, e le schede non si vedevano. Da lì la `0010`, scritta per essere rilanciabile senza danni. Se una migration fallisce a metà strada, la riparazione si scrive come nuovo file idempotente invece di rilanciare quello vecchio.
 
