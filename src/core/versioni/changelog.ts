@@ -91,52 +91,55 @@ export function dataBuild(): string | null {
   return process.env.DATA_BUILD ?? null;
 }
 
-export const NON_RILASCIATO: NonRilasciato | null = {
-  migrazioni: [
-    "0011 — registro del peso",
-    "0012 — collegamento delle chat",
-    "0013 — permesso di scrittura per le chat",
-  ],
-  modifiche: [
-    // --- Accessi
-    { categoria: "aggiunto", testo: "Chi vuole provare l'app può chiedere un accesso da sé: la richiesta resta in attesa finché un amministratore non la approva, e fino ad allora l'account non vede nessun dato." },
-    { categoria: "aggiunto", testo: "In Impostazioni › Utenti le richieste da approvare compaiono per prime, con Approva e Rifiuta." },
-    { categoria: "sicurezza", testo: "Il modulo di registrazione è protetto dal filtro anti-bot di Cloudflare e dallo stesso freno del login: troppe richieste dallo stesso indirizzo di rete vengono rallentate." },
-
-    // --- Chat collegate
-    { categoria: "aggiunto", testo: "Puoi collegare una chat di Claude al tuo account e chiederle cosa hai mangiato o come sta andando il peso: legge e basta, non scrive e non vede il resto dell'app." },
-    { categoria: "aggiunto", testo: "In Impostazioni › Profilo vedi le chat collegate, quando hanno letto l'ultima volta, e le stacchi quando vuoi." },
-    { categoria: "aggiunto", testo: "Una chat può anche segnare pasti e pesate, se glielo concedi: è un permesso a parte, e i collegamenti già fatti restano in sola lettura finché non li rifai." },
-    { categoria: "sicurezza", testo: "Quello che una chat aggiunge al diario deve avere valori nutrizionali coerenti, o viene rifiutato: è lo stesso controllo usato per i dati delle banche dati esterne. Resta segnato come arrivato da una chat, e solo quello può essere tolto da lì." },
-
-    // --- Peso
-    { categoria: "aggiunto", testo: "Nuova sezione Peso: segni quanto pesi, con una nota se serve, e vedi l'andamento nel tempo invece del solo numero di oggi." },
-    { categoria: "modificato", testo: "Le calorie bruciate di un allenamento usano il peso di quel periodo e non quello attuale: prima, dimagrendo, i numeri degli allenamenti passati cambiavano da soli." },
-    { categoria: "modificato", testo: "Il calcolo degli obiettivi usa l'ultima pesata, e il peso che scrivi li' viene registrato come pesata di oggi: il peso sta in un posto solo." },
-
-    // --- Sviluppo
-    { categoria: "corretto", testo: "Solo per chi sviluppa: in locale l'app ora risponde ai clic e si aggiorna da sola a ogni modifica. Le regole di sicurezza bloccavano il server di sviluppo di Next; in produzione non cambia nulla." },
-
-    // --- Alimentazione
-    { categoria: "corretto", testo: "Gli obiettivi nutrizionali si potevano togliere: svuotare un campo e salvare lo cancellava a schermo, ma ricaricando l'obiettivo era tornato." },
-    { categoria: "modificato", testo: "Nei grafici i colori delle serie non seguono piu' il colore scelto per l'app: con certi temi due linee finivano per essere dello stesso colore." },
-    { categoria: "modificato", testo: "In Andamento il periodo (7, 30, 90 giorni) sta sulla stessa riga della scelta fra Alimentazione e Allenamento, a destra." },
-    { categoria: "modificato", testo: "La media delle calorie dice ora su quanti giorni e' calcolata: conta solo quelli con qualcosa di segnato, perche' un giorno non compilato non e' un giorno a digiuno." },
-    { categoria: "modificato", testo: "\"Copia giorno\" e \"Obiettivi\" si aprono in una finestra sopra il diario: non si perde piu' il giorno che stavi guardando." },
-    { categoria: "aggiunto", testo: "Prima di copiare un giorno vedi l'elenco di cosa verrebbe copiato, pasto per pasto, e il pulsante dice quante voci sono." },
-    { categoria: "modificato", testo: "In Aggiungi si parte dalla ricerca: sotto la casella vuota ci sono gli ultimi alimenti che hai segnato, che lasciano il posto ai risultati appena scrivi." },
-    { categoria: "modificato", testo: "La scheda \"A mano\" e' diventata un \"+\" accanto alla ricerca: apre una finestra dove scegli se creare un alimento singolo o una ricetta fatta di ingredienti, e in entrambi i casi finisce subito nel diario." },
-    { categoria: "corretto", testo: "I riquadri dei pasti nel diario avevano gli angoli sporgenti: l'intestazione grigia usciva dalla cornice arrotondata." },
-    { categoria: "modificato", testo: "Le voci di menu si chiamano \"Diario\" e \"Dashboard\": dicono cosa si trova dietro, invece di nominare l'argomento." },
-    { categoria: "corretto", testo: "L'app si installa davvero sul telefono: il file che il browser legge per installarla era protetto dal login, e quindi irraggiungibile." },
-    { categoria: "corretto", testo: "Su iPhone l'icona sulla schermata Home e' quella dell'app, non una miniatura della pagina." },
-    { categoria: "modificato", testo: "Nel registro delle versioni gli interventi sul database dei rilasci gia' pubblicati sono una riga di storia e non piu' un avviso: riguardavano chi pubblica, non chi usa l'app." },
-    { categoria: "corretto", testo: "La pagina Versioni dice quando e' stato pubblicato quello che stai guardando: prima mostrava una data scritta a mano, rimasta indietro di tre settimane rispetto alle modifiche elencate sotto." },
-  ],
-};
+export const NON_RILASCIATO: NonRilasciato | null = null;
 
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
+  {
+    versione: "2026.10.12",
+    data: "2026-10-12",
+    migrazioni: [
+      "0011 — registro del peso",
+      "0012 — collegamento delle chat",
+      "0013 — permesso di scrittura per le chat",
+    ],
+    modifiche: [
+      // --- Accessi
+      { categoria: "aggiunto", testo: "Chi vuole provare l'app può chiedere un accesso da sé: la richiesta resta in attesa finché un amministratore non la approva, e fino ad allora l'account non vede nessun dato." },
+      { categoria: "aggiunto", testo: "In Impostazioni › Utenti le richieste da approvare compaiono per prime, con Approva e Rifiuta." },
+      { categoria: "sicurezza", testo: "Il modulo di registrazione è protetto dal filtro anti-bot di Cloudflare e dallo stesso freno del login: troppe richieste dallo stesso indirizzo di rete vengono rallentate." },
+
+      // --- Chat collegate
+      { categoria: "aggiunto", testo: "Puoi collegare una chat di Claude al tuo account e chiederle cosa hai mangiato o come sta andando il peso: vede quello e nient'altro dell'app." },
+      { categoria: "aggiunto", testo: "In Impostazioni › Profilo vedi le chat collegate: se ognuna legge soltanto o puo' anche scrivere, quand'e' stata usata l'ultima volta, e la stacchi quando vuoi." },
+      { categoria: "aggiunto", testo: "Una chat può anche segnare pasti e pesate, se glielo concedi: è un permesso a parte, e i collegamenti già fatti restano in sola lettura finché non li rifai." },
+      { categoria: "sicurezza", testo: "Quello che una chat aggiunge al diario deve avere valori nutrizionali coerenti, o viene rifiutato: è lo stesso controllo usato per i dati delle banche dati esterne. Resta segnato come arrivato da una chat, e solo quello può essere tolto da lì." },
+
+      // --- Peso
+      { categoria: "aggiunto", testo: "Nuova sezione Peso: segni quanto pesi, con una nota se serve, e vedi l'andamento nel tempo invece del solo numero di oggi." },
+      { categoria: "modificato", testo: "Le calorie bruciate di un allenamento usano il peso di quel periodo e non quello attuale: prima, dimagrendo, i numeri degli allenamenti passati cambiavano da soli." },
+      { categoria: "modificato", testo: "Il calcolo degli obiettivi usa l'ultima pesata, e il peso che scrivi li' viene registrato come pesata di oggi: il peso sta in un posto solo." },
+
+      // --- Sviluppo
+      { categoria: "corretto", testo: "Solo per chi sviluppa: in locale l'app ora risponde ai clic e si aggiorna da sola a ogni modifica. Le regole di sicurezza bloccavano il server di sviluppo di Next; in produzione non cambia nulla." },
+
+      // --- Alimentazione
+      { categoria: "corretto", testo: "Gli obiettivi nutrizionali si potevano togliere: svuotare un campo e salvare lo cancellava a schermo, ma ricaricando l'obiettivo era tornato." },
+      { categoria: "modificato", testo: "Nei grafici i colori delle serie non seguono piu' il colore scelto per l'app: con certi temi due linee finivano per essere dello stesso colore." },
+      { categoria: "modificato", testo: "In Andamento il periodo (7, 30, 90 giorni) sta sulla stessa riga della scelta fra Alimentazione e Allenamento, a destra." },
+      { categoria: "modificato", testo: "La media delle calorie dice ora su quanti giorni e' calcolata: conta solo quelli con qualcosa di segnato, perche' un giorno non compilato non e' un giorno a digiuno." },
+      { categoria: "modificato", testo: "\"Copia giorno\" e \"Obiettivi\" si aprono in una finestra sopra il diario: non si perde piu' il giorno che stavi guardando." },
+      { categoria: "aggiunto", testo: "Prima di copiare un giorno vedi l'elenco di cosa verrebbe copiato, pasto per pasto, e il pulsante dice quante voci sono." },
+      { categoria: "modificato", testo: "In Aggiungi si parte dalla ricerca: sotto la casella vuota ci sono gli ultimi alimenti che hai segnato, che lasciano il posto ai risultati appena scrivi." },
+      { categoria: "modificato", testo: "La scheda \"A mano\" e' diventata un \"+\" accanto alla ricerca: apre una finestra dove scegli se creare un alimento singolo o una ricetta fatta di ingredienti, e in entrambi i casi finisce subito nel diario." },
+      { categoria: "corretto", testo: "I riquadri dei pasti nel diario avevano gli angoli sporgenti: l'intestazione grigia usciva dalla cornice arrotondata." },
+      { categoria: "modificato", testo: "Le voci di menu si chiamano \"Diario\" e \"Dashboard\": dicono cosa si trova dietro, invece di nominare l'argomento." },
+      { categoria: "corretto", testo: "L'app si installa davvero sul telefono: il file che il browser legge per installarla era protetto dal login, e quindi irraggiungibile." },
+      { categoria: "corretto", testo: "Su iPhone l'icona sulla schermata Home e' quella dell'app, non una miniatura della pagina." },
+      { categoria: "modificato", testo: "Nel registro delle versioni gli interventi sul database dei rilasci gia' pubblicati sono una riga di storia e non piu' un avviso: riguardavano chi pubblica, non chi usa l'app." },
+      { categoria: "corretto", testo: "La pagina Versioni dice quando e' stato pubblicato quello che stai guardando: prima mostrava una data scritta a mano, rimasta indietro di tre settimane rispetto alle modifiche elencate sotto." },
+    ],
+  },
   {
     versione: "2026.09.15",
     data: "2026-09-15",
