@@ -75,8 +75,8 @@ function attese() {
   return tabelle;
 }
 
-/** Lo schema vero di un database: tabella -> insieme di colonne. */
-function schemaReale(db) {
+/** Una lettura sola, senza rete di protezione. */
+function interroga(db) {
   /*
     Si chiama il file di wrangler con node, invece di passare da `npx`.
     Due problemi evitati in un colpo: con `shell: true` gli argomenti vengono
@@ -85,7 +85,7 @@ function schemaReale(db) {
     rifiuta di avviare `npx.cmd` (EINVAL: i file batch vogliono una shell).
     Un file .js lo avvia direttamente, e ogni argomento resta intero.
   */
-  const out = execFileSync(
+  return execFileSync(
     process.execPath,
     [
       "node_modules/wrangler/bin/wrangler.js",
@@ -102,18 +102,114 @@ function schemaReale(db) {
         " where m.type='table' and substr(m.name,1,1) <> '_'" +
         " and m.name not like 'sqlite%' and m.name not like 'd1%'",
     ],
-    { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 1 << 24 }
+    /*
+      Si cattura anche stderr, e si tiene stdout pure quando il comando
+      fallisce: è lì che wrangler scrive *perché*. Buttandolo restava
+      `e.message`, che dice "Command failed" e poi ripete il comando — cioè
+      l'unica cosa che già si sapeva.
+    */
+    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 1 << 24 }
   );
+}
 
-  // wrangler stampa anche righe non JSON: si tiene dal primo "[".
-  const righe = JSON.parse(out.slice(out.indexOf("[")))[0].results ?? [];
-  const mappa = new Map();
-  for (const r of righe) {
-    const t = String(r.t).toLowerCase();
-    if (!mappa.has(t)) mappa.set(t, new Set());
-    mappa.get(t).add(String(r.c).toLowerCase());
+/**
+ * Pausa sincrona. Tutto il resto dello script è sincrono e si legge bene così:
+ * riscriverlo in asincrono per poter aspettare sarebbe un prezzo alto per una
+ * pausa.
+ */
+function attendi(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+/*
+  D1 è remoto, e ogni tanto una chiamata cade senza che sia successo niente.
+  Prima lo script lo riferiva e basta, lasciando a chi legge l'unica mossa
+  possibile: rilanciare. Tanto vale che rilanci da sé.
+
+  POCHI TENTATIVI DISTANZIATI, non tanti ravvicinati: quello che fa cadere una
+  chiamata dura secondi, quindi riprovare dopo 200 ms vuol dire quasi sempre
+  ricadere nello stesso momento storto. Tre tentativi in sette secondi coprono
+  il caso vero senza trasformare un guasto in un'attesa.
+*/
+const PAUSE = [2000, 5000];
+
+/**
+ * Se riprovare è inutile. L'elenco è corto apposta: nel dubbio si riprova,
+ * perché sette secondi persi costano meno che dare per irraggiungibile un
+ * database che c'era.
+ */
+function definitivo(motivo) {
+  const m = motivo.toLowerCase();
+  return [
+    "couldn't find", // database inesistente, o nome sbagliato
+    "authentication error", // credenziali scadute o revocate
+    "cloudflare_api_token", // nessuna credenziale in ambiente non interattivo
+    "more than one account", // serve scegliere l'account, non aspettare
+  ].some((x) => m.includes(x));
+}
+
+/**
+ * La riga che spiega il guasto, fra tutto quello che wrangler ha scritto.
+ *
+ * Il primo posto dove guardare è stdout, non stderr: con `--json` wrangler
+ * riporta anche i fallimenti come JSON sull'uscita normale, e stderr resta
+ * vuoto. Cercandolo solo su stderr non si trovava niente e si ricadeva sul
+ * "Command failed" di prima — misurato: `--json` con un database inesistente
+ * dà stderr vuoto e su stdout `{"error":{"text":"Couldn't find a D1 DB..."}}`.
+ */
+function motivoDi(e) {
+  const uscita = String(e?.stdout ?? "");
+  const graffa = uscita.indexOf("{");
+  if (graffa >= 0) {
+    try {
+      const testo = JSON.parse(uscita.slice(graffa))?.error?.text;
+      if (testo) return String(testo).trim();
+    } catch {
+      // Non era JSON: si prova con stderr, qui sotto.
+    }
   }
-  return mappa;
+
+  const righe = String(e?.stderr ?? "")
+    // Via i colori del terminale: qui finiscono dentro una stringa, non su uno schermo.
+    .replace(/\u001b\[[0-9;]*m/g, "")
+    .split("\n")
+    .map((r) => r.trim())
+    .filter(Boolean);
+  return (
+    righe.find((r) => r.includes("ERROR")) ??
+    righe[0] ??
+    String(e?.message ?? e).split("\n")[0]
+  );
+}
+
+/**
+ * Lo schema vero di un database: tabella -> insieme di colonne.
+ *
+ * Dice anche quanti tentativi sono serviti. Un errore passeggero si ripara da
+ * sé, ma va detto lo stesso: se capita tutti i giorni, non era passeggero.
+ */
+function schemaReale(db) {
+  for (let tentativo = 0; ; tentativo++) {
+    let out;
+    try {
+      out = interroga(db);
+    } catch (e) {
+      const motivo = motivoDi(e);
+      if (tentativo >= PAUSE.length || definitivo(motivo)) throw new Error(motivo);
+      attendi(PAUSE[tentativo]);
+      continue;
+    }
+
+    // wrangler stampa anche righe non JSON: si tiene dal primo "[".
+    const righe = JSON.parse(out.slice(out.indexOf("[")))[0].results ?? [];
+    const mappa = new Map();
+    for (const r of righe) {
+      const t = String(r.t).toLowerCase();
+      if (!mappa.has(t)) mappa.set(t, new Set());
+      mappa.get(t).add(String(r.c).toLowerCase());
+    }
+    return { schema: mappa, tentativi: tentativo + 1 };
+  }
 }
 
 const chiavi = process.argv.slice(2).filter((a) => a in DATABASE);
@@ -131,15 +227,19 @@ for (const chiave of daControllare) {
   process.stdout.write(`${db.etichetta.padEnd(12)} `);
 
   let reale;
+  let tentativi;
   try {
-    reale = schemaReale(db);
+    ({ schema: reale, tentativi } = schemaReale(db));
   } catch (e) {
-    // Si dice cosa è andato storto: "non raggiungibile" e basta manda a
-    // indovinare fra autenticazione scaduta, rete, e nome sbagliato.
-    console.log(`non letto — ${e instanceof Error ? e.message.split("\n")[0] : e}`);
+    // Si dice cosa è andato storto: "non letto" e basta manda a indovinare
+    // fra autenticazione scaduta, rete e nome sbagliato.
+    console.log(`non letto — ${e instanceof Error ? e.message : e}`);
     qualcosaManca = true;
     continue;
   }
+
+  // Detto piano, in coda: è riuscito, quindi non è un problema di oggi.
+  const ritentativi = tentativi > 1 ? ` (riuscito al ${tentativi}º tentativo)` : "";
 
   /** I file da lanciare, con il motivo. */
   const mancanti = new Map();
@@ -161,12 +261,12 @@ for (const chiave of daControllare) {
   }
 
   if (mancanti.size === 0) {
-    console.log("tutto a posto");
+    console.log(`tutto a posto${ritentativi}`);
     continue;
   }
 
   qualcosaManca = true;
-  console.log(`manca qualcosa:`);
+  console.log(`manca qualcosa${ritentativi}:`);
   for (const [file, motivi] of [...mancanti].sort()) {
     console.log(`  ${file}`);
     for (const m of motivi) console.log(`      ${m}`);
