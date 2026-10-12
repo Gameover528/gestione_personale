@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Unplug } from "lucide-react";
+import { Eye, PenLine, Unplug } from "lucide-react";
 import {
   listCollegamenti,
   staccaCollegamento,
@@ -16,6 +16,11 @@ import { formatDate } from "@/lib/utils";
  * Il riquadro compare solo se ce n'è almeno una: a chi non ha mai collegato
  * niente non direbbe niente, e una pagina di impostazioni piena di sezioni
  * vuote è una pagina che si smette di leggere.
+ *
+ * OGNI RIGA DICE SE QUELLA CHAT PUÒ SCRIVERE, e non è un dettaglio: da quando
+ * il permesso esiste, due collegamenti identici a vedersi possono essere uno
+ * che guarda e uno che ti aggiunge pasti nel diario. Qui si decide se
+ * staccarne uno, e non si può decidere senza sapere cosa fa.
  */
 export function ChatCollegate() {
   const [righe, setRighe] = useState<Collegamento[] | null>(null);
@@ -43,23 +48,42 @@ export function ChatCollegate() {
     <Card>
       <CardTitle>Chat collegate</CardTitle>
       <p className="mt-2 text-sm text-muted-foreground">
-        Possono leggere il tuo diario alimentare e il registro del peso. Non
-        possono scrivere niente né vedere il resto dell&apos;app.
+        Leggono il tuo diario alimentare e il registro del peso. Alcune possono
+        anche scriverci, se gliel&apos;hai concesso: lo dice ogni riga. Nessuna
+        vede il resto dell&apos;app.
       </p>
       <ul className="mt-3 divide-y">
         {righe.map((r) => (
           <li
             key={r.sessione}
-            className="flex items-center justify-between gap-3 py-2 text-sm"
+            className="flex items-start justify-between gap-3 py-2.5 text-sm"
           >
             <span className="min-w-0">
-              <span className="font-medium">
-                Collegata il {formatDate(r.creato.slice(0, 10))}
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">
+                  Collegata il {formatDate(r.creato.slice(0, 10))}
+                </span>
+                {/*
+                  Il permesso si legge come etichetta e non come icona sola:
+                  un'icona va indovinata, e qui l'informazione è "questa cosa
+                  può scrivere nei miei dati".
+                */}
+                {r.scrive ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-warning/50 bg-warning/10 px-2 py-0.5 text-xs font-medium">
+                    <PenLine className="h-3 w-3 text-warning" />
+                    Legge e scrive
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
+                    <Eye className="h-3 w-3" />
+                    Solo lettura
+                  </span>
+                )}
               </span>
-              <span className="block text-xs text-muted-foreground">
+              <span className="mt-0.5 block text-xs text-muted-foreground">
                 {r.ultimoUso
-                  ? `ultima lettura il ${formatDate(r.ultimoUso.slice(0, 10))}`
-                  : "non ha ancora letto niente"}
+                  ? `usata l'ultima volta il ${formatDate(r.ultimoUso.slice(0, 10))}`
+                  : "non ancora usata"}
               </span>
             </span>
             <button
