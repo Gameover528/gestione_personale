@@ -1,22 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { sincronizzaProdSuDevAction } from "../sync";
+import { sincronizzaProdSuDevAction, type SyncResult } from "../sync";
 import { Card, CardTitle } from "@/core/components/ui";
 import { RefreshCw } from "lucide-react";
 
 export function SincronizzaProdSuDev() {
   const [in_corso, setInCorso] = useState(false);
-  const [risultato, setRisultato] = useState<{
-    error?: string;
-    riepilogo?: Record<string, number>;
-  } | null>(null);
+  const [risultato, setRisultato] = useState<SyncResult | null>(null);
 
   async function handleSync() {
     if (
       !confirm(
-        "Sostituisce i TUOI dati su dev (bollette, abbonamenti, diario, piatti, " +
-          "obiettivi, preferenze) con quelli del tuo account di produzione. " +
+        "Sostituisce TUTTI i tuoi dati su dev con quelli del tuo account di " +
+          "produzione. " +
           "Gli altri profili di test su dev non vengono toccati. Continuare?"
       )
     )
@@ -54,6 +51,16 @@ export function SincronizzaProdSuDev() {
 
       {risultato?.error && (
         <p className="mt-3 text-sm text-destructive">{risultato.error}</p>
+      )}
+      {risultato?.avvisi && risultato.avvisi.length > 0 && (
+        <div className="mt-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm">
+          <p className="mb-1 font-medium">Copiato, ma non tutto:</p>
+          <ul className="list-disc space-y-0.5 pl-5">
+            {risultato.avvisi.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+        </div>
       )}
       {risultato?.riepilogo && (
         <div className="mt-3 text-sm text-muted-foreground">

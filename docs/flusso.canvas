@@ -1,1392 +1,194 @@
 {
-	"nodes": [
-		{
-			"id": "p-password",
-			"type": "group",
-			"label": "Password dimenticata",
-			"x": -40,
-			"y": 3840,
-			"width": 1320,
-			"height": 230,
-			"color": "2"
-		},
-		{
-			"id": "p-bolletta",
-			"type": "group",
-			"label": "Registrare una bolletta",
-			"x": -40,
-			"y": 3580,
-			"width": 1640,
-			"height": 230
-		},
-		{
-			"id": "p-chat",
-			"type": "group",
-			"label": "Collegare una chat",
-			"x": -40,
-			"y": 3320,
-			"width": 1640,
-			"height": 230,
-			"color": "6"
-		},
-		{
-			"id": "p-peso",
-			"type": "group",
-			"label": "Segnare il peso",
-			"x": -40,
-			"y": 3060,
-			"width": 1320,
-			"height": 230
-		},
-		{
-			"id": "p-allenamento",
-			"type": "group",
-			"label": "Registrare un allenamento",
-			"x": -40,
-			"y": 2800,
-			"width": 1640,
-			"height": 230
-		},
-		{
-			"id": "p-copia",
-			"type": "group",
-			"label": "Copiare un giorno",
-			"x": -40,
-			"y": 2540,
-			"width": 1640,
-			"height": 230
-		},
-		{
-			"id": "p-nuovo-alimento",
-			"type": "group",
-			"label": "Creare un alimento che non c'è",
-			"x": -40,
-			"y": 2280,
-			"width": 1320,
-			"height": 230
-		},
-		{
-			"id": "p-pasto",
-			"type": "group",
-			"label": "Segnare un pasto",
-			"x": -40,
-			"y": 2020,
-			"width": 1640,
-			"height": 230
-		},
-		{
-			"id": "p-registrazione",
-			"type": "group",
-			"label": "Registrarsi",
-			"x": -40,
-			"y": 1760,
-			"width": 1640,
-			"height": 230
-		},
-		{
-			"id": "g-chat",
-			"type": "group",
-			"label": "Chat collegate (Claude)",
-			"x": 2760,
-			"y": -60,
-			"width": 360,
-			"height": 900,
-			"color": "6"
-		},
-		{
-			"id": "g-impostazioni",
-			"type": "group",
-			"label": "Area · Impostazioni",
-			"x": 2360,
-			"y": -60,
-			"width": 360,
-			"height": 1110
-		},
-		{
-			"id": "g-salute",
-			"type": "group",
-			"label": "Area · Salute",
-			"x": 1280,
-			"y": -60,
-			"width": 1000,
-			"height": 1530,
-			"color": "4"
-		},
-		{
-			"id": "g-consumi",
-			"type": "group",
-			"label": "Area · Consumi e Costi",
-			"x": 480,
-			"y": -60,
-			"width": 680,
-			"height": 900,
-			"color": "5"
-		},
-		{
-			"id": "g-accesso",
-			"type": "group",
-			"label": "Accesso",
-			"x": -40,
-			"y": -60,
-			"width": 360,
-			"height": 900
-		},
-		{
-			"id": "titolo",
-			"type": "text",
-			"text": "# Gestione Personale — flusso del sito\n\nIn alto le **pagine** e come si passa dall'una all'altra; in basso i **percorsi d'uso**, passo per passo.\n\nGenerato dalle rotte in `src/app` il 19/10/2026. Da qui in poi si aggiorna a mano.",
-			"x": 0,
-			"y": -540,
-			"width": 760,
-			"height": 200
-		},
-		{
-			"id": "legenda",
-			"type": "text",
-			"text": "**Legenda**\n- 🟩 pubblica, senza accesso\n- 🟦 pagina dell'app\n- 🟧 solo amministratori\n- 🟨 finestra sopra la pagina\n- 🟪 chat collegate",
-			"x": 820,
-			"y": -540,
-			"width": 300,
-			"height": 200
-		},
-		{
-			"id": "login",
-			"type": "text",
-			"text": "**Accedi**\n`/login`\n\nEmail e password. Dopo 8 tentativi falliti si blocca per qualche minuto.",
-			"x": 0,
-			"y": 0,
-			"width": 280,
-			"height": 170,
-			"color": "4"
-		},
-		{
-			"id": "registrati",
-			"type": "text",
-			"text": "**Chiedi un accesso**\n`/registrati`\n\nCon il filtro anti-bot di Cloudflare.",
-			"x": 0,
-			"y": 210,
-			"width": 280,
-			"height": 170,
-			"color": "4"
-		},
-		{
-			"id": "attesa",
-			"type": "text",
-			"text": "**In attesa**\n`/in-attesa`\n\nAccount creato ma non approvato: non vede nessun dato. Lo approva un amministratore da Impostazioni › Utenti.",
-			"x": 0,
-			"y": 420,
-			"width": 280,
-			"height": 170,
-			"color": "4"
-		},
-		{
-			"id": "esci",
-			"type": "text",
-			"text": "**Esci**\n`/auth/signout`\n\nChiude la sessione e torna ad Accedi.",
-			"x": 0,
-			"y": 630,
-			"width": 280,
-			"height": 170,
-			"color": "4"
-		},
-		{
-			"id": "cc-dash",
-			"type": "text",
-			"text": "**Dashboard**\n`/consumi-costi`\n\nDa pagare, già pagato, scadenze, spesa per tipo. Riquadri da riordinare.",
-			"x": 520,
-			"y": 0,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "bollette",
-			"type": "text",
-			"text": "**Bollette**\n`/bollette`\n\nSchede con filtri.",
-			"x": 520,
-			"y": 210,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "bolletta-nuova",
-			"type": "text",
-			"text": "**Nuova bolletta**\n`/bollette/nuova`",
-			"x": 840,
-			"y": 210,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "bolletta",
-			"type": "text",
-			"text": "**Bolletta**\n`/bollette/[id]`\n\nAllegati PDF, divisione con l'altra famiglia, pagamento.",
-			"x": 840,
-			"y": 420,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "abbonamenti",
-			"type": "text",
-			"text": "**Abbonamenti**\n`/abbonamenti`\n\nSpese ricorrenti, rate generate da sé.",
-			"x": 520,
-			"y": 630,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "abbonamento-nuovo",
-			"type": "text",
-			"text": "**Nuovo abbonamento**\n`/abbonamenti/nuovo`",
-			"x": 840,
-			"y": 630,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "s-dash",
-			"type": "text",
-			"text": "**Dashboard**\n`/alimentazione/dashboard`\n\nBilancio energetico: mangiate meno bruciate.",
-			"x": 1640,
-			"y": 0,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "diario",
-			"type": "text",
-			"text": "**Diario**\n`/alimentazione`\n\nI pasti di un giorno, divisi per pasto.",
-			"x": 1320,
-			"y": 210,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "aggiungi",
-			"type": "text",
-			"text": "**＋ Aggiungi**\n`/alimentazione/aggiungi`\n\nCerca (recenti sotto la casella vuota) · I miei piatti · + crea.",
-			"x": 1320,
-			"y": 420,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "piatti",
-			"type": "text",
-			"text": "**Piatti**\n`/alimentazione/piatti`\n\nPiatti personali e ricette.",
-			"x": 1320,
-			"y": 630,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "piatto",
-			"type": "text",
-			"text": "**Piatto**\n`/alimentazione/piatti/[id] · /nuovo`",
-			"x": 1320,
-			"y": 840,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "andamento",
-			"type": "text",
-			"text": "**Andamento**\n`/alimentazione/andamento`\n\nAlimentazione | Allenamento, su 7/30/90 giorni.",
-			"x": 1320,
-			"y": 1050,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "obiettivi",
-			"type": "text",
-			"text": "**Obiettivi**\n`/alimentazione/obiettivi`\n\nAnche come finestra dal Diario.",
-			"x": 1320,
-			"y": 1260,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "m-copia",
-			"type": "text",
-			"text": "**Copia giorno**\n_finestra sul Diario_\n\nAnteprima di cosa si copia, poi «Copia N voci».",
-			"x": 1640,
-			"y": 210,
-			"width": 280,
-			"height": 170,
-			"color": "3"
-		},
-		{
-			"id": "m-obiettivi",
-			"type": "text",
-			"text": "**Obiettivi**\n_finestra sul Diario_\n\nKcal e macronutrienti del giorno.",
-			"x": 1640,
-			"y": 420,
-			"width": 280,
-			"height": 170,
-			"color": "3"
-		},
-		{
-			"id": "m-crea",
-			"type": "text",
-			"text": "**Crea alimento**\n_finestra da ＋ Aggiungi_\n\nSingolo o composto; finisce subito nel diario.",
-			"x": 1640,
-			"y": 630,
-			"width": 280,
-			"height": 170,
-			"color": "3"
-		},
-		{
-			"id": "esercizio",
-			"type": "text",
-			"text": "**Esercizio**\n`/esercizio`\n\nAllenamenti registrati.",
-			"x": 1960,
-			"y": 210,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "allenamento",
-			"type": "text",
-			"text": "**Allenamento**\n`/esercizio/allenamento/[id]`\n\nSerie, ripetizioni, carichi, calorie stimate.",
-			"x": 1960,
-			"y": 420,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "schede",
-			"type": "text",
-			"text": "**Schede**\n`/esercizio/schede · /[id]`\n\nAllenamenti ricorrenti da avviare.",
-			"x": 1960,
-			"y": 630,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "catalogo",
-			"type": "text",
-			"text": "**Catalogo esercizi**\n`/esercizio/catalogo · /[id]`\n\n1500 esercizi, mappa dei muscoli e animazione.",
-			"x": 1960,
-			"y": 840,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "miei",
-			"type": "text",
-			"text": "**Miei esercizi**\n`/esercizio/miei · /nuovo`",
-			"x": 1960,
-			"y": 1050,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "peso",
-			"type": "text",
-			"text": "**Peso**\n`/peso`\n\nPesate e andamento. Solo nel menu laterale.",
-			"x": 1960,
-			"y": 1260,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "profilo",
-			"type": "text",
-			"text": "**Profilo**\n`/impostazioni/profilo`\n\nNome, tema, colore, password, sessioni, chat collegate.",
-			"x": 2400,
-			"y": 0,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "utenti",
-			"type": "text",
-			"text": "**Utenti**\n`/impostazioni/utenti`\n\nApprova richieste, ruoli, sospensioni, password temporanea.",
-			"x": 2400,
-			"y": 210,
-			"width": 280,
-			"height": 170,
-			"color": "2"
-		},
-		{
-			"id": "backup",
-			"type": "text",
-			"text": "**Backup dati**\n`/impostazioni/backup`",
-			"x": 2400,
-			"y": 420,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "preferenze",
-			"type": "text",
-			"text": "**Preferenze moduli**\n`/impostazioni/preferenze`",
-			"x": 2400,
-			"y": 630,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "versioni",
-			"type": "text",
-			"text": "**Versioni**\n`/impostazioni/versioni`\n\nRegistro dei rilasci.",
-			"x": 2400,
-			"y": 840,
-			"width": 280,
-			"height": 170,
-			"color": "5"
-		},
-		{
-			"id": "cambio-area",
-			"type": "text",
-			"text": "**Cambio area**\nMenu in alto (telefono) o in cima al menu laterale. Ogni area si apre sulla sua Dashboard; Impostazioni su Profilo.",
-			"x": 660,
-			"y": -260,
-			"width": 340,
-			"height": 170
-		},
-		{
-			"id": "claude",
-			"type": "text",
-			"text": "**claude.ai**\nConnettore personalizzato con l'indirizzo dell'app.",
-			"x": 2800,
-			"y": 0,
-			"width": 280,
-			"height": 170,
-			"color": "6"
-		},
-		{
-			"id": "authorize",
-			"type": "text",
-			"text": "**Consenso**\n`/oauth/authorize`\n\nDice cosa potrà fare: solo leggere, o anche scrivere.",
-			"x": 2800,
-			"y": 210,
-			"width": 280,
-			"height": 170,
-			"color": "6"
-		},
-		{
-			"id": "esito",
-			"type": "text",
-			"text": "**Esito**\n`/oauth/esito`",
-			"x": 2800,
-			"y": 420,
-			"width": 280,
-			"height": 170,
-			"color": "6"
-		},
-		{
-			"id": "mcp",
-			"type": "text",
-			"text": "**Server MCP**\n`/api/mcp`\n\nleggi_diario · leggi_peso · cerca_alimento\n+ aggiungi_pasto · registra_peso · annulla_aggiunta",
-			"x": 2800,
-			"y": 630,
-			"width": 280,
-			"height": 170,
-			"color": "6"
-		},
-		{
-			"id": "titolo-percorsi",
-			"type": "text",
-			"text": "# Percorsi d'uso\nCosa fa una persona, passo per passo.",
-			"x": 0,
-			"y": 1630,
-			"width": 760,
-			"height": 110
-		},
-		{
-			"id": "p-registrazione-0",
-			"type": "text",
-			"text": "**1.** Su Accedi, «Chiedilo»",
-			"x": 0,
-			"y": 1810,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-registrazione-1",
-			"type": "text",
-			"text": "**2.** Email e password, filtro anti-bot",
-			"x": 320,
-			"y": 1810,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-registrazione-2",
-			"type": "text",
-			"text": "**3.** Pagina «In attesa»: ancora nessun dato visibile",
-			"x": 640,
-			"y": 1810,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-registrazione-3",
-			"type": "text",
-			"text": "**4.** Un amministratore approva da Impostazioni › Utenti",
-			"x": 960,
-			"y": 1810,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-registrazione-4",
-			"type": "text",
-			"text": "**5.** Accedi → Dashboard di Consumi e Costi",
-			"x": 1280,
-			"y": 1810,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-pasto-0",
-			"type": "text",
-			"text": "**1.** Salute › Diario, scegli giorno e pasto",
-			"x": 0,
-			"y": 2070,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-pasto-1",
-			"type": "text",
-			"text": "**2.** ＋ Aggiungi: sotto la casella vuota ci sono gli ultimi alimenti segnati",
-			"x": 320,
-			"y": 2070,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-pasto-2",
-			"type": "text",
-			"text": "**3.** Scrivi: i recenti lasciano il posto ai risultati (o «I miei piatti»)",
-			"x": 640,
-			"y": 2070,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-pasto-3",
-			"type": "text",
-			"text": "**4.** Scheda quantità: grammi o porzioni",
-			"x": 960,
-			"y": 2070,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-pasto-4",
-			"type": "text",
-			"text": "**5.** Aggiungi al diario → torni al Diario",
-			"x": 1280,
-			"y": 2070,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-nuovo-alimento-0",
-			"type": "text",
-			"text": "**1.** ＋ Aggiungi, poi il «+» accanto alla ricerca",
-			"x": 0,
-			"y": 2330,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-nuovo-alimento-1",
-			"type": "text",
-			"text": "**2.** Singolo (valori per 100 g) o composto (ingredienti)",
-			"x": 320,
-			"y": 2330,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-nuovo-alimento-2",
-			"type": "text",
-			"text": "**3.** Il composto si salva sempre fra i tuoi piatti; il singolo se lo spunti",
-			"x": 640,
-			"y": 2330,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-nuovo-alimento-3",
-			"type": "text",
-			"text": "**4.** Scheda quantità → finisce subito nel diario",
-			"x": 960,
-			"y": 2330,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-copia-0",
-			"type": "text",
-			"text": "**1.** Diario → Copia giorno (finestra)",
-			"x": 0,
-			"y": 2590,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-copia-1",
-			"type": "text",
-			"text": "**2.** Scegli il giorno di partenza e i pasti",
-			"x": 320,
-			"y": 2590,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-copia-2",
-			"type": "text",
-			"text": "**3.** Anteprima di cosa verrà copiato",
-			"x": 640,
-			"y": 2590,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-copia-3",
-			"type": "text",
-			"text": "**4.** «Copia N voci»",
-			"x": 960,
-			"y": 2590,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-copia-4",
-			"type": "text",
-			"text": "**5.** «Annulla» per qualche secondo, se hai sbagliato",
-			"x": 1280,
-			"y": 2590,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-allenamento-0",
-			"type": "text",
-			"text": "**1.** Salute › Esercizio: nuovo allenamento, o avvia una scheda",
-			"x": 0,
-			"y": 2850,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-allenamento-1",
-			"type": "text",
-			"text": "**2.** Aggiungi esercizi dal catalogo o dai tuoi",
-			"x": 320,
-			"y": 2850,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-allenamento-2",
-			"type": "text",
-			"text": "**3.** Serie: ripetizioni, carichi, durata",
-			"x": 640,
-			"y": 2850,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-allenamento-3",
-			"type": "text",
-			"text": "**4.** Calorie stimate con il peso di quel giorno",
-			"x": 960,
-			"y": 2850,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-allenamento-4",
-			"type": "text",
-			"text": "**5.** Le bruciate compaiono in Andamento, sopra le mangiate",
-			"x": 1280,
-			"y": 2850,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-peso-0",
-			"type": "text",
-			"text": "**1.** Salute › Peso (menu laterale)",
-			"x": 0,
-			"y": 3110,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-peso-1",
-			"type": "text",
-			"text": "**2.** Peso di oggi, con una nota se serve",
-			"x": 320,
-			"y": 3110,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-peso-2",
-			"type": "text",
-			"text": "**3.** Andamento nel tempo",
-			"x": 640,
-			"y": 3110,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-peso-3",
-			"type": "text",
-			"text": "**4.** Usato dagli obiettivi e dalle calorie degli allenamenti",
-			"x": 960,
-			"y": 3110,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-chat-0",
-			"type": "text",
-			"text": "**1.** In claude.ai, aggiungi il connettore dell'app",
-			"x": 0,
-			"y": 3370,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-chat-1",
-			"type": "text",
-			"text": "**2.** Si apre il Consenso: solo lettura, o anche scrittura",
-			"x": 320,
-			"y": 3370,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-chat-2",
-			"type": "text",
-			"text": "**3.** Consenti → torni alla chat",
-			"x": 640,
-			"y": 3370,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-chat-3",
-			"type": "text",
-			"text": "**4.** Chiedi del diario o del peso; se può scrivere, segna pasti e pesate",
-			"x": 960,
-			"y": 3370,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-chat-4",
-			"type": "text",
-			"text": "**5.** Impostazioni › Profilo: vedi il permesso di ognuna e la stacchi",
-			"x": 1280,
-			"y": 3370,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-bolletta-0",
-			"type": "text",
-			"text": "**1.** Consumi e Costi › Bollette",
-			"x": 0,
-			"y": 3630,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-bolletta-1",
-			"type": "text",
-			"text": "**2.** + Nuova: fornitore, tipo, importo, scadenza, periodo",
-			"x": 320,
-			"y": 3630,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-bolletta-2",
-			"type": "text",
-			"text": "**3.** Allega il PDF della bolletta",
-			"x": 640,
-			"y": 3630,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-bolletta-3",
-			"type": "text",
-			"text": "**4.** Divisione spesa: persone tue e dell'altra famiglia",
-			"x": 960,
-			"y": 3630,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-bolletta-4",
-			"type": "text",
-			"text": "**5.** Quando la paghi: stato, data e ricevuta → «già pagato»",
-			"x": 1280,
-			"y": 3630,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-password-0",
-			"type": "text",
-			"text": "**1.** Chiedi a un amministratore (non c'è servizio di posta)",
-			"x": 0,
-			"y": 3890,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-password-1",
-			"type": "text",
-			"text": "**2.** Impostazioni › Utenti → password temporanea, mostrata una volta",
-			"x": 320,
-			"y": 3890,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-password-2",
-			"type": "text",
-			"text": "**3.** Te la comunica a voce; le tue sessioni vengono chiuse",
-			"x": 640,
-			"y": 3890,
-			"width": 260,
-			"height": 140
-		},
-		{
-			"id": "p-password-3",
-			"type": "text",
-			"text": "**4.** Accedi e la cambi da Impostazioni › Profilo",
-			"x": 960,
-			"y": 3890,
-			"width": 260,
-			"height": 140
-		}
+	"nodes":[
+		{"id":"g-salute","type":"group","x":1280,"y":-60,"width":1200,"height":1690,"color":"4","label":"Area · Salute"},
+		{"id":"g-chat","type":"group","x":3080,"y":-60,"width":1040,"height":1070,"color":"6","label":"Chat collegate (Claude)"},
+		{"id":"g-consumi","type":"group","x":360,"y":-60,"width":820,"height":900,"color":"5","label":"Area · Consumi e Costi"},
+		{"id":"g-accesso","type":"group","x":-520,"y":-60,"width":620,"height":1110,"label":"Accesso"},
+		{"id":"g-impostazioni","type":"group","x":2520,"y":-60,"width":360,"height":1110,"label":"Area · Impostazioni"},
+		{"id":"p-bolletta","type":"group","x":-40,"y":3920,"width":1640,"height":230,"label":"Registrare una bolletta"},
+		{"id":"p-chat","type":"group","x":-40,"y":3600,"width":1640,"height":230,"color":"6","label":"Collegare una chat"},
+		{"id":"p-allenamento","type":"group","x":-40,"y":2960,"width":1640,"height":230,"label":"Registrare un allenamento"},
+		{"id":"p-copia","type":"group","x":-40,"y":2640,"width":1640,"height":230,"label":"Copiare un giorno"},
+		{"id":"p-pasto","type":"group","x":-40,"y":2000,"width":1640,"height":230,"label":"Segnare un pasto"},
+		{"id":"p-registrazione","type":"group","x":-40,"y":1680,"width":1640,"height":230,"label":"Registrarsi"},
+		{"id":"p-password","type":"group","x":-40,"y":4240,"width":1320,"height":230,"color":"2","label":"Password dimenticata"},
+		{"id":"p-peso","type":"group","x":-40,"y":3280,"width":1320,"height":230,"label":"Segnare il peso"},
+		{"id":"p-nuovo-alimento","type":"group","x":-40,"y":2320,"width":1320,"height":230,"label":"Creare un alimento che non c'è"},
+		{"id":"aggiungi","type":"text","text":"**＋ Aggiungi**\n`/alimentazione/aggiungi`\n\nCerca (recenti sotto la casella vuota) · I miei piatti · + crea.","x":1320,"y":420,"width":280,"height":170,"color":"5"},
+		{"id":"piatti","type":"text","text":"**Piatti**\n`/alimentazione/piatti`\n\nPiatti personali e ricette.","x":1320,"y":630,"width":280,"height":170,"color":"5"},
+		{"id":"piatto","type":"text","text":"**Piatto**\n`/alimentazione/piatti/[id] · /nuovo`","x":1320,"y":840,"width":280,"height":170,"color":"5"},
+		{"id":"andamento","type":"text","text":"**Andamento**\n`/alimentazione/andamento`\n\nAlimentazione | Allenamento, su 7/30/90 giorni.","x":1320,"y":1050,"width":280,"height":170,"color":"5"},
+		{"id":"bollette","type":"text","text":"**Bollette**\n`/bollette`\n\nSchede con filtri.","x":400,"y":210,"width":280,"height":170,"color":"5"},
+		{"id":"abbonamenti","type":"text","text":"**Abbonamenti**\n`/abbonamenti`\n\nSpese ricorrenti, rate generate da sé.","x":400,"y":630,"width":280,"height":170,"color":"5"},
+		{"id":"schede","type":"text","text":"**Schede**\n`/esercizio/schede · /[id]`\n\nAllenamenti ricorrenti da avviare.","x":2040,"y":630,"width":280,"height":170,"color":"5"},
+		{"id":"catalogo","type":"text","text":"**Catalogo esercizi**\n`/esercizio/catalogo · /[id]`\n\n1500 esercizi, mappa dei muscoli e animazione.","x":2040,"y":840,"width":280,"height":170,"color":"5"},
+		{"id":"miei","type":"text","text":"**Miei esercizi**\n`/esercizio/miei · /nuovo`","x":2040,"y":1050,"width":280,"height":170,"color":"5"},
+		{"id":"peso","type":"text","text":"**Peso**\n`/peso`\n\nPesate e andamento. Solo nel menu laterale.","x":2040,"y":1260,"width":280,"height":170,"color":"5"},
+		{"id":"profilo","type":"text","text":"**Profilo**\n`/impostazioni/profilo`\n\nNome, tema, colore, password, sessioni, chat collegate.","x":2560,"y":0,"width":280,"height":170,"color":"5"},
+		{"id":"bolletta-nuova","type":"text","text":"**Nuova bolletta**\n`/bollette/nuova`","x":860,"y":210,"width":280,"height":170,"color":"5"},
+		{"id":"bolletta","type":"text","text":"**Bolletta**\n`/bollette/[id]`\n\nAllegati PDF, divisione con l'altra famiglia, pagamento.","x":860,"y":420,"width":280,"height":170,"color":"5"},
+		{"id":"abbonamento-nuovo","type":"text","text":"**Nuovo abbonamento**\n`/abbonamenti/nuovo`","x":860,"y":630,"width":280,"height":170,"color":"5"},
+		{"id":"diario","type":"text","text":"**Diario**\n`/alimentazione`\n\nI pasti di un giorno, divisi per pasto.","x":1320,"y":210,"width":280,"height":170,"color":"5"},
+		{"id":"obiettivi","type":"text","text":"**Obiettivi**\n`/alimentazione/obiettivi`\n\nAnche come finestra dal Diario.","x":1320,"y":1260,"width":280,"height":170,"color":"5"},
+		{"id":"utenti","type":"text","text":"**Utenti**\n`/impostazioni/utenti`\n\nApprova richieste, ruoli, sospensioni, password temporanea.","x":2560,"y":210,"width":280,"height":170,"color":"2"},
+		{"id":"backup","type":"text","text":"**Backup dati**\n`/impostazioni/backup`","x":2560,"y":420,"width":280,"height":170,"color":"5"},
+		{"id":"preferenze","type":"text","text":"**Preferenze moduli**\n`/impostazioni/preferenze`","x":2560,"y":630,"width":280,"height":170,"color":"5"},
+		{"id":"versioni","type":"text","text":"**Versioni**\n`/impostazioni/versioni`\n\nRegistro dei rilasci.","x":2560,"y":840,"width":280,"height":170,"color":"5"},
+		{"id":"esercizio","type":"text","text":"**Esercizio**\n`/esercizio`\n\nAllenamenti registrati.","x":2040,"y":210,"width":280,"height":170,"color":"5"},
+		{"id":"allenamento","type":"text","text":"**Allenamento**\n`/esercizio/allenamento/[id]`\n\nSerie, ripetizioni, carichi, calorie stimate.","x":2040,"y":420,"width":280,"height":170,"color":"5"},
+		{"id":"s-dash","type":"text","text":"**Dashboard**\n`/alimentazione/dashboard`\n\nBilancio energetico: mangiate meno bruciate.","x":1700,"y":0,"width":280,"height":170,"color":"5"},
+		{"id":"login","type":"text","text":"**Accedi**\n`/login`\n\nEmail e password. Dopo 8 tentativi falliti si blocca per qualche minuto.","x":-220,"y":0,"width":280,"height":170,"color":"4"},
+		{"id":"esci","type":"text","text":"**Esci**\n`/auth/signout`\n\nChiude la sessione e torna ad Accedi.","x":-220,"y":800,"width":280,"height":170,"color":"4"},
+		{"id":"attesa","type":"text","text":"**In attesa**\n`/in-attesa`\n\nAccount creato ma non approvato: non vede nessun dato. Lo approva un amministratore da Impostazioni › Utenti.","x":-220,"y":510,"width":280,"height":240,"color":"4"},
+		{"id":"registrati","type":"text","text":"**Chiedi un accesso**\n`/registrati`\n\nCon il filtro anti-bot di Cloudflare.","x":-220,"y":250,"width":280,"height":170,"color":"4"},
+		{"id":"titolo-percorsi","type":"text","text":"# Percorsi d'uso\nCosa fa una persona, passo per passo.","x":0,"y":1480,"width":760,"height":110},
+		{"id":"m-copia","type":"text","text":"**Copia giorno**\n_finestra sul Diario_\n\nAnteprima di cosa si copia, poi «Copia N voci».","x":1700,"y":210,"width":280,"height":170,"color":"3"},
+		{"id":"m-obiettivi","type":"text","text":"**Obiettivi**\n_finestra sul Diario_\n\nKcal e macronutrienti del giorno.","x":1700,"y":420,"width":280,"height":170,"color":"3"},
+		{"id":"m-crea","type":"text","text":"**Crea alimento**\n_finestra da ＋ Aggiungi_\n\nSingolo o composto; finisce subito nel diario.","x":1700,"y":630,"width":280,"height":170,"color":"3"},
+		{"id":"legenda","type":"text","text":"**Legenda**\n- 🟩 pubblica, senza accesso\n- 🟦 pagina dell'app\n- 🟧 solo amministratori\n- 🟨 finestra sopra la pagina\n- 🟪 chat collegate","x":840,"y":-560,"width":300,"height":206},
+		{"id":"titolo","type":"text","text":"# Gestione Personale — flusso del sito\n\nIn alto le **pagine** e come si passa dall'una all'altra; in basso i **percorsi d'uso**, passo per passo.\n\nGenerato dalle rotte in `src/app` il 19/10/2026. Da qui in poi si aggiorna a mano.","x":80,"y":-524,"width":760,"height":134},
+		{"id":"cc-dash","type":"text","text":"**Dashboard**\n`/consumi-costi`\n\nDa pagare, già pagato, scadenze, spesa per tipo. Riquadri da riordinare.","x":400,"y":0,"width":280,"height":170,"color":"5"},
+		{"id":"cambio-area","type":"text","text":"**Cambio area**\nMenu in alto (telefono) o in cima al menu laterale. Ogni area si apre sulla sua Dashboard; Impostazioni su Profilo.","x":970,"y":-260,"width":340,"height":115},
+		{"id":"p-bolletta-2","type":"text","text":"**3.** Allega il PDF della bolletta","x":640,"y":3970,"width":260,"height":140},
+		{"id":"p-bolletta-3","type":"text","text":"**4.** Divisione spesa: persone tue e dell'altra famiglia","x":960,"y":3970,"width":260,"height":140},
+		{"id":"p-bolletta-4","type":"text","text":"**5.** Quando la paghi: stato, data e ricevuta → «già pagato»","x":1280,"y":3970,"width":260,"height":140},
+		{"id":"p-password-2","type":"text","text":"**3.** Te la comunica a voce; le tue sessioni vengono chiuse","x":640,"y":4290,"width":260,"height":140},
+		{"id":"p-password-3","type":"text","text":"**4.** Accedi e la cambi da Impostazioni › Profilo","x":960,"y":4290,"width":260,"height":140},
+		{"id":"p-peso-2","type":"text","text":"**3.** Andamento nel tempo","x":640,"y":3330,"width":260,"height":140},
+		{"id":"p-peso-3","type":"text","text":"**4.** Usato dagli obiettivi e dalle calorie degli allenamenti","x":960,"y":3330,"width":260,"height":140},
+		{"id":"p-chat-2","type":"text","text":"**3.** Consenti → torni alla chat","x":640,"y":3650,"width":260,"height":140},
+		{"id":"p-chat-3","type":"text","text":"**4.** Chiedi del diario o del peso; se può scrivere, segna pasti e pesate","x":960,"y":3650,"width":260,"height":140},
+		{"id":"p-chat-4","type":"text","text":"**5.** Impostazioni › Profilo: vedi il permesso di ognuna e la stacchi","x":1280,"y":3650,"width":260,"height":140},
+		{"id":"p-bolletta-0","type":"text","text":"**1.** Consumi e Costi › Bollette","x":0,"y":3970,"width":260,"height":140},
+		{"id":"p-bolletta-1","type":"text","text":"**2.** + Nuova: fornitore, tipo, importo, scadenza, periodo","x":320,"y":3970,"width":260,"height":140},
+		{"id":"p-password-0","type":"text","text":"**1.** Chiedi a un amministratore (non c'è servizio di posta)","x":0,"y":4290,"width":260,"height":140},
+		{"id":"p-password-1","type":"text","text":"**2.** Impostazioni › Utenti → password temporanea, mostrata una volta","x":320,"y":4290,"width":260,"height":140},
+		{"id":"p-pasto-2","type":"text","text":"**3.** Scrivi: i recenti lasciano il posto ai risultati (o «I miei piatti»)","x":640,"y":2050,"width":260,"height":140},
+		{"id":"p-peso-0","type":"text","text":"**1.** Salute › Peso (menu laterale)","x":0,"y":3330,"width":260,"height":140},
+		{"id":"p-nuovo-alimento-2","type":"text","text":"**3.** Il composto si salva sempre fra i tuoi piatti; il singolo se lo spunti","x":640,"y":2370,"width":260,"height":140},
+		{"id":"p-allenamento-0","type":"text","text":"**1.** Salute › Esercizio: nuovo allenamento, o avvia una scheda","x":0,"y":3010,"width":260,"height":140},
+		{"id":"p-allenamento-1","type":"text","text":"**2.** Aggiungi esercizi dal catalogo o dai tuoi","x":320,"y":3010,"width":260,"height":140},
+		{"id":"p-allenamento-2","type":"text","text":"**3.** Serie: ripetizioni, carichi, durata","x":640,"y":3010,"width":260,"height":140},
+		{"id":"p-allenamento-3","type":"text","text":"**4.** Calorie stimate con il peso di quel giorno","x":960,"y":3010,"width":260,"height":140},
+		{"id":"p-allenamento-4","type":"text","text":"**5.** Le bruciate compaiono in Andamento, sopra le mangiate","x":1280,"y":3010,"width":260,"height":140},
+		{"id":"p-pasto-3","type":"text","text":"**4.** Scheda quantità: grammi o porzioni","x":960,"y":2050,"width":260,"height":140},
+		{"id":"p-pasto-4","type":"text","text":"**5.** Aggiungi al diario → torni al Diario","x":1280,"y":2050,"width":260,"height":140},
+		{"id":"p-peso-1","type":"text","text":"**2.** Peso di oggi, con una nota se serve","x":320,"y":3330,"width":260,"height":140},
+		{"id":"p-nuovo-alimento-3","type":"text","text":"**4.** Scheda quantità → finisce subito nel diario","x":960,"y":2370,"width":260,"height":140},
+		{"id":"p-copia-0","type":"text","text":"**1.** Diario → Copia giorno (finestra)","x":0,"y":2690,"width":260,"height":140},
+		{"id":"p-copia-1","type":"text","text":"**2.** Scegli il giorno di partenza e i pasti","x":320,"y":2690,"width":260,"height":140},
+		{"id":"p-chat-1","type":"text","text":"**2.** Si apre il Consenso: solo lettura, o anche scrittura","x":320,"y":3650,"width":260,"height":140},
+		{"id":"p-chat-0","type":"text","text":"**1.** In claude.ai, aggiungi il connettore dell'app","x":0,"y":3650,"width":260,"height":140},
+		{"id":"p-pasto-0","type":"text","text":"**1.** Salute › Diario, scegli giorno e pasto","x":0,"y":2050,"width":260,"height":140},
+		{"id":"p-pasto-1","type":"text","text":"**2.** ＋ Aggiungi: sotto la casella vuota ci sono gli ultimi alimenti segnati","x":320,"y":2050,"width":260,"height":140},
+		{"id":"p-nuovo-alimento-0","type":"text","text":"**1.** ＋ Aggiungi, poi il «+» accanto alla ricerca","x":0,"y":2370,"width":260,"height":140},
+		{"id":"p-nuovo-alimento-1","type":"text","text":"**2.** Singolo (valori per 100 g) o composto (ingredienti)","x":320,"y":2370,"width":260,"height":140},
+		{"id":"p-copia-2","type":"text","text":"**3.** Anteprima di cosa verrà copiato","x":640,"y":2690,"width":260,"height":140},
+		{"id":"p-copia-3","type":"text","text":"**4.** «Copia N voci»","x":960,"y":2690,"width":260,"height":140},
+		{"id":"p-copia-4","type":"text","text":"**5.** «Annulla» per qualche secondo, se hai sbagliato","x":1280,"y":2690,"width":260,"height":140},
+		{"id":"p-registrazione-1","type":"text","text":"**2.** Email e password, filtro anti-bot","x":320,"y":1730,"width":260,"height":140},
+		{"id":"p-registrazione-2","type":"text","text":"**3.** Pagina «In attesa»: ancora nessun dato visibile","x":640,"y":1730,"width":260,"height":140},
+		{"id":"p-registrazione-3","type":"text","text":"**4.** Un amministratore approva da Impostazioni › Utenti","x":960,"y":1730,"width":260,"height":140},
+		{"id":"p-registrazione-4","type":"text","text":"**5.** Accedi → Dashboard di Consumi e Costi","x":1280,"y":1730,"width":260,"height":140},
+		{"id":"p-registrazione-0","type":"text","text":"**1.** Su Accedi, «Chiedilo»","x":0,"y":1730,"width":260,"height":140},
+		{"id":"mcp","type":"text","text":"**Server MCP**\n`/api/mcp`\n\nleggi_diario · leggi_peso · cerca_alimento\n+ aggiungi_pasto · registra_peso · annulla_aggiunta","x":3120,"y":545,"width":280,"height":236,"color":"6"},
+		{"id":"esito","type":"text","text":"**Esito**\n`/oauth/esito`","x":3590,"y":545,"width":180,"height":85,"color":"6"},
+		{"id":"authorize","type":"text","text":"**Consenso**\n`/oauth/authorize`\n\nDice cosa potrà fare: solo leggere, o anche scrivere.","x":3540,"y":170,"width":280,"height":170,"color":"6"},
+		{"id":"claude","type":"text","text":"**claude.ai**\nConnettore personalizzato con l'indirizzo dell'app.","x":3120,"y":21,"width":280,"height":128,"color":"6"}
 	],
-	"edges": [
+	"edges":[
+		{"id":"e1","toFloating":false,"fromNode":"login","fromSide":"bottom","toNode":"registrati","toSide":"top","label":"non hai un accesso?"},
+		{"id":"e2","fromNode":"registrati","fromSide":"bottom","toNode":"attesa","toSide":"top","label":"richiesta inviata"},
+		{"id":"e3","fromNode":"login","fromSide":"right","toNode":"cc-dash","toSide":"left","label":"accesso riuscito"},
+		{"id":"e4","fromFloating":false,"fromNode":"login","fromSide":"left","toNode":"attesa","toSide":"left","label":"non ancora approvato"},
+		{"id":"e5","fromNode":"cc-dash","fromSide":"bottom","toNode":"bollette","toSide":"top"},
+		{"id":"e6","fromNode":"bollette","fromSide":"right","toNode":"bolletta-nuova","toSide":"left","label":"+ nuova"},
+		{"id":"e7","fromNode":"bollette","fromSide":"right","toNode":"bolletta","toSide":"left","label":"apri"},
+		{"id":"e8","fromNode":"bollette","fromSide":"bottom","toNode":"abbonamenti","toSide":"top"},
+		{"id":"e9","fromNode":"abbonamenti","fromSide":"right","toNode":"abbonamento-nuovo","toSide":"left","label":"+ nuovo"},
+		{"id":"e10","fromFloating":false,"toFloating":false,"fromNode":"s-dash","fromSide":"left","toNode":"diario","toSide":"top"},
+		{"id":"e11","fromNode":"diario","fromSide":"bottom","toNode":"aggiungi","toSide":"top","label":"＋"},
+		{"id":"e12","fromNode":"aggiungi","fromSide":"top","toNode":"diario","toSide":"bottom","label":"aggiunto"},
+		{"id":"e13","fromNode":"diario","fromSide":"right","toNode":"m-copia","toSide":"left"},
 		{
-			"id": "e1",
-			"fromNode": "login",
-			"fromSide": "bottom",
-			"toNode": "registrati",
-			"toSide": "top",
-			"toEnd": "arrow",
-			"label": "non hai un accesso?"
+			"id":"e14",
+			"toFloating":false,
+			"styleAttributes":{"pathfindingMethod":"square"},
+			"fromNode":"aggiungi",
+			"fromSide":"right",
+			"toNode":"m-crea",
+			"toSide":"left",
+			"label":"+"
 		},
+		{"id":"e15","fromNode":"piatti","fromSide":"bottom","toNode":"piatto","toSide":"top"},
+		{"id":"e16","toFloating":false,"fromNode":"s-dash","fromSide":"right","toNode":"esercizio","toSide":"top"},
+		{"id":"e17","fromNode":"esercizio","fromSide":"bottom","toNode":"allenamento","toSide":"top","label":"apri / nuovo"},
+		{"id":"e18","fromNode":"schede","fromSide":"top","toNode":"allenamento","toSide":"bottom","label":"avvia"},
 		{
-			"id": "e2",
-			"fromNode": "registrati",
-			"fromSide": "bottom",
-			"toNode": "attesa",
-			"toSide": "top",
-			"toEnd": "arrow",
-			"label": "richiesta inviata"
+			"id":"e19",
+			"fromFloating":false,
+			"styleAttributes":{
+				"pathfindingMethod":null
+			},
+			"toFloating":false,
+			"fromNode":"catalogo",
+			"fromSide":"right",
+			"toNode":"allenamento",
+			"toSide":"right",
+			"label":"aggiungi esercizio"
 		},
+		{"id":"e20","fromFloating":false,"fromNode":"cambio-area","fromSide":"left","toNode":"cc-dash","toSide":"top"},
+		{"id":"e21","fromNode":"cambio-area","fromSide":"right","toNode":"s-dash","toSide":"top"},
 		{
-			"id": "e3",
-			"fromNode": "login",
-			"fromSide": "right",
-			"toNode": "cc-dash",
-			"toSide": "left",
-			"toEnd": "arrow",
-			"label": "accesso riuscito"
+			"id":"e22",
+			"fromFloating":false,
+			"styleAttributes":{"pathfindingMethod":"square"},
+			"fromNode":"claude",
+			"fromSide":"right",
+			"toNode":"authorize",
+			"toSide":"top",
+			"label":"Collega"
 		},
-		{
-			"id": "e4",
-			"fromNode": "login",
-			"fromSide": "left",
-			"toNode": "attesa",
-			"toSide": "left",
-			"toEnd": "arrow",
-			"label": "non ancora approvato"
-		},
-		{
-			"id": "e5",
-			"fromNode": "cc-dash",
-			"fromSide": "bottom",
-			"toNode": "bollette",
-			"toSide": "top",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e6",
-			"fromNode": "bollette",
-			"fromSide": "right",
-			"toNode": "bolletta-nuova",
-			"toSide": "left",
-			"toEnd": "arrow",
-			"label": "+ nuova"
-		},
-		{
-			"id": "e7",
-			"fromNode": "bollette",
-			"fromSide": "right",
-			"toNode": "bolletta",
-			"toSide": "left",
-			"toEnd": "arrow",
-			"label": "apri"
-		},
-		{
-			"id": "e8",
-			"fromNode": "bollette",
-			"fromSide": "bottom",
-			"toNode": "abbonamenti",
-			"toSide": "top",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e9",
-			"fromNode": "abbonamenti",
-			"fromSide": "right",
-			"toNode": "abbonamento-nuovo",
-			"toSide": "left",
-			"toEnd": "arrow",
-			"label": "+ nuovo"
-		},
-		{
-			"id": "e10",
-			"fromNode": "s-dash",
-			"fromSide": "left",
-			"toNode": "diario",
-			"toSide": "right",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e11",
-			"fromNode": "diario",
-			"fromSide": "bottom",
-			"toNode": "aggiungi",
-			"toSide": "top",
-			"toEnd": "arrow",
-			"label": "＋"
-		},
-		{
-			"id": "e12",
-			"fromNode": "aggiungi",
-			"fromSide": "top",
-			"toNode": "diario",
-			"toSide": "bottom",
-			"toEnd": "arrow",
-			"label": "aggiunto"
-		},
-		{
-			"id": "e13",
-			"fromNode": "diario",
-			"fromSide": "right",
-			"toNode": "m-copia",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e14",
-			"fromNode": "aggiungi",
-			"fromSide": "right",
-			"toNode": "m-crea",
-			"toSide": "left",
-			"toEnd": "arrow",
-			"label": "+"
-		},
-		{
-			"id": "e15",
-			"fromNode": "piatti",
-			"fromSide": "bottom",
-			"toNode": "piatto",
-			"toSide": "top",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e16",
-			"fromNode": "s-dash",
-			"fromSide": "right",
-			"toNode": "esercizio",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e17",
-			"fromNode": "esercizio",
-			"fromSide": "bottom",
-			"toNode": "allenamento",
-			"toSide": "top",
-			"toEnd": "arrow",
-			"label": "apri / nuovo"
-		},
-		{
-			"id": "e18",
-			"fromNode": "schede",
-			"fromSide": "top",
-			"toNode": "allenamento",
-			"toSide": "bottom",
-			"toEnd": "arrow",
-			"label": "avvia"
-		},
-		{
-			"id": "e19",
-			"fromNode": "catalogo",
-			"fromSide": "right",
-			"toNode": "allenamento",
-			"toSide": "right",
-			"toEnd": "arrow",
-			"label": "aggiungi esercizio"
-		},
-		{
-			"id": "e20",
-			"fromNode": "cambio-area",
-			"fromSide": "bottom",
-			"toNode": "cc-dash",
-			"toSide": "top",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e21",
-			"fromNode": "cambio-area",
-			"fromSide": "right",
-			"toNode": "s-dash",
-			"toSide": "top",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e22",
-			"fromNode": "claude",
-			"fromSide": "bottom",
-			"toNode": "authorize",
-			"toSide": "top",
-			"toEnd": "arrow",
-			"label": "Collega"
-		},
-		{
-			"id": "e23",
-			"fromNode": "authorize",
-			"fromSide": "bottom",
-			"toNode": "esito",
-			"toSide": "top",
-			"toEnd": "arrow",
-			"label": "Consenti / Annulla"
-		},
-		{
-			"id": "e24",
-			"fromNode": "esito",
-			"fromSide": "top",
-			"toNode": "claude",
-			"toSide": "bottom",
-			"toEnd": "arrow",
-			"label": "torna alla chat"
-		},
-		{
-			"id": "e25",
-			"fromNode": "claude",
-			"fromSide": "bottom",
-			"toNode": "mcp",
-			"toSide": "top",
-			"toEnd": "arrow",
-			"label": "domande"
-		},
-		{
-			"id": "e26",
-			"fromNode": "profilo",
-			"fromSide": "right",
-			"toNode": "claude",
-			"toSide": "left",
-			"toEnd": "arrow",
-			"label": "Stacca",
-			"color": "1"
-		},
-		{
-			"id": "e27",
-			"fromNode": "p-registrazione-0",
-			"fromSide": "right",
-			"toNode": "p-registrazione-1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e28",
-			"fromNode": "p-registrazione-1",
-			"fromSide": "right",
-			"toNode": "p-registrazione-2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e29",
-			"fromNode": "p-registrazione-2",
-			"fromSide": "right",
-			"toNode": "p-registrazione-3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e30",
-			"fromNode": "p-registrazione-3",
-			"fromSide": "right",
-			"toNode": "p-registrazione-4",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e31",
-			"fromNode": "p-pasto-0",
-			"fromSide": "right",
-			"toNode": "p-pasto-1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e32",
-			"fromNode": "p-pasto-1",
-			"fromSide": "right",
-			"toNode": "p-pasto-2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e33",
-			"fromNode": "p-pasto-2",
-			"fromSide": "right",
-			"toNode": "p-pasto-3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e34",
-			"fromNode": "p-pasto-3",
-			"fromSide": "right",
-			"toNode": "p-pasto-4",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e35",
-			"fromNode": "p-nuovo-alimento-0",
-			"fromSide": "right",
-			"toNode": "p-nuovo-alimento-1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e36",
-			"fromNode": "p-nuovo-alimento-1",
-			"fromSide": "right",
-			"toNode": "p-nuovo-alimento-2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e37",
-			"fromNode": "p-nuovo-alimento-2",
-			"fromSide": "right",
-			"toNode": "p-nuovo-alimento-3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e38",
-			"fromNode": "p-copia-0",
-			"fromSide": "right",
-			"toNode": "p-copia-1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e39",
-			"fromNode": "p-copia-1",
-			"fromSide": "right",
-			"toNode": "p-copia-2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e40",
-			"fromNode": "p-copia-2",
-			"fromSide": "right",
-			"toNode": "p-copia-3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e41",
-			"fromNode": "p-copia-3",
-			"fromSide": "right",
-			"toNode": "p-copia-4",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e42",
-			"fromNode": "p-allenamento-0",
-			"fromSide": "right",
-			"toNode": "p-allenamento-1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e43",
-			"fromNode": "p-allenamento-1",
-			"fromSide": "right",
-			"toNode": "p-allenamento-2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e44",
-			"fromNode": "p-allenamento-2",
-			"fromSide": "right",
-			"toNode": "p-allenamento-3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e45",
-			"fromNode": "p-allenamento-3",
-			"fromSide": "right",
-			"toNode": "p-allenamento-4",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e46",
-			"fromNode": "p-peso-0",
-			"fromSide": "right",
-			"toNode": "p-peso-1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e47",
-			"fromNode": "p-peso-1",
-			"fromSide": "right",
-			"toNode": "p-peso-2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e48",
-			"fromNode": "p-peso-2",
-			"fromSide": "right",
-			"toNode": "p-peso-3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e49",
-			"fromNode": "p-chat-0",
-			"fromSide": "right",
-			"toNode": "p-chat-1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e50",
-			"fromNode": "p-chat-1",
-			"fromSide": "right",
-			"toNode": "p-chat-2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e51",
-			"fromNode": "p-chat-2",
-			"fromSide": "right",
-			"toNode": "p-chat-3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e52",
-			"fromNode": "p-chat-3",
-			"fromSide": "right",
-			"toNode": "p-chat-4",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e53",
-			"fromNode": "p-bolletta-0",
-			"fromSide": "right",
-			"toNode": "p-bolletta-1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e54",
-			"fromNode": "p-bolletta-1",
-			"fromSide": "right",
-			"toNode": "p-bolletta-2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e55",
-			"fromNode": "p-bolletta-2",
-			"fromSide": "right",
-			"toNode": "p-bolletta-3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e56",
-			"fromNode": "p-bolletta-3",
-			"fromSide": "right",
-			"toNode": "p-bolletta-4",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e57",
-			"fromNode": "p-password-0",
-			"fromSide": "right",
-			"toNode": "p-password-1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e58",
-			"fromNode": "p-password-1",
-			"fromSide": "right",
-			"toNode": "p-password-2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e59",
-			"fromNode": "p-password-2",
-			"fromSide": "right",
-			"toNode": "p-password-3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		}
-	]
+		{"id":"e23","toFloating":false,"fromNode":"authorize","fromSide":"bottom","toNode":"esito","toSide":"top","label":"Consenti / Annulla"},
+		{"id":"e24","fromFloating":false,"fromNode":"esito","fromSide":"left","toNode":"claude","toSide":"bottom","label":"torna alla chat"},
+		{"id":"e25","fromNode":"claude","fromSide":"bottom","toNode":"mcp","toSide":"top","label":"domande"},
+		{"id":"e26","fromNode":"profilo","fromSide":"right","toNode":"claude","toSide":"left","color":"1","label":"Stacca"},
+		{"id":"e27","fromNode":"p-registrazione-0","fromSide":"right","toNode":"p-registrazione-1","toSide":"left"},
+		{"id":"e28","fromNode":"p-registrazione-1","fromSide":"right","toNode":"p-registrazione-2","toSide":"left"},
+		{"id":"e29","fromNode":"p-registrazione-2","fromSide":"right","toNode":"p-registrazione-3","toSide":"left"},
+		{"id":"e30","fromNode":"p-registrazione-3","fromSide":"right","toNode":"p-registrazione-4","toSide":"left"},
+		{"id":"e31","fromNode":"p-pasto-0","fromSide":"right","toNode":"p-pasto-1","toSide":"left"},
+		{"id":"e32","fromNode":"p-pasto-1","fromSide":"right","toNode":"p-pasto-2","toSide":"left"},
+		{"id":"e33","fromNode":"p-pasto-2","fromSide":"right","toNode":"p-pasto-3","toSide":"left"},
+		{"id":"e34","fromNode":"p-pasto-3","fromSide":"right","toNode":"p-pasto-4","toSide":"left"},
+		{"id":"e35","fromNode":"p-nuovo-alimento-0","fromSide":"right","toNode":"p-nuovo-alimento-1","toSide":"left"},
+		{"id":"e36","fromNode":"p-nuovo-alimento-1","fromSide":"right","toNode":"p-nuovo-alimento-2","toSide":"left"},
+		{"id":"e37","fromNode":"p-nuovo-alimento-2","fromSide":"right","toNode":"p-nuovo-alimento-3","toSide":"left"},
+		{"id":"e38","fromNode":"p-copia-0","fromSide":"right","toNode":"p-copia-1","toSide":"left"},
+		{"id":"e39","fromNode":"p-copia-1","fromSide":"right","toNode":"p-copia-2","toSide":"left"},
+		{"id":"e40","fromNode":"p-copia-2","fromSide":"right","toNode":"p-copia-3","toSide":"left"},
+		{"id":"e41","fromNode":"p-copia-3","fromSide":"right","toNode":"p-copia-4","toSide":"left"},
+		{"id":"e42","fromNode":"p-allenamento-0","fromSide":"right","toNode":"p-allenamento-1","toSide":"left"},
+		{"id":"e43","fromNode":"p-allenamento-1","fromSide":"right","toNode":"p-allenamento-2","toSide":"left"},
+		{"id":"e44","fromNode":"p-allenamento-2","fromSide":"right","toNode":"p-allenamento-3","toSide":"left"},
+		{"id":"e45","fromNode":"p-allenamento-3","fromSide":"right","toNode":"p-allenamento-4","toSide":"left"},
+		{"id":"e46","fromNode":"p-peso-0","fromSide":"right","toNode":"p-peso-1","toSide":"left"},
+		{"id":"e47","fromNode":"p-peso-1","fromSide":"right","toNode":"p-peso-2","toSide":"left"},
+		{"id":"e48","fromNode":"p-peso-2","fromSide":"right","toNode":"p-peso-3","toSide":"left"},
+		{"id":"e49","fromNode":"p-chat-0","fromSide":"right","toNode":"p-chat-1","toSide":"left"},
+		{"id":"e50","fromNode":"p-chat-1","fromSide":"right","toNode":"p-chat-2","toSide":"left"},
+		{"id":"e51","fromNode":"p-chat-2","fromSide":"right","toNode":"p-chat-3","toSide":"left"},
+		{"id":"e52","fromNode":"p-chat-3","fromSide":"right","toNode":"p-chat-4","toSide":"left"},
+		{"id":"e53","fromNode":"p-bolletta-0","fromSide":"right","toNode":"p-bolletta-1","toSide":"left"},
+		{"id":"e54","fromNode":"p-bolletta-1","fromSide":"right","toNode":"p-bolletta-2","toSide":"left"},
+		{"id":"e55","fromNode":"p-bolletta-2","fromSide":"right","toNode":"p-bolletta-3","toSide":"left"},
+		{"id":"e56","fromNode":"p-bolletta-3","fromSide":"right","toNode":"p-bolletta-4","toSide":"left"},
+		{"id":"e57","fromNode":"p-password-0","fromSide":"right","toNode":"p-password-1","toSide":"left"},
+		{"id":"e58","fromNode":"p-password-1","fromSide":"right","toNode":"p-password-2","toSide":"left"},
+		{"id":"e59","fromNode":"p-password-2","fromSide":"right","toNode":"p-password-3","toSide":"left"}
+	],
+	"metadata":{
+		"version":"1.0-1.0",
+		"frontmatter":{}
+	}
 }
