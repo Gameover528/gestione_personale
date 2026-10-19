@@ -16,9 +16,10 @@ export default async function BackupPage() {
         <Card>
           <CardTitle>Esporta i tuoi dati</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
-            Genera un file JSON con tutte le tue bollette, il diario alimentare,
-            i piatti e le preferenze. Non include gli allegati PDF (restano su
-            Workers KV).
+            Genera un file JSON con tutti i tuoi dati: bollette e abbonamenti,
+            diario, piatti, allenamenti e schede, pesate, obiettivi e
+            preferenze. In testa al file c&apos;è quante righe ci sono di
+            ciascuna cosa. Non include gli allegati PDF (restano su Workers KV).
           </p>
           <a
             href="/api/backup"

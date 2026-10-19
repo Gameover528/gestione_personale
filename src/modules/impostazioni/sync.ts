@@ -3,6 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { getDb, getDbProd } from "@/lib/cf";
 import { requireAdminUser } from "@/lib/auth/session";
+import {
+  colonneDi,
+  dipendenzeDi,
+  etichetta,
+  ordinaPerDipendenze,
+  tabelleUtente,
+} from "@/lib/dati-utente";
 
 export interface SyncResult {
   error?: string;
@@ -13,120 +20,16 @@ export interface SyncResult {
 }
 
 /*
-  QUALI TABELLE SI COPIANO: TUTTE QUELLE CON `user_id`, TROVATE DAL DATABASE.
+  QUALI TABELLE SI COPIANO: TUTTE QUELLE CON `user_id`, TROVATE DAL DATABASE
+  (vedi src/lib/dati-utente.ts, la stessa regola del backup).
 
-  Prima erano un elenco scritto a mano, e l'elenco si è fermato alle tabelle
-  che esistevano quando è stato scritto: allenamenti, serie, schede ed esercizi
-  personali (0008-0010) e il registro del peso (0011) non ci sono mai entrati.
-  La sincronizzazione finiva senza errori e dichiarava "Fatto", e su dev
-  mancavano tredici allenamenti su quindici — con loro le calorie bruciate, che
-  si calcolano da allenamenti, serie e peso.
-
-  Un elenco da aggiornare a ogni migration è un elenco che resta indietro. Così
-  invece una tabella nuova si copia da sola, e si esclude a mano solo quello
-  che non va copiato: l'errore possibile diventa "copiato qualcosa in più" su
-  dev, che di produzione legge già tutto, invece di "perso qualcosa in
-  silenzio".
+  Prima erano un elenco scritto a mano, fermo alle tabelle che esistevano
+  quando è stato scritto: allenamenti, serie, schede ed esercizi personali
+  (0008-0010) e il registro del peso (0011) non ci sono mai entrati. La
+  sincronizzazione finiva senza errori e diceva "Fatto", e su dev mancavano
+  undici allenamenti su tredici — con loro le calorie bruciate, che si
+  calcolano da allenamenti, serie e peso.
 */
-
-/**
- * Le tabelle con `user_id` che NON sono dati della persona ma il suo accesso.
- * Copiarle vorrebbe dire portare su dev sessioni e permessi di produzione: un
- * cookie o un token di produzione varrebbero anche lì.
- */
-const ESCLUSE = new Set(["sessions", "oauth_codici", "oauth_token"]);
-
-/** Nomi leggibili per il riepilogo; una tabella nuova compare col suo nome. */
-const ETICHETTE: Record<string, string> = {
-  bollette: "Bollette",
-  user_preferences: "Preferenze",
-  diario_pasti: "Diario pasti",
-  obiettivi_nutrizionali: "Obiettivi nutrizionali",
-  piatti: "Piatti",
-  piatto_ingredienti: "Ingredienti piatti",
-  abbonamenti: "Abbonamenti",
-  abbonamento_rate: "Rate abbonamenti",
-  allenamenti: "Allenamenti",
-  allenamento_serie: "Serie degli allenamenti",
-  schede: "Schede",
-  scheda_esercizi: "Esercizi delle schede",
-  esercizi: "Esercizi personali",
-  pesi: "Pesate",
-};
-
-/*
-  Le tabelle interne di D1 vanno escluse: il pragma su quelle è negato e
-  l'intera query fallirebbe con SQLITE_AUTH. Stesso filtro di
-  scripts/stato-migrazioni.mjs.
-*/
-const FILTRO_TABELLE =
-  "m.type = 'table' and substr(m.name, 1, 1) <> '_'" +
-  " and m.name not like 'sqlite%' and m.name not like 'd1%'";
-
-/** Tabella -> colonne, letto dal database stesso. */
-async function colonneDi(db: D1Database): Promise<Map<string, string[]>> {
-  const { results } = await db
-    .prepare(
-      `select m.name as t, p.name as c from sqlite_master m
-         join pragma_table_info(m.name) p
-        where ${FILTRO_TABELLE}
-        order by m.name, p.cid`
-    )
-    .all<{ t: string; c: string }>();
-  const mappa = new Map<string, string[]>();
-  for (const r of results ?? []) {
-    if (!mappa.has(r.t)) mappa.set(r.t, []);
-    mappa.get(r.t)!.push(r.c);
-  }
-  return mappa;
-}
-
-/** Coppie figlia -> madre delle chiavi esterne. */
-async function dipendenzeDi(db: D1Database): Promise<[string, string][]> {
-  const { results } = await db
-    .prepare(
-      `select m.name as figlia, f."table" as madre from sqlite_master m
-         join pragma_foreign_key_list(m.name) f
-        where ${FILTRO_TABELLE}`
-    )
-    .all<{ figlia: string; madre: string }>();
-  return (results ?? []).map((r) => [r.figlia, r.madre]);
-}
-
-/**
- * Ordina le tabelle in modo che ogni madre venga prima delle sue figlie:
- * piatti prima degli ingredienti, schede prima degli allenamenti che le
- * citano. È l'ordine giusto per inserire; per cancellare si usa al contrario.
- *
- * Con l'elenco a mano l'ordine era scritto a mano anch'esso, ed era il secondo
- * modo di sbagliare a ogni tabella nuova.
- */
-function ordinaPerDipendenze(
-  tabelle: string[],
-  dipendenze: [string, string][]
-): string[] {
-  const dentro = new Set(tabelle);
-  const madri = new Map<string, Set<string>>(tabelle.map((t) => [t, new Set()]));
-  for (const [figlia, madre] of dipendenze) {
-    if (figlia !== madre && dentro.has(figlia) && dentro.has(madre)) {
-      madri.get(figlia)!.add(madre);
-    }
-  }
-
-  const ordinate: string[] = [];
-  const fatte = new Set<string>();
-  // Ordine alfabetico di partenza: lo stesso risultato a ogni esecuzione.
-  const restanti = [...tabelle].sort();
-  while (restanti.length > 0) {
-    const i = restanti.findIndex((t) => [...madri.get(t)!].every((m) => fatte.has(m)));
-    // Un ciclo fra chiavi esterne non c'è, ma se mai ci fosse si va avanti
-    // invece di bloccarsi: l'inserimento lo segnalerebbe comunque.
-    const t = restanti.splice(i >= 0 ? i : 0, 1)[0];
-    ordinate.push(t);
-    fatte.add(t);
-  }
-  return ordinate;
-}
 
 /**
  * Porta su dev i dati del PROPRIO account presi da produzione, senza toccare
@@ -184,8 +87,7 @@ export async function sincronizzaProdSuDevAction(): Promise<SyncResult> {
   */
   const avvisi: string[] = [];
   const piano: { tabella: string; colonne: string[] }[] = [];
-  for (const [tabella, colProd] of schemaProd) {
-    if (!colProd.includes("user_id") || ESCLUSE.has(tabella)) continue;
+  for (const [tabella, colProd] of tabelleUtente(schemaProd)) {
     const colDev = schemaDev.get(tabella);
     if (!colDev) {
       avvisi.push(`${tabella}: la tabella non esiste su dev, non copiata. Manca una migration.`);
@@ -221,7 +123,7 @@ export async function sincronizzaProdSuDevAction(): Promise<SyncResult> {
       .bind(prodId)
       .all<Record<string, unknown>>();
     const righe = results ?? [];
-    riepilogo[ETICHETTE[tabella] ?? tabella] = righe.length;
+    riepilogo[etichetta(tabella)] = righe.length;
     if (righe.length === 0) continue;
 
     const stmt = dbDev.prepare(

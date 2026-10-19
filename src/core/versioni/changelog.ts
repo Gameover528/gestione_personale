@@ -93,6 +93,7 @@ export function dataBuild(): string | null {
 
 export const NON_RILASCIATO: NonRilasciato | null = {
   modifiche: [
+    { categoria: "corretto", testo: "Il backup contiene tutti i tuoi dati: prima mancavano abbonamenti, allenamenti, schede, esercizi personali e pesate, senza che il file lo dicesse. In testa al file c'è quante righe ci sono di ciascuna cosa." },
     { categoria: "corretto", testo: "La sincronizzazione da produzione copia anche allenamenti, schede, esercizi personali e pesate, e quindi le calorie bruciate: si fermava alle tabelle che esistevano quando era stata scritta. Se su sviluppo manca una migration lo dice, invece di saltare i dati in silenzio." },
     { categoria: "corretto", testo: "Nel grafico delle calorie le bruciate stanno nella stessa colonna delle mangiate, sopra di loro: prima erano due barre affiancate e il netto della giornata non si leggeva." },
   ],
