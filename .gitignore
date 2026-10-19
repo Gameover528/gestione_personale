@@ -47,3 +47,7 @@ cloudflare-env.d.ts
 # Segreti per lo sviluppo locale (wrangler li legge da qui): mai nel repo.
 .dev.vars
 .dev.vars.*
+
+# Obsidian: chi apre docs/ (o il repo) come vault per modificare flusso.canvas
+# si ritrova questa cartella di impostazioni personali, che non va condivisa.
+.obsidian/
