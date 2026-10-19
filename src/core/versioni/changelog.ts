@@ -91,7 +91,11 @@ export function dataBuild(): string | null {
   return process.env.DATA_BUILD ?? null;
 }
 
-export const NON_RILASCIATO: NonRilasciato | null = null;
+export const NON_RILASCIATO: NonRilasciato | null = {
+  modifiche: [
+    { categoria: "corretto", testo: "Nel grafico delle calorie le bruciate stanno nella stessa colonna delle mangiate, sopra di loro: prima erano due barre affiancate e il netto della giornata non si leggeva." },
+  ],
+};
 
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [

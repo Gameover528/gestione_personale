@@ -229,6 +229,15 @@ export function AndamentoAlimentazione({
                     interval="preserveStartEnd"
                     minTickGap={16}
                   />
+                  {/*
+                    Secondo asse X, nascosto, per le bruciate. Recharts mette
+                    le barre di uno stesso asse una accanto all'altra: erano
+                    due colonne per giorno, e "scendono dalla cima delle
+                    mangiate" non si vedeva. Su un asse proprio, con le stesse
+                    categorie, la barra delle bruciate cade nella stessa
+                    colonna e si posa sopra quella delle mangiate.
+                  */}
+                  <XAxis xAxisId="bruciate" dataKey="label" hide />
                   <YAxis
                     fontSize={12}
                     tickLine={false}
@@ -265,12 +274,18 @@ export function AndamentoAlimentazione({
                     fill="hsl(var(--serie-1))"
                     radius={[4, 4, 0, 0]}
                   />
-                  {/* Barra sospesa: parte dalla cima delle mangiate e scende. */}
+                  {/*
+                    Barra sospesa, sopra quella delle mangiate: parte dalla
+                    cima e scende. Il blu che resta sotto è il netto. Gli
+                    angoli tondi sono in alto perché ora è lei la cima della
+                    colonna.
+                  */}
                   <Bar
+                    xAxisId="bruciate"
                     isAnimationActive={false}
                     dataKey="intervalloBruciate"
                     fill="hsl(var(--serie-2))"
-                    radius={[0, 0, 4, 4]}
+                    radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
