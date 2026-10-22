@@ -12,14 +12,15 @@ import {
 } from "../schede";
 import { listEsercizi } from "../queries";
 import { cercaEsercizi, muscoliDisegnabili, type Esercizio } from "../types";
-import { metEsercizio } from "../met";
+import { isCardio } from "../met";
 import { NOME_MUSCOLO } from "../muscoli/tipi";
 import { Miniatura } from "./Miniatura";
-import { oggiIso } from "@/lib/utils";
+import { numeroFacoltativo, oggiIso } from "@/lib/utils";
 import { useToast } from "@/core/components/Toast";
 import { Card, CardTitle } from "@/core/components/ui";
 import {
   IconButton,
+  NumberInput,
   inputClass,
   bottoneClass,
   bottonePrimarioClass,
@@ -235,9 +236,9 @@ function FormVoce({
   onAggiunta: () => void;
   onCambia: () => void;
 }) {
-  const cardio =
-    metEsercizio(esercizio) >= 7 ||
-    esercizio.parti_corpo.some((p) => p.toLowerCase() === "cardio");
+  // La stessa regola dell'allenamento (met.ts): una copia qui aveva lo stesso
+  // difetto, e due copie divergono alla prima correzione.
+  const cardio = isCardio(esercizio);
 
   const [serie, setSerie] = useState("3");
   const [ripetizioni, setRipetizioni] = useState("");
@@ -245,8 +246,22 @@ function FormVoce({
   const [durata, setDurata] = useState("");
   const [distanza, setDistanza] = useState("");
   const [inCorso, setInCorso] = useState(false);
+  const [errore, setErrore] = useState<string | null>(null);
 
   async function aggiungi() {
+    // Con type=number "62,5" arrivava qui come "" e diventava null: il carico
+    // della scheda spariva senza avviso. Vedi numeroFacoltativo.
+    const valori = {
+      ripetizioni: numeroFacoltativo(ripetizioni),
+      peso_kg: numeroFacoltativo(peso),
+      durata_min: numeroFacoltativo(durata),
+      distanza_km: numeroFacoltativo(distanza),
+    };
+    if (Object.values(valori).some((v) => Number.isNaN(v))) {
+      setErrore("Un valore non è un numero: controlla i campi (va bene anche la virgola, es. 62,5).");
+      return;
+    }
+    setErrore(null);
     setInCorso(true);
     try {
       await aggiungiEsercizioScheda(schedaId, {
@@ -254,10 +269,7 @@ function FormVoce({
         esercizio_fonte: esercizio.fonte,
         esercizio_nome: esercizio.nome,
         serie: serie ? Number(serie) : 1,
-        ripetizioni: ripetizioni ? Number(ripetizioni) : null,
-        peso_kg: peso ? Number(peso) : null,
-        durata_min: durata ? Number(durata) : null,
-        distanza_km: distanza ? Number(distanza) : null,
+        ...valori,
       });
       onCambia();
       onAggiunta();
@@ -295,57 +307,32 @@ function FormVoce({
           <>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Durata (min)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                value={durata}
-                onChange={(e) => setDurata(e.target.value)}
-                className={inputClass}
-              />
+              <NumberInput value={durata} onChange={setDurata} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Distanza (km)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.1"
-                value={distanza}
-                onChange={(e) => setDistanza(e.target.value)}
-                className={inputClass}
-              />
+              <NumberInput value={distanza} onChange={setDistanza} />
             </label>
           </>
         ) : (
           <>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Ripetizioni</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={ripetizioni}
-                onChange={(e) => setRipetizioni(e.target.value)}
-                className={inputClass}
-              />
+              <NumberInput value={ripetizioni} onChange={setRipetizioni} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Carico (kg)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.5"
-                value={peso}
-                onChange={(e) => setPeso(e.target.value)}
-                className={inputClass}
-              />
+              <NumberInput value={peso} onChange={setPeso} placeholder="es. 62,5" />
             </label>
           </>
         )}
       </div>
 
+      {errore && (
+        <p role="alert" className="text-sm text-destructive">
+          {errore}
+        </p>
+      )}
       <button
         onClick={aggiungi}
         disabled={inCorso}

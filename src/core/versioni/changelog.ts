@@ -93,6 +93,18 @@ export function dataBuild(): string | null {
 
 export const NON_RILASCIATO: NonRilasciato | null = {
   modifiche: [
+    { categoria: "aggiunto", testo: "Quando esce una nuova versione, l'app aperta lo dice e si aggiorna con un tocco. Prima, dopo un rilascio, i salvataggi fallivano finché non la si chiudeva e riapriva." },
+    { categoria: "corretto", testo: "Da telefono si arriva a Peso, Piatti, Catalogo esercizi e Miei esercizi: il menu in alto («Vai a») elenca le pagine che non stanno nella barra in basso. Prima da telefono non c'era modo di raggiungerle." },
+    { categoria: "corretto", testo: "Con 100 o più allenamenti registrati, Andamento e i riquadri della dashboard Salute andavano in errore." },
+    { categoria: "corretto", testo: "Negli allenamenti e nelle schede un carico scritto con la virgola, come 62,5, veniva salvato vuoto. Ora si accetta, e un valore che non è un numero viene segnato in rosso invece di cancellare quello salvato." },
+    { categoria: "corretto", testo: "Pressa a 45°, hack squat e gli altri esercizi alla pressa chiedono ripetizioni e carico, non minuti e chilometri. Le loro calorie stimate sono più basse, e più realistiche." },
+    { categoria: "sicurezza", testo: "Una chat collegata non può più sostituire una pesata scritta da te: può correggere e togliere soltanto le sue, come promette la pagina del consenso." },
+    { categoria: "corretto", testo: "Dopo il login si torna alla pagina che si voleva aprire. Prima si finiva sempre sulla dashboard, e il collegamento di una chat si interrompeva a metà." },
+    { categoria: "corretto", testo: "Il «+» della barra in basso aggiunge al giorno che stai guardando nel diario, non sempre a oggi." },
+    { categoria: "corretto", testo: "«Rimuovi» sul PDF di una bolletta lo cancella solo quando salvi: con Annulla il documento resta, e prima di salvare si può ripristinare." },
+    { categoria: "corretto", testo: "Si caricano PDF fino a 10 MB: prima il limite era 1 MB, e oltre compariva un errore tecnico. Un file che non è un PDF viene rifiutato con un messaggio chiaro." },
+    { categoria: "corretto", testo: "La ricerca degli alimenti usa il nuovo motore di Open Food Facts, molto più affidabile del vecchio, e non mostra più lo stesso prodotto dieci volte." },
+    { categoria: "corretto", testo: "Errori e pagine inesistenti hanno una pagina in italiano, con un modo per tornare indietro anche dall'app installata." },
     { categoria: "corretto", testo: "Il backup contiene tutti i tuoi dati: prima mancavano abbonamenti, allenamenti, schede, esercizi personali e pesate, senza che il file lo dicesse. In testa al file c'è quante righe ci sono di ciascuna cosa." },
     { categoria: "corretto", testo: "La sincronizzazione da produzione copia anche allenamenti, schede, esercizi personali e pesate, e quindi le calorie bruciate: si fermava alle tabelle che esistevano quando era stata scritta. Se su sviluppo manca una migration lo dice, invece di saltare i dati in silenzio." },
     { categoria: "corretto", testo: "Nel grafico delle calorie le bruciate stanno nella stessa colonna delle mangiate, sopra di loro: prima erano due barre affiancate e il netto della giornata non si leggeva." },

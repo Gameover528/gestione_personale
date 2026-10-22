@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { destinazioneSicura } from "@/lib/auth/destinazione";
 
 const COOKIE_NAME = "session";
 
@@ -150,16 +151,27 @@ export async function middleware(request: NextRequest) {
   let stato: string | null = null;
 
   if (sessionId) {
-    const { env } = await getCloudflareContext({ async: true });
-    const row = await env.DB.prepare(
-      `select u.stato as stato from sessions s
-       join users u on u.id = s.user_id
-       where s.id = ? and s.expires_at > datetime('now')
-         and u.stato in ('attivo', 'in_attesa')`
-    )
-      .bind(sessionId)
-      .first<{ stato: string }>();
-    stato = row?.stato ?? null;
+    /*
+      Se il database non risponde, qui non si può decidere niente: né che la
+      sessione è valida né che non lo è. Prima l'eccezione saliva fino a
+      Cloudflare, che mostrava la sua pagina d'errore in inglese; mandare al
+      login sarebbe stato peggio, perché chi è entrato crederebbe di essere
+      stato buttato fuori. Si dice com'è: un momento di guasto, riprova.
+    */
+    try {
+      const { env } = await getCloudflareContext({ async: true });
+      const row = await env.DB.prepare(
+        `select u.stato as stato from sessions s
+         join users u on u.id = s.user_id
+         where s.id = ? and s.expires_at > datetime('now')
+           and u.stato in ('attivo', 'in_attesa')`
+      )
+        .bind(sessionId)
+        .first<{ stato: string }>();
+      stato = row?.stato ?? null;
+    } catch {
+      return applicaHeaderSicurezza(servizioNonDisponibile(), csp);
+    }
   }
 
   const authenticated = stato === "attivo";
@@ -175,8 +187,21 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!authenticated && !isPublic && !(inAttesa && isAttesa)) {
+    /*
+      Al login ci si porta dietro la pagina chiesta, in ?next=. Senza, dopo
+      il login si finiva sempre sulla dashboard: chi collegava una chat da un
+      browser senza sessione perdeva il consenso OAuth a metà strada.
+      Prima la query della pagina chiesta restava appiccicata all'indirizzo
+      del login (?client_id=...&state=...); ora c'è solo next.
+      Per le API non serve: a una fetch il "dove tornare" non dice niente.
+    */
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.search = "";
+    const next = pathname.startsWith("/api/")
+      ? null
+      : destinazioneSicura(pathname + request.nextUrl.search);
+    if (next) url.searchParams.set("next", next);
     return applicaHeaderSicurezza(NextResponse.redirect(url), csp);
   }
 
@@ -186,7 +211,19 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith("/registrati") ||
       isAttesa)
   ) {
+    // Già dentro: si va dove si voleva andare, se lo si sa e se è una pagina
+    // di questo sito, altrimenti alla dashboard.
+    const next = pathname.startsWith("/login")
+      ? destinazioneSicura(request.nextUrl.searchParams.get("next"))
+      : null;
     const url = request.nextUrl.clone();
+    url.search = "";
+    if (next) {
+      return applicaHeaderSicurezza(
+        NextResponse.redirect(new URL(next, request.nextUrl.origin)),
+        csp
+      );
+    }
     url.pathname = "/consumi-costi"; // tenuto in sync a mano con DEFAULT_AREA_HREF in registry.ts (evitiamo di importare la registry, pesante, nel middleware)
     return applicaHeaderSicurezza(NextResponse.redirect(url), csp);
   }
@@ -195,6 +232,23 @@ export async function middleware(request: NextRequest) {
     NextResponse.next({ request: { headers: requestHeaders } }),
     csp
   );
+}
+
+/** Pagina minima, senza script né risorse esterne: deve funzionare proprio quando il resto non va. */
+function servizioNonDisponibile(): NextResponse {
+  const html = `<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Servizio momentaneamente non disponibile</title></head>
+<body style="font-family:system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;padding:16px;background:#f8fafc;color:#0f172a">
+<div style="max-width:360px;text-align:center">
+<h1 style="font-size:20px">Servizio momentaneamente non disponibile</h1>
+<p style="color:#475569;font-size:14px;line-height:1.5">Non riusciamo a raggiungere i dati in questo momento. I tuoi dati non sono persi: riprova fra qualche secondo.</p>
+<p><a href="" style="color:#2563eb">Riprova</a></p>
+</div></body></html>`;
+  return new NextResponse(html, {
+    status: 503,
+    headers: { "Content-Type": "text/html; charset=utf-8", "Retry-After": "30" },
+  });
 }
 
 export const config = {

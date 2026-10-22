@@ -1,6 +1,7 @@
 import { Sidebar } from "./Sidebar";
 import { HeaderMobile } from "./HeaderMobile";
 import { BarraInferiore } from "./BarraInferiore";
+import { AvvisoNuovaVersione } from "./AvvisoNuovaVersione";
 import type { Ruolo } from "@/lib/auth/roles";
 
 /**
@@ -27,7 +28,7 @@ export function AppShell({
       <Sidebar userEmail={userEmail} userNome={userNome} ruolo={ruolo} />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <HeaderMobile userEmail={userEmail} userNome={userNome} />
+        <HeaderMobile userEmail={userEmail} userNome={userNome} ruolo={ruolo} />
 
         <main className="flex-1 overflow-y-auto">
           {/*
@@ -41,6 +42,7 @@ export function AppShell({
       </div>
 
       <BarraInferiore ruolo={ruolo} />
+      <AvvisoNuovaVersione />
     </div>
   );
 }

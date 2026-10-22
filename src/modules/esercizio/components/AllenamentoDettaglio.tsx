@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useId, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { Plus, Trash2, Search, X, Flame, ClipboardList } from "lucide-react";
 import {
@@ -18,24 +18,40 @@ import { listEsercizi } from "../queries";
 import { cercaEsercizi, muscoliDisegnabili, type Esercizio } from "../types";
 import { NOME_MUSCOLO } from "../muscoli/tipi";
 import { Miniatura } from "./Miniatura";
-import { metEsercizio } from "../met";
-import { formatDate } from "@/lib/utils";
+import { isCardio } from "../met";
+import { formatDate, numeroFacoltativo } from "@/lib/utils";
 import { useToast } from "@/core/components/Toast";
 import { Card, CardTitle } from "@/core/components/ui";
 import {
   IconButton,
+  NumberInput,
   inputClass,
   bottoneClass,
   bottonePrimarioClass,
 } from "@/core/components/controls";
 
-/** Un esercizio è "cardio" se il suo impegno o la parte del corpo lo dicono. */
-function isCardio(e: Pick<Esercizio, "attrezzi" | "parti_corpo">): boolean {
-  return (
-    metEsercizio(e) >= 7 ||
-    e.parti_corpo.some((p) => p.toLowerCase() === "cardio")
-  );
+/**
+ * Quali due colonne mostrare per una serie già registrata: quelle in cui ci
+ * sono già dei numeri; solo per una serie vuota decide l'esercizio.
+ *
+ * Senza questa regola, quando la classificazione di un esercizio cambia, i
+ * valori salvati sparirebbero dalla vista. È successo correggendo isCardio:
+ * le leg press registrate prima, per forza in minuti e km, si sarebbero
+ * mostrate con ripetizioni e kg vuoti, e chi riscriveva i numeri ne creava
+ * una seconda coppia accanto a quella nascosta.
+ */
+function serieCardio(
+  s: Serie,
+  esercizio: Pick<Esercizio, "attrezzi" | "parti_corpo"> | undefined
+): boolean {
+  const haCardio = s.durata_min !== null || s.distanza_km !== null;
+  const haForza = s.ripetizioni !== null || s.peso_kg !== null;
+  if (haCardio !== haForza) return haCardio;
+  return esercizio ? isCardio(esercizio) : haCardio;
 }
+
+/** Solo cifre, punto e virgola: quello che serve a un numero, anche all'italiana. */
+const soloNumero = (v: string) => v.replace(/[^\d.,]/g, "");
 
 export function AllenamentoDettaglio({ id }: { id: string }) {
   const [dati, setDati] = useState<AllenamentoConSerie | null | "assente">(null);
@@ -126,11 +142,7 @@ export function AllenamentoDettaglio({ id }: { id: string }) {
                     key={s.id}
                     serie={s}
                     numero={n + 1}
-                    cardio={
-                      perId.has(s.esercizio_id)
-                        ? isCardio(perId.get(s.esercizio_id)!)
-                        : s.durata_min !== null || s.distanza_km !== null
-                    }
+                    cardio={serieCardio(s, perId.get(s.esercizio_id))}
                     onElimina={() => handleEliminaSerie(s)}
                     onSalvato={load}
                   />
@@ -196,9 +208,24 @@ function RigaSerie({
     (cardio ? serie.distanza_km : serie.peso_kg)?.toString() ?? ""
   );
 
+  /*
+    Quale dei due campi non è un numero. Prima "62,5" in un campo type=number
+    diventava "" per il browser, e "" diventava null: il carico spariva al
+    primo tocco fuori dal campo, senza dire niente. Ora i campi accettano la
+    virgola, e un testo che non si legge come numero resta lì, segnato in
+    rosso, invece di cancellare il valore salvato.
+  */
+  const [invalido, setInvalido] = useState({ a: false, b: false });
+  // Il messaggio scritto sotto la riga: il solo bordo rosso non lo vede chi non
+  // distingue i colori, o chi guarda il telefono al sole in palestra.
+  const idErrore = useId();
+
   async function salva() {
-    const na = a ? Number(a) : null;
-    const nb = b ? Number(b) : null;
+    const na = numeroFacoltativo(a);
+    const nb = numeroFacoltativo(b);
+    const errati = { a: Number.isNaN(na), b: Number.isNaN(nb) };
+    setInvalido(errati);
+    if (errati.a || errati.b) return;
     const invariato = cardio
       ? na === serie.durata_min && nb === serie.distanza_km
       : na === serie.ripetizioni && nb === serie.peso_kg;
@@ -216,49 +243,62 @@ function RigaSerie({
   const campo =
     "h-9 w-16 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-primary";
 
+  const segnato = "border-destructive ring-1 ring-destructive";
+
   return (
-    <li className="flex min-h-11 items-center gap-2 border-t pt-1 text-sm">
-      <span className="w-5 shrink-0 text-muted-foreground">{numero}.</span>
-      <input
-        type="number"
-        inputMode="decimal"
-        min={0}
-        value={a}
-        onChange={(e) => setA(e.target.value)}
-        onBlur={salva}
-        aria-label={
-          cardio
-            ? `Durata in minuti della serie ${numero}`
-            : `Ripetizioni della serie ${numero}`
-        }
-        className={campo}
-      />
-      <span className="text-muted-foreground">{cardio ? "min" : "rip."}</span>
-      <input
-        type="number"
-        inputMode="decimal"
-        min={0}
-        step={cardio ? "0.1" : "0.5"}
-        value={b}
-        onChange={(e) => setB(e.target.value)}
-        onBlur={salva}
-        aria-label={
-          cardio
-            ? `Distanza in chilometri della serie ${numero}`
-            : `Carico in chilogrammi della serie ${numero}`
-        }
-        className={campo}
-      />
-      <span className="text-muted-foreground">{cardio ? "km" : "kg"}</span>
-      <span className="ml-auto">
-        <IconButton
-          label={`Elimina la serie ${numero} di ${serie.esercizio_nome}`}
-          tono="distruttivo"
-          onClick={onElimina}
-        >
-          <Trash2 className="h-4 w-4" />
-        </IconButton>
-      </span>
+    <li className="border-t pt-1 text-sm">
+      <div className="flex min-h-11 items-center gap-2">
+        <span className="w-5 shrink-0 text-muted-foreground">{numero}.</span>
+        <input
+          type="text"
+          inputMode={cardio ? "decimal" : "numeric"}
+          autoComplete="off"
+          value={a}
+          onChange={(e) => setA(soloNumero(e.target.value))}
+          onBlur={salva}
+          aria-invalid={invalido.a || undefined}
+          aria-describedby={invalido.a ? idErrore : undefined}
+          aria-label={
+            cardio
+              ? `Durata in minuti della serie ${numero}`
+              : `Ripetizioni della serie ${numero}`
+          }
+          className={`${campo} ${invalido.a ? segnato : ""}`}
+        />
+        <span className="text-muted-foreground">{cardio ? "min" : "rip."}</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          value={b}
+          onChange={(e) => setB(soloNumero(e.target.value))}
+          onBlur={salva}
+          aria-invalid={invalido.b || undefined}
+          aria-describedby={invalido.b ? idErrore : undefined}
+          aria-label={
+            cardio
+              ? `Distanza in chilometri della serie ${numero}`
+              : `Carico in chilogrammi della serie ${numero}`
+          }
+          className={`${campo} ${invalido.b ? segnato : ""}`}
+        />
+        <span className="text-muted-foreground">{cardio ? "km" : "kg"}</span>
+        <span className="ml-auto">
+          <IconButton
+            label={`Elimina la serie ${numero} di ${serie.esercizio_nome}`}
+            tono="distruttivo"
+            onClick={onElimina}
+          >
+            <Trash2 className="h-4 w-4" />
+          </IconButton>
+        </span>
+      </div>
+      {(invalido.a || invalido.b) && (
+        <p id={idErrore} role="alert" className="pb-1 pl-7 text-xs text-destructive">
+          Non è un numero (va bene anche la virgola, es. 62,5): non l&apos;ho
+          salvato, resta il valore di prima.
+        </p>
+      )}
     </li>
   );
 }
@@ -507,8 +547,20 @@ function FormSerie({
   const [durata, setDurata] = useState("");
   const [distanza, setDistanza] = useState("");
   const [inCorso, setInCorso] = useState(false);
+  const [errore, setErrore] = useState<string | null>(null);
 
   async function aggiungi() {
+    const valori = {
+      ripetizioni: numeroFacoltativo(ripetizioni),
+      peso_kg: numeroFacoltativo(peso),
+      durata_min: numeroFacoltativo(durata),
+      distanza_km: numeroFacoltativo(distanza),
+    };
+    if (Object.values(valori).some((v) => Number.isNaN(v))) {
+      setErrore("Un valore non è un numero: controlla i campi (va bene anche la virgola, es. 62,5).");
+      return;
+    }
+    setErrore(null);
     setInCorso(true);
     try {
       await aggiungiSerie(
@@ -517,10 +569,7 @@ function FormSerie({
           esercizio_id: esercizio.id,
           esercizio_fonte: esercizio.fonte,
           esercizio_nome: esercizio.nome,
-          ripetizioni: ripetizioni ? Number(ripetizioni) : null,
-          peso_kg: peso ? Number(peso) : null,
-          durata_min: durata ? Number(durata) : null,
-          distanza_km: distanza ? Number(distanza) : null,
+          ...valori,
         },
         quante ? Number(quante) : 1
       );
@@ -567,56 +616,31 @@ function FormSerie({
           <>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Durata (min)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                value={durata}
-                onChange={(e) => setDurata(e.target.value)}
-                className={inputClass}
-              />
+              <NumberInput value={durata} onChange={setDurata} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Distanza (km)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.1"
-                value={distanza}
-                onChange={(e) => setDistanza(e.target.value)}
-                className={inputClass}
-              />
+              <NumberInput value={distanza} onChange={setDistanza} />
             </label>
           </>
         ) : (
           <>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Ripetizioni</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={ripetizioni}
-                onChange={(e) => setRipetizioni(e.target.value)}
-                className={inputClass}
-              />
+              <NumberInput value={ripetizioni} onChange={setRipetizioni} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Carico (kg)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.5"
-                value={peso}
-                onChange={(e) => setPeso(e.target.value)}
-                className={inputClass}
-              />
+              <NumberInput value={peso} onChange={setPeso} placeholder="es. 62,5" />
             </label>
           </>
         )}
       </div>
+      {errore && (
+        <p role="alert" className="text-sm text-destructive">
+          {errore}
+        </p>
+      )}
 
       <button
         onClick={aggiungi}

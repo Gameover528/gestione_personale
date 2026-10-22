@@ -130,7 +130,7 @@ const registraPeso: Attrezzo = {
   nome: "registra_peso",
   titolo: "Registra una pesata",
   descrizione:
-    "Segna quanto pesi in un certo giorno. Se quel giorno c'è già una pesata, la sostituisce.",
+    "Segna quanto pesi in un certo giorno. Se quel giorno c'è già una pesata scritta da una chat, la sostituisce; se l'ha scritta la persona dall'app, non la tocca e risponde con un errore.",
   scrive: true,
   schema: {
     type: "object",
@@ -149,19 +149,43 @@ const registraPeso: Attrezzo = {
     const data = giorno(a.data);
     const id = crypto.randomUUID();
 
-    await getDb()
+    /*
+      La sostituzione vale solo per le pesate scritte da una chat.
+
+      Prima l'upsert sostituiva qualunque pesata di quel giorno: peso, nota e
+      fonte di una riga scritta a mano diventavano quelli della chat, e
+      annulla_aggiunta non poteva rimetterla com'era. La pagina del consenso
+      promette il contrario («non potrà toccare quello che hai scritto tu
+      dall'app»), e una promessa scritta sulla schermata dove si clicca
+      Consenti è quella che conta.
+
+      Con la condizione sull'update, una riga dell'utente semplicemente non
+      cambia, e "returning" non restituisce niente: è così che lo si scopre,
+      senza una seconda lettura.
+    */
+    const riga = await getDb()
       .prepare(
         `insert into pesi (id, user_id, data, peso_kg, nota, fonte)
          values (?, ?, ?, ?, ?, ?)
          on conflict (user_id, data) do update
-           set peso_kg = excluded.peso_kg, nota = excluded.nota, fonte = excluded.fonte`
+           set peso_kg = excluded.peso_kg, nota = excluded.nota, fonte = excluded.fonte
+           where pesi.fonte = ?
+         returning id`
       )
-      .bind(id, userId, data, kg, String(a.nota ?? "").trim() || null, FONTE)
-      .run();
+      .bind(id, userId, data, kg, String(a.nota ?? "").trim() || null, FONTE, FONTE)
+      .first<{ id: string }>();
+
+    if (!riga) {
+      throw new Error(
+        `Il ${data} c'è già una pesata scritta dalla persona nell'app: non la sostituisco. Se va corretta, si cambia dall'app.`
+      );
+    }
 
     return {
-      testo: `Registrato: ${kg.toFixed(1)} kg il ${data}.`,
-      dati: { data, peso_kg: kg },
+      testo:
+        `Registrato: ${kg.toFixed(1)} kg il ${data}. ` +
+        `Per toglierlo: annulla_aggiunta con id ${riga.id}.`,
+      dati: { id: riga.id, data, peso_kg: kg },
     };
   },
 };
@@ -172,13 +196,13 @@ const annulla: Attrezzo = {
   nome: "annulla_aggiunta",
   titolo: "Togli quello che hai aggiunto",
   descrizione:
-    "Toglie una riga che hai aggiunto tu in questa conversazione, passando l'id che ti è stato restituito. Non può togliere niente di scritto dall'app.",
+    "Toglie un pasto o una pesata che hai aggiunto tu, passando l'id che ti è stato restituito. Non può togliere niente di scritto dall'app.",
   scrive: true,
   schema: {
     type: "object",
     required: ["id"],
     properties: {
-      id: { type: "string", description: "L'id restituito da aggiungi_pasto." },
+      id: { type: "string", description: "L'id restituito da aggiungi_pasto o da registra_peso." },
     },
   },
   async esegui(userId, a) {
@@ -186,18 +210,23 @@ const annulla: Attrezzo = {
     if (!id) throw new Error("Serve l'id della riga da togliere.");
 
     // Il filtro su fonte è la difesa: anche con l'id giusto, una riga scritta
-    // dall'app non si cancella da qui.
-    const res = await getDb()
-      .prepare("delete from diario_pasti where id = ? and user_id = ? and fonte = ?")
-      .bind(id, userId, FONTE)
-      .run();
+    // dall'app non si cancella da qui. Prima valeva solo per il diario, e una
+    // pesata segnata da una chat non si poteva più togliere da lì.
+    const db = getDb();
+    const [pasto, pesata] = await db.batch([
+      db
+        .prepare("delete from diario_pasti where id = ? and user_id = ? and fonte = ?")
+        .bind(id, userId, FONTE),
+      db
+        .prepare("delete from pesi where id = ? and user_id = ? and fonte = ?")
+        .bind(id, userId, FONTE),
+    ]);
 
-    if (!res.meta.changes) {
-      throw new Error(
-        "Non ho trovato niente da togliere con quell'id, oppure quella riga non l'avevo aggiunta io: dall'app si cancella a mano."
-      );
-    }
-    return { testo: "Tolto dal diario.", dati: { id } };
+    if (pasto.meta.changes) return { testo: "Tolto dal diario.", dati: { id } };
+    if (pesata.meta.changes) return { testo: "Pesata tolta dal registro.", dati: { id } };
+    throw new Error(
+      "Non ho trovato niente da togliere con quell'id, oppure quella riga non l'avevo aggiunta io: dall'app si cancella a mano."
+    );
   },
 };
 

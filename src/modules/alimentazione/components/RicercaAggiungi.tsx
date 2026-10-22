@@ -579,8 +579,15 @@ export function RicercaAggiungi({
       {modo === "piatti" && !sel && (
         <>
           {piattiIniziali.length === 0 ? (
+            // Prima: "Creane uno nella sezione Piatti", senza link — e da
+            // telefono quella sezione non era raggiungibile.
             <p className="text-sm text-muted-foreground">
-              Nessun piatto salvato. Creane uno nella sezione Piatti.
+              Nessun piatto salvato. Puoi crearne uno col <strong>+</strong> accanto
+              alla ricerca, oppure dalla pagina{" "}
+              <Link href="/alimentazione/piatti" className="text-primary hover:underline">
+                Piatti
+              </Link>
+              .
             </p>
           ) : (
             <ul className="divide-y rounded-lg border">

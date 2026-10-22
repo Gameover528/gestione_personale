@@ -407,7 +407,9 @@ async function fetchConRetry(
   let ultimoErrore: unknown;
   for (let i = 0; i < tentativi; i++) {
     try {
-      const res = await fetch(url, options);
+      // Un tetto per tentativo: senza, un servizio che non risponde teneva
+      // ferma la ricerca finché non scadeva la richiesta intera.
+      const res = await fetch(url, { ...options, signal: AbortSignal.timeout(TIMEOUT_FONTE_MS) });
       if (res.ok) return res;
       ultimoErrore = new Error(`HTTP ${res.status}`);
     } catch (err) {
@@ -419,6 +421,9 @@ async function fetchConRetry(
   }
   throw ultimoErrore;
 }
+
+/** Quanto aspettare una fonte esterna prima di considerarla muta. */
+const TIMEOUT_FONTE_MS = 4000;
 
 function n(v: unknown): number {
   const x = typeof v === "string" ? parseFloat(v) : (v as number);
@@ -440,45 +445,109 @@ interface EsitoFonte {
   errore: boolean;
 }
 
+const CAMPI_OFF = "product_name_it,product_name,brands,serving_quantity,nutriments";
+const INTESTAZIONI_OFF = { "User-Agent": "GestionePersonale/1.0", "Accept-Language": "it" };
+
+/*
+  DUE MOTORI, IL NUOVO PER PRIMO.
+
+  La ricerca usava solo il vecchio /cgi/search.pl, che risponde 503 a raffica:
+  misurato il 21/10/2026, 3 chiamate su 9 fallite, e quando succede i tre
+  tentativi da 400 ms ricadono nello stesso momento storto. Un utente nuovo,
+  senza piatti né recenti, si ritrovava con "Gli archivi esterni non hanno
+  risposto" e nessun modo di aggiungere un alimento se non a mano.
+  search.openfoodfacts.org ("search-a-licious") è il motore che Open Food
+  Facts indica per le ricerche: nella stessa prova ha risposto 3 volte su 3,
+  in circa 200 ms. Il vecchio resta come ripiego.
+*/
 async function cercaOFF(q: string): Promise<EsitoFonte> {
+  try {
+    const res = await fetch(
+      "https://search.openfoodfacts.org/search?page_size=20&langs=it" +
+        `&fields=${CAMPI_OFF}&q=${encodeURIComponent(q)}`,
+      { headers: INTESTAZIONI_OFF, signal: AbortSignal.timeout(TIMEOUT_FONTE_MS) }
+    );
+    if (res.ok) {
+      const data = (await res.json()) as { hits?: unknown };
+      if (Array.isArray(data.hits)) {
+        return { risultati: daProdottiOFF(data.hits), errore: false };
+      }
+    }
+  } catch {
+    // Si prova col motore vecchio, qui sotto.
+  }
+
   const url =
     "https://it.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1" +
-    "&page_size=20&sort_by=unique_scans_n&lc=it" +
-    "&fields=product_name_it,product_name,brands,serving_quantity,nutriments&search_terms=" +
+    `&page_size=20&sort_by=unique_scans_n&lc=it&fields=${CAMPI_OFF}&search_terms=` +
     encodeURIComponent(q);
   try {
-    const res = await fetchConRetry(url, {
-      headers: { "User-Agent": "GestionePersonale/1.0", "Accept-Language": "it" },
-    });
+    // Due tentativi e non tre: è già il ripiego, e ogni tentativo ha il suo tetto.
+    const res = await fetchConRetry(url, { headers: INTESTAZIONI_OFF }, 2);
     const data = (await res.json()) as any;
-    const prodotti: any[] = data.products ?? [];
-    const risultati = prodotti
-      .map((p) => {
-        const nome = String(p.product_name_it || p.product_name || "").trim();
-        const nu = p.nutriments ?? {};
-        const porzione = porzioneOFF(p);
-        return {
-          nome,
-          marca: p.brands ? String(p.brands).split(",")[0].trim() : "",
-          fonte: "off" as const,
-          porzione_nome: porzione ? "porzione" : null,
-          porzione_g: porzione,
-          per100: {
-            kcal: n(nu["energy-kcal_100g"]),
-            proteine: n(nu["proteins_100g"]),
-            carboidrati: n(nu["carbohydrates_100g"]),
-            grassi: n(nu["fat_100g"]),
-            fibre: n(nu["fiber_100g"]),
-            zuccheri: n(nu["sugars_100g"]),
-            sale: n(nu["salt_100g"]),
-          },
-        };
-      })
-      .filter((a) => a.nome && a.per100.kcal > 0 && !NON_LATINO.test(a.nome));
-    return { risultati, errore: false };
+    return { risultati: daProdottiOFF(data.products ?? []), errore: false };
   } catch {
     return { risultati: [], errore: true };
   }
+}
+
+/** La prima marca: il motore nuovo le dà in un elenco, quello vecchio in un testo con le virgole. */
+function primaMarca(b: unknown): string {
+  const prima = Array.isArray(b) ? b[0] : typeof b === "string" ? b.split(",")[0] : "";
+  return String(prima ?? "").trim();
+}
+
+/** I prodotti di Open Food Facts nella forma dell'app: la stessa per i due motori. */
+function daProdottiOFF(prodotti: any[]): AlimentoRicerca[] {
+  return prodotti
+    .map((p) => {
+      const nome = String(p.product_name_it || p.product_name || "").trim();
+      const nu = p.nutriments ?? {};
+      const porzione = porzioneOFF(p);
+      return {
+        nome,
+        marca: primaMarca(p.brands),
+        fonte: "off" as const,
+        porzione_nome: porzione ? "porzione" : null,
+        porzione_g: porzione,
+        per100: {
+          kcal: n(nu["energy-kcal_100g"]),
+          proteine: n(nu["proteins_100g"]),
+          carboidrati: n(nu["carbohydrates_100g"]),
+          grassi: n(nu["fat_100g"]),
+          fibre: n(nu["fiber_100g"]),
+          zuccheri: n(nu["sugars_100g"]),
+          sale: n(nu["salt_100g"]),
+        },
+      };
+    })
+    .filter((a) => a.nome && a.per100.kcal > 0 && !NON_LATINO.test(a.nome));
+}
+
+/**
+ * Toglie i doppioni: stesso nome, stessa marca, stessi valori.
+ *
+ * Lo stesso prodotto compare con codici a barre diversi (formati, lotti):
+ * cercando "parmigiano" c'erano più di dieci righe identiche. Per chi sceglie
+ * sono una cosa sola, e ripeterle spinge in fondo le alternative vere. Si
+ * tiene la prima, che è la più pertinente. Vale anche per i risultati già in
+ * cache, che non scadono.
+ */
+function senzaDoppioni(lista: AlimentoRicerca[]): AlimentoRicerca[] {
+  const visti = new Set<string>();
+  return lista.filter((a) => {
+    const chiave = [
+      a.nome.trim().toLowerCase(),
+      (a.marca ?? "").trim().toLowerCase(),
+      a.per100.kcal,
+      a.per100.proteine,
+      a.per100.carboidrati,
+      a.per100.grassi,
+    ].join("|");
+    if (visti.has(chiave)) return false;
+    visti.add(chiave);
+    return true;
+  });
 }
 
 async function cercaUSDA(q: string): Promise<EsitoFonte> {
@@ -560,7 +629,7 @@ export async function cercaAlimentiEsterni(q: string): Promise<RisultatiEsterni>
     try {
       return {
         risultati: ordinaPerRilevanza(
-          JSON.parse(cached.risultati) as AlimentoRicerca[],
+          senzaDoppioni(JSON.parse(cached.risultati) as AlimentoRicerca[]),
           query
         ),
         irraggiungibile: false,
@@ -571,7 +640,7 @@ export async function cercaAlimentiEsterni(q: string): Promise<RisultatiEsterni>
   }
 
   const [off, usda] = await Promise.all([cercaOFF(query), cercaUSDA(query)]);
-  const risultati = [...off.risultati, ...usda.risultati].slice(0, 30);
+  const risultati = senzaDoppioni([...off.risultati, ...usda.risultati]).slice(0, 30);
 
   // Salva in cache solo risultati non vuoti: se le API sono state
   // irraggiungibili non vogliamo bloccare per sempre un termine valido.

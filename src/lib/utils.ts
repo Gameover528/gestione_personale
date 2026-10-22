@@ -46,6 +46,22 @@ export function parseNumero(value: string | number | null | undefined): number {
 }
 
 /**
+ * Il valore di un campo numerico facoltativo: vuoto -> null, "62,5" o
+ * "62.5" -> 62.5, testo che non è un numero -> NaN.
+ *
+ * A differenza di parseNumero non trasforma il testo sbagliato in 0 e non lo
+ * confonde col vuoto: chi chiama vede NaN e può segnalare il campo invece di
+ * salvare null in silenzio. È così che si perdevano i carichi: "62,5" in un
+ * <input type="number"> diventava "", e "" diventava null.
+ */
+export function numeroFacoltativo(testo: string | null | undefined): number | null {
+  const t = String(testo ?? "").trim();
+  if (t === "") return null;
+  const x = Number(t.replace(",", "."));
+  return Number.isFinite(x) ? x : NaN;
+}
+
+/**
  * Fuso orario di riferimento dell'app. Serve perche' "oggi" va deciso in ora
  * locale: il Worker gira in UTC, quindi con new Date().toISOString() tra
  * mezzanotte e le 2 (ora italiana d'estate) "oggi" risulterebbe il giorno

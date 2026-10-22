@@ -31,7 +31,10 @@ const MET_ATTREZZO: Record<string, number> = {
   "skierg machine": 7,
   "stepmill machine": 9,
   "upper body ergometer": 5,
-  "sled machine": 8,
+  // Sotto questo nome il catalogo mette la pressa a 45°, l'hack squat e le
+  // calf raise alla pressa: lavoro di forza, non cardio. Era 8, e insieme alla
+  // regola "MET >= 7 = cardio" faceva chiedere minuti e km per la leg press.
+  "sled machine": 5,
   rope: 8,
   tire: 8,
   "body weight": 4,
@@ -60,6 +63,29 @@ const MET_ATTREZZO: Record<string, number> = {
 const MET_PARTE_CORPO: Record<string, number> = {
   cardio: 7,
 };
+
+/**
+ * Le macchine che si usano a tempo e a distanza. Un elenco esplicito invece di
+ * "MET >= 7": un MET alto dice quanto si consuma, non come si misura. Con la
+ * regola del MET finivano fra i cardio la leg press, il tire flip e gli
+ * allungamenti con la corda, mentre lo ski ergometer — cardio vero, ma senza
+ * l'etichetta nel catalogo — ci finiva solo per caso.
+ */
+const ATTREZZI_CARDIO = new Set([
+  "stationary bike",
+  "elliptical machine",
+  "skierg machine",
+  "stepmill machine",
+  "upper body ergometer",
+]);
+
+/** Se un esercizio si registra a tempo e distanza invece che a ripetizioni e carico. */
+export function isCardio(e: Pick<Esercizio, "attrezzi" | "parti_corpo">): boolean {
+  return (
+    e.parti_corpo.some((p) => p.toLowerCase() === "cardio") ||
+    e.attrezzi.some((a) => ATTREZZI_CARDIO.has(a.toLowerCase()))
+  );
+}
 
 /** MET di un singolo esercizio, dal suo attrezzo o dalla parte del corpo. */
 export function metEsercizio(e: {

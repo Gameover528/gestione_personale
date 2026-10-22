@@ -77,19 +77,31 @@ async function pesoPerData(): Promise<(data: string) => number | null> {
  * Attrezzi e parti del corpo degli esercizi usati, per stimare il MET medio.
  * Una query sola per tutto l'elenco invece di una per allenamento.
  */
+/** Valori per una clausola IN: sotto il tetto di 100 parametri di D1, con margine per gli altri. */
+const MAX_PARAMETRI_IN = 90;
+
 async function attributiEsercizi(
   ids: string[]
 ): Promise<Map<string, { attrezzi: string[]; parti_corpo: string[] }>> {
   const mappa = new Map<string, { attrezzi: string[]; parti_corpo: string[] }>();
   if (ids.length === 0) return mappa;
 
-  const segnaposti = ids.map(() => "?").join(",");
-  const { results } = await getDb()
-    .prepare(
-      `select id, attrezzi, parti_corpo from esercizi_catalogo where id in (${segnaposti})`
-    )
-    .bind(...ids)
-    .all<{ id: string; attrezzi: string; parti_corpo: string }>();
+  /*
+    A blocchi: D1 accetta al massimo 100 parametri per query, mentre il SQLite
+    locale non ha questo limite — in sviluppo una IN con 150 valori passa, in
+    produzione va in errore. Chi usa tanti esercizi diversi ci arriva.
+  */
+  const results: { id: string; attrezzi: string; parti_corpo: string }[] = [];
+  for (let i = 0; i < ids.length; i += MAX_PARAMETRI_IN) {
+    const blocco = ids.slice(i, i + MAX_PARAMETRI_IN);
+    const { results: parte } = await getDb()
+      .prepare(
+        `select id, attrezzi, parti_corpo from esercizi_catalogo where id in (${blocco.map(() => "?").join(",")})`
+      )
+      .bind(...blocco)
+      .all<{ id: string; attrezzi: string; parti_corpo: string }>();
+    results.push(...(parte ?? []));
+  }
 
   const leggi = (v: string): string[] => {
     try {
@@ -122,7 +134,7 @@ export async function listAllenamenti(limite = 30): Promise<AllenamentoRiepilogo
          left join allenamento_serie s on s.allenamento_id = a.id
         where a.user_id = ?
         group by a.id
-        order by a.data desc, a.created_at desc
+        order by a.data desc, a.created_at desc, a.id
         limit ?`
     )
     .bind(user.id, limite)
@@ -131,14 +143,26 @@ export async function listAllenamenti(limite = 30): Promise<AllenamentoRiepilogo
   const righe = results ?? [];
   if (righe.length === 0) return [];
 
-  // Gli esercizi di tutti gli allenamenti dell'elenco, in una query sola.
+  /*
+    Gli esercizi di tutti gli allenamenti dell'elenco, in una query sola.
+
+    Prima era una IN con un segnaposto per allenamento: D1 accetta al massimo
+    100 parametri per query, quindi dal centesimo allenamento in poi Andamento
+    e i riquadri della dashboard andavano in errore — solo in produzione,
+    perché il SQLite locale quel limite non ce l'ha. Ora la stessa selezione
+    (stesso ordine, stesso limite) è una sottoquery: tre parametri, sempre.
+  */
   const { results: usati } = await db
     .prepare(
-      `select distinct allenamento_id, esercizio_id
-         from allenamento_serie
-        where user_id = ? and allenamento_id in (${righe.map(() => "?").join(",")})`
+      `select distinct s.allenamento_id, s.esercizio_id
+         from allenamento_serie s
+         join (select id from allenamenti
+                where user_id = ?
+                order by data desc, created_at desc, id
+                limit ?) a on a.id = s.allenamento_id
+        where s.user_id = ?`
     )
-    .bind(user.id, ...righe.map((r) => r.id))
+    .bind(user.id, limite, user.id)
     .all<{ allenamento_id: string; esercizio_id: string }>();
 
   const peso = await pesoPerData();

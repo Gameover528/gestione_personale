@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { macroAree, getMacroAreaForPath } from "@/core/modules/registry";
 import { hrefAttivo, vociBarra, type VoceBarra } from "@/core/navigazione/barra";
 import { cn } from "@/lib/utils";
@@ -16,8 +16,11 @@ import type { Ruolo } from "@/lib/auth/roles";
  */
 export function BarraInferiore({ ruolo }: { ruolo?: Ruolo }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const area = getMacroAreaForPath(pathname) ?? macroAree[0];
-  const voci = vociBarra(area, ruolo);
+  const voci = vociBarra(area, ruolo).map((v) =>
+    v.azione ? { ...v, href: conGiornoDelDiario(v.href, pathname, searchParams) } : v
+  );
   const attivo = hrefAttivo(
     pathname,
     voci.map((v) => v.href)
@@ -44,6 +47,24 @@ export function BarraInferiore({ ruolo }: { ruolo?: Ruolo }) {
       </ul>
     </nav>
   );
+}
+
+/**
+ * Il "+" porta con sé il giorno che si sta guardando nel diario.
+ *
+ * Su telefono è l'unico modo di aggiungere (il pulsante del diario è solo da
+ * desktop), e portava sempre ad Aggiungi senza data: chi guardava ieri e
+ * toccava "+" registrava il pasto oggi, senza accorgersene. Il diario tiene il
+ * giorno nell'indirizzo (?data=), quindi basta passarlo avanti.
+ */
+function conGiornoDelDiario(
+  href: string,
+  pathname: string,
+  searchParams: URLSearchParams | null
+): string {
+  if (pathname !== "/alimentazione" || href !== "/alimentazione/aggiungi") return href;
+  const data = searchParams?.get("data");
+  return data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? `${href}?data=${data}` : href;
 }
 
 function Voce({ voce, attiva }: { voce: VoceBarra; attiva: boolean }) {

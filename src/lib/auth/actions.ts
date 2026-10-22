@@ -16,6 +16,7 @@ import {
   azzeraLimiteLogin,
 } from "./rateLimit";
 import { verificaTurnstile } from "./turnstile";
+import { destinazioneSicura } from "./destinazione";
 import { DEFAULT_AREA_HREF } from "@/core/modules/registry";
 
 export interface LoginResult {
@@ -96,7 +97,12 @@ export async function loginAction(
 
   // Chi aspetta l'approvazione entra lo stesso, ma nella sua schermata: è il
   // modo di sapere a che punto è senza doverlo chiedere a qualcuno.
-  redirect(user.stato === "in_attesa" ? "/in-attesa" : DEFAULT_AREA_HREF);
+  if (user.stato === "in_attesa") redirect("/in-attesa");
+
+  // Gli altri tornano alla pagina da cui il login li aveva fermati. Il valore
+  // arriva dal modulo, quindi dal client: lo si ricontrolla qui, non basta
+  // che l'abbia filtrato la pagina.
+  redirect(destinazioneSicura(String(formData.get("next") ?? "")) ?? DEFAULT_AREA_HREF);
 }
 
 export async function logoutAction(): Promise<void> {

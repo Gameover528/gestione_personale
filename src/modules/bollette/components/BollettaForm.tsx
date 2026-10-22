@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  createBolletta,
-  updateBolletta,
-  uploadAllegato,
-  removeAllegato,
-} from "../queries";
+import { createBolletta, updateBolletta, removeAllegato } from "../queries";
 import { getBollettePreferenze } from "@/modules/impostazioni/queries";
 import {
   type Bolletta,
@@ -17,6 +12,7 @@ import {
   type StatoDivisione,
   TIPI,
   DIVISIONI,
+  LIMITE_ALLEGATO_BYTE,
   quotaAltra,
 } from "../types";
 import { formatCurrency } from "@/lib/utils";
@@ -25,6 +21,37 @@ import {
   bottonePrimarioClass,
   inputClass,
 } from "@/core/components/controls";
+
+/**
+ * Carica un PDF e ne restituisce il percorso.
+ *
+ * Passa da una route invece che da una server action: quelle si fermano a
+ * 1 MB, e una bolletta scansionata li supera. La dimensione si controlla anche
+ * qui, prima di spedire: aspettare il caricamento di 30 MB per sentirsi dire
+ * di no è tempo e traffico buttati, soprattutto da telefono.
+ */
+function controllaDimensione(f: File): void {
+  if (f.size > LIMITE_ALLEGATO_BYTE) {
+    const mb = (f.size / 1024 / 1024).toLocaleString("it-IT", { maximumFractionDigits: 1 });
+    throw new Error(
+      `"${f.name}" pesa ${mb} MB: il massimo è ${LIMITE_ALLEGATO_BYTE / 1024 / 1024} MB.`
+    );
+  }
+}
+
+async function caricaPdf(f: File): Promise<string> {
+  controllaDimensione(f);
+  const res = await fetch("/api/allegati", {
+    method: "POST",
+    body: f,
+    headers: { "Content-Type": "application/pdf" },
+  });
+  const corpo = (await res.json().catch(() => null)) as { path?: string; error?: string } | null;
+  if (!res.ok || !corpo?.path) {
+    throw new Error(corpo?.error ?? `Caricamento di "${f.name}" non riuscito. Riprova.`);
+  }
+  return corpo.path;
+}
 
 /** Campo file: alto come gli altri e con il pulsante interno leggibile. */
 const fileClass =
@@ -98,23 +125,27 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         throw new Error("Il periodo 'al' non puo' precedere il 'dal'.");
       }
 
+      // Il tipo dichiarato dal browser è solo un primo filtro (alcuni telefoni
+      // non lo dichiarano affatto): il controllo vero lo fa il server.
+      if (file && file.type && file.type !== "application/pdf") {
+        throw new Error("L'allegato deve essere un PDF.");
+      }
+      if (filePagamento && filePagamento.type && filePagamento.type !== "application/pdf") {
+        throw new Error("La ricevuta di pagamento deve essere un PDF.");
+      }
+
+      // Prima di caricarne uno si controllano TUTTI E DUE: se la ricevuta è
+      // troppo grande lo si dice subito, senza aver già spedito la bolletta.
+      if (file) controllaDimensione(file);
+      if (filePagamento) controllaDimensione(filePagamento);
+
+      // I file appena caricati: se poi qualcosa fallisce — il secondo
+      // caricamento o il salvataggio — vanno tolti, altrimenti restano in KV
+      // senza nessuna bolletta che li citi, uno in più a ogni nuovo tentativo.
+      const caricati: string[] = [];
       let path = allegatoPath;
-      if (file) {
-        if (file.type !== "application/pdf") {
-          throw new Error("L'allegato deve essere un PDF.");
-        }
-        path = await uploadAllegato(file);
-      }
-
       let pagPath = pagamentoPath;
-      if (filePagamento) {
-        if (filePagamento.type !== "application/pdf") {
-          throw new Error("La ricevuta di pagamento deve essere un PDF.");
-        }
-        pagPath = await uploadAllegato(filePagamento);
-      }
-
-      const payload: BollettaInput = {
+      const payload = (): BollettaInput => ({
         fornitore: fornitore.trim(),
         tipo,
         importo: parseFloat(importo || "0"),
@@ -131,13 +162,40 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         note: note.trim() || null,
         allegato_path: path,
         pagamento_path: pagPath,
-      };
+      });
 
-      if (editing && initial) {
-        await updateBolletta(initial.id, payload);
-      } else {
-        await createBolletta(payload);
+      try {
+        if (file) {
+          path = await caricaPdf(file);
+          caricati.push(path);
+        }
+        if (filePagamento) {
+          pagPath = await caricaPdf(filePagamento);
+          caricati.push(pagPath);
+        }
+        if (editing && initial) {
+          await updateBolletta(initial.id, payload());
+        } else {
+          await createBolletta(payload());
+        }
+      } catch (err) {
+        await Promise.allSettled(caricati.map((p) => removeAllegato(p)));
+        throw err;
       }
+
+      /*
+        Solo ORA, a bolletta salvata, si cancellano i PDF che non le servono
+        più: quelli tolti con "Rimuovi" e quelli sostituiti da un file nuovo.
+        Prima "Rimuovi" cancellava subito il file, e se poi si premeva Annulla
+        la bolletta restava collegata a un documento che non esisteva più.
+        Se una cancellazione fallisce resta un file in più, non un file in meno.
+      */
+      const superati = [
+        initial?.allegato_path !== path ? initial?.allegato_path : null,
+        initial?.pagamento_path !== pagPath ? initial?.pagamento_path : null,
+      ].filter((p): p is string => !!p);
+      await Promise.allSettled(superati.map((p) => removeAllegato(p)));
+
       router.push("/bollette");
       router.refresh();
     } catch (err) {
@@ -146,14 +204,15 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
     }
   }
 
-  async function handleRemoveAllegato() {
-    if (allegatoPath) await removeAllegato(allegatoPath);
+  // "Rimuovi" toglie il PDF dal modulo, non dall'archivio: il file si cancella
+  // solo se poi si salva (vedi handleSubmit). Fino ad allora si può tornare
+  // indietro con "Ripristina", o con Annulla.
+  function handleRemoveAllegato() {
     setAllegatoPath(null);
     setFile(null);
   }
 
-  async function handleRemovePagamento() {
-    if (pagamentoPath) await removeAllegato(pagamentoPath);
+  function handleRemovePagamento() {
     setPagamentoPath(null);
     setFilePagamento(null);
   }
@@ -318,12 +377,23 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
             </button>
           </div>
         ) : (
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className={fileClass}
-          />
+          <>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className={fileClass}
+            />
+            {initial?.allegato_path && (
+              <AvvisoRimozione
+                sostituito={!!file}
+                onRipristina={() => {
+                  setAllegatoPath(initial.allegato_path);
+                  setFile(null);
+                }}
+              />
+            )}
+          </>
         )}
       </Field>
 
@@ -340,16 +410,27 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
             </button>
           </div>
         ) : (
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => setFilePagamento(e.target.files?.[0] ?? null)}
-            className={fileClass}
-          />
+          <>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setFilePagamento(e.target.files?.[0] ?? null)}
+              className={fileClass}
+            />
+            {initial?.pagamento_path && (
+              <AvvisoRimozione
+                sostituito={!!filePagamento}
+                onRipristina={() => {
+                  setPagamentoPath(initial.pagamento_path);
+                  setFilePagamento(null);
+                }}
+              />
+            )}
+          </>
         )}
       </Field>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
       <div className="flex gap-3">
         <button
@@ -368,6 +449,32 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
         </button>
       </div>
     </form>
+  );
+}
+
+/** Il PDF precedente sparirà solo al salvataggio: lo si dice, e si può tornare indietro. */
+function AvvisoRimozione({
+  sostituito,
+  onRipristina,
+}: {
+  sostituito: boolean;
+  onRipristina: () => void;
+}) {
+  return (
+    <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+      {sostituito
+        ? "Il PDF precedente verrà sostituito quando salvi."
+        : "Il PDF precedente verrà cancellato quando salvi."}
+      {/* Alto 44 px su telefono: è il pulsante che si cerca dopo un tocco
+          sbagliato, e sta subito sotto il campo file. */}
+      <button
+        type="button"
+        onClick={onRipristina}
+        className="inline-flex min-h-11 items-center px-1 font-medium text-primary hover:underline lg:min-h-0"
+      >
+        Ripristina
+      </button>
+    </p>
   );
 }
 

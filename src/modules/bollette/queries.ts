@@ -157,19 +157,8 @@ export async function deleteBolletta(id: string): Promise<void> {
     .run();
 }
 
-/** Carica un PDF su Workers KV e ritorna il path salvato (prefissato con l'id utente). */
-export async function uploadAllegato(file: File): Promise<string> {
-  const user = await requireSessionUser();
-
-  const ext = file.name.split(".").pop() || "pdf";
-  const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-
-  await getAllegatiKv().put(path, await file.arrayBuffer(), {
-    metadata: { contentType: file.type || "application/pdf" },
-  });
-
-  return path;
-}
+// Il caricamento dei PDF è in src/app/api/allegati/route.ts: come server
+// action era limitato a 1 MB e non controllava né tipo né dimensione.
 
 /** URL (relativo, protetto da sessione) per aprire/scaricare l'allegato. */
 export async function getAllegatoUrl(path: string): Promise<string | null> {

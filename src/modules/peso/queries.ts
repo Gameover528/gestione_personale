@@ -81,12 +81,19 @@ export interface PesataInput {
 export async function salvaPesata(input: PesataInput): Promise<string> {
   const user = await requireSessionUser();
   const id = crypto.randomUUID();
+  /*
+    "fonte = null" anche nella sostituzione: una pesata toccata dall'app è
+    dell'utente, chiunque l'avesse scritta prima. Senza, una pesata messa da
+    una chat e poi corretta qui restava "della chat", e la chat poteva ancora
+    sovrascriverla o toglierla — proprio quello che il consenso promette di
+    non fare.
+  */
   await getDb()
     .prepare(
       `insert into pesi (id, user_id, data, peso_kg, nota)
        values (?, ?, ?, ?, ?)
        on conflict (user_id, data) do update
-         set peso_kg = excluded.peso_kg, nota = excluded.nota`
+         set peso_kg = excluded.peso_kg, nota = excluded.nota, fonte = null`
     )
     .bind(id, user.id, input.data, input.peso_kg, input.nota)
     .run();
@@ -105,7 +112,9 @@ export async function eliminaPesata(id: string): Promise<void> {
 
 /**
  * Rimette una pesata cancellata, con lo stesso id: è l'annulla del messaggio
- * che compare dopo la cancellazione.
+ * che compare dopo la cancellazione. Torna come pesata dell'utente (fonte
+ * vuota), anche se l'aveva scritta una chat: a rimetterla è stato lui, e i
+ * dati del ripristino arrivano dal client, quindi non decidono la provenienza.
  */
 export async function ripristinaPesata(p: Pesata): Promise<void> {
   const user = await requireSessionUser();
@@ -114,7 +123,7 @@ export async function ripristinaPesata(p: Pesata): Promise<void> {
       `insert into pesi (id, user_id, data, peso_kg, nota)
        values (?, ?, ?, ?, ?)
        on conflict (user_id, data) do update
-         set peso_kg = excluded.peso_kg, nota = excluded.nota`
+         set peso_kg = excluded.peso_kg, nota = excluded.nota, fonte = null`
     )
     .bind(p.id, user.id, p.data, p.peso_kg, p.nota)
     .run();

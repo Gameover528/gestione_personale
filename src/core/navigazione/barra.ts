@@ -36,6 +36,24 @@ function etichetta(voce: NavItem): string {
  * aggiungere un modulo o una pagina aggiorna la navigazione da sé, come già
  * accade per la sidebar.
  */
+/**
+ * Le pagine dell'area che non stanno nella barra: Piatti, Schede, Catalogo,
+ * Miei esercizi, Peso.
+ *
+ * "Fuori barra" voleva dire "solo nella sidebar del desktop", ma sotto i
+ * 1024 px la sidebar non c'è: da telefono queste pagine non avevano nessun
+ * ingresso, e il peso non si poteva registrare. Ora l'intestazione le elenca
+ * nel foglio "Vai a", e lo fa leggendole da qui: una voce fuori barra
+ * aggiunta domani compare da sola, senza che qualcuno debba ricordarsene.
+ */
+export function vociFuoriBarra(area: MacroAreaConfig, ruolo?: Ruolo): VoceBarra[] {
+  return area.moduli.flatMap((modulo) =>
+    modulo.nav
+      .filter((v) => v.fuoriBarra && (!v.adminOnly || (ruolo && puoGestireUtenti(ruolo))))
+      .map((v) => ({ label: v.label, href: v.href, icon: v.icon }))
+  );
+}
+
 export function vociBarra(area: MacroAreaConfig, ruolo?: Ruolo): VoceBarra[] {
   const voci: VoceBarra[] = [];
 

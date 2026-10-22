@@ -130,3 +130,10 @@ export function periodoRicadeInAnno(
   return mesiPeriodo(inizio, fine, fallback).some((x) => x.anno === anno);
 }
 
+
+/**
+ * Dimensione massima di un PDF allegato. Il vecchio limite era quello
+ * implicito delle server action di Next (1 MB), che una bolletta scansionata
+ * supera spesso; 10 MB stanno larghi sotto il massimo di un valore KV (25 MB).
+ */
+export const LIMITE_ALLEGATO_BYTE = 10 * 1024 * 1024;

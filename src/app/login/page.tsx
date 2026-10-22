@@ -1,13 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
+import { use, useActionState } from "react";
 import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
 import { loginAction, type LoginResult } from "@/lib/auth/actions";
+import { destinazioneSicura } from "@/lib/auth/destinazione";
 
 const initialState: LoginResult = {};
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string | string[] }>;
+}) {
+  const { next } = use(searchParams);
+  const destinazione = destinazioneSicura(Array.isArray(next) ? next[0] : next);
   const [state, formAction, isPending] = useActionState(
     loginAction,
     initialState
@@ -25,6 +32,8 @@ export default function LoginPage() {
         </div>
 
         <form action={formAction} className="flex flex-col gap-4">
+          {/* Dove tornare dopo il login: messo qui dal middleware. */}
+          {destinazione && <input type="hidden" name="next" value={destinazione} />}
           <div className="flex flex-col gap-1">
             <label htmlFor="email" className="text-sm font-medium">
               Email

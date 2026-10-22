@@ -10,6 +10,8 @@ import {
   hrefForMacroArea,
 } from "@/core/modules/registry";
 import { ThemeToggle } from "@/core/theme/ThemeToggle";
+import { vociFuoriBarra } from "@/core/navigazione/barra";
+import type { Ruolo } from "@/lib/auth/roles";
 import { cn, iniziali } from "@/lib/utils";
 
 /**
@@ -23,9 +25,11 @@ import { cn, iniziali } from "@/lib/utils";
 export function HeaderMobile({
   userEmail,
   userNome,
+  ruolo,
 }: {
   userEmail?: string;
   userNome?: string | null;
+  ruolo?: Ruolo;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -33,6 +37,7 @@ export function HeaderMobile({
 
   const area = getMacroAreaForPath(pathname) ?? macroAree[0];
   const AreaIcon = area.icon;
+  const altrePagine = vociFuoriBarra(area, ruolo);
 
   function vaiAll(id: string) {
     const scelta = macroAree.find((a) => a.id === id);
@@ -86,6 +91,36 @@ export function HeaderMobile({
               </button>
             );
           })}
+          {/*
+            Le pagine dell'area che non hanno posto nella barra in basso. Senza
+            questo elenco, da telefono non c'era modo di arrivarci.
+          */}
+          {altrePagine.length > 0 && (
+            <div className="mt-1 border-t pt-1">
+              <p className="px-4 pb-1 pt-2 text-xs font-medium text-muted-foreground">
+                Altre pagine di {area.label}
+              </p>
+              {altrePagine.map((v) => {
+                const Icon = v.icon;
+                const corrente = pathname === v.href || pathname.startsWith(v.href + "/");
+                return (
+                  <Link
+                    key={v.href}
+                    href={v.href}
+                    onClick={() => setAperto(null)}
+                    aria-current={corrente ? "page" : undefined}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 text-sm transition active:bg-accent",
+                      corrente && "font-semibold text-primary"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {v.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </Foglio>
       )}
 

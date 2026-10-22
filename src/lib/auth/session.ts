@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/cf";
 
@@ -6,6 +6,7 @@ const COOKIE_NAME = "session";
 const SESSION_DAYS = 30;
 
 import { puoGestireUtenti, type Ruolo, type StatoAccount } from "./roles";
+import { destinazioneSicura } from "./destinazione";
 
 export interface SessionUser {
   id: string;
@@ -134,7 +135,20 @@ export async function getUtenteInAttesa(): Promise<SessionUser | null> {
  */
 export async function requireSessionUser(): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    // Qui arrivano soprattutto le azioni lanciate da una pagina rimasta
+    // aperta: la pagina da cui partono è nel Referer, e dopo il login ci si
+    // torna invece di finire sulla dashboard. Solo se è di questo sito.
+    const h = await headers();
+    let next: string | null = null;
+    try {
+      const ref = new URL(h.get("referer") ?? "");
+      if (ref.host === h.get("host")) next = destinazioneSicura(ref.pathname + ref.search);
+    } catch {
+      // Nessun Referer leggibile: si va al login e basta.
+    }
+    redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
+  }
   return user;
 }
 
