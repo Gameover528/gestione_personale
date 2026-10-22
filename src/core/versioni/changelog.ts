@@ -93,6 +93,7 @@ export function dataBuild(): string | null {
 
 export const NON_RILASCIATO: NonRilasciato | null = {
   modifiche: [
+    { categoria: "sicurezza", testo: "L'app gira su Next.js 16, una versione ancora supportata che riceve le correzioni di sicurezza. Next.js 15 è uscito dal supporto il 21 ottobre." },
     { categoria: "aggiunto", testo: "Quando esce una nuova versione, l'app aperta lo dice e si aggiorna con un tocco. Prima, dopo un rilascio, i salvataggi fallivano finché non la si chiudeva e riapriva." },
     { categoria: "corretto", testo: "Da telefono si arriva a Peso, Piatti, Catalogo esercizi e Miei esercizi: il menu in alto («Vai a») elenca le pagine che non stanno nella barra in basso. Prima da telefono non c'era modo di raggiungerle." },
     { categoria: "corretto", testo: "Con 100 o più allenamenti registrati, Andamento e i riquadri della dashboard Salute andavano in errore." },

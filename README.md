@@ -127,6 +127,6 @@ Salute › Cibo › Andamento, 30 giorni. Media giornaliera e quanto spesso hai 
 
 ## Sotto il cofano, in breve
 
-Next.js 15 e React 19, ospitata su Cloudflare Workers, dati su D1 (SQLite) e allegati su Workers KV. Autenticazione scritta in casa, senza servizi esterni. Gira interamente sul piano gratuito di Cloudflare.
+Next.js 16 e React 19, ospitata su Cloudflare Workers, dati su D1 (SQLite) e allegati su Workers KV. Autenticazione scritta in casa, senza servizi esterni. Gira interamente sul piano gratuito di Cloudflare.
 
 📖 **Setup, deploy, migrazioni, struttura del progetto e come aggiungere un modulo: [`docs/sviluppo.md`](docs/sviluppo.md).**

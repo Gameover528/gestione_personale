@@ -6,7 +6,9 @@ Tutto quello che serve per lavorare al progetto. Per capire *cosa fa* l'app e co
 
 ## Stack
 
-- **Next.js 15** (App Router, TypeScript, React 19).
+- **Next.js 16** (App Router, TypeScript, React 19), compilato con Turbopack.
+  - **Il middleware resta `src/middleware.ts`**, anche se Next 16 lo dà per deprecato e suggerisce `proxy.ts`. Il motivo è che `proxy.ts` gira solo sul runtime Node.js, e su Workers OpenNext lo dichiara *sperimentale e non supportato*. `middleware.ts` invece gira sul runtime edge, che è la strada supportata. L'avviso «The "middleware" file convention is deprecated» in build è quindi atteso. Si passa a `proxy.ts` quando OpenNext lo supporterà.
+  - **Ogni versione principale di Next è supportata per 2 anni**, e OpenNext si rifiuta di compilarne una scaduta. Next 15 è scaduto il 21/10/2026, e dal giorno dopo la pipeline falliva. Next 16 scade il **21/10/2027**: l'aggiornamento a Next 17 va fatto prima.
 - **Cloudflare Workers** come hosting, tramite l'adapter [OpenNext](https://opennext.js.org/cloudflare): nessun server da gestire.
 - **D1** (SQLite gestito da Cloudflare) per tutti i dati: bollette, abbonamenti, diario, piatti, esercizi, allenamenti, schede, preferenze, utenti e sessioni.
 - **Workers KV** per gli allegati PDF delle bollette e per la cache delle GIF degli esercizi.
