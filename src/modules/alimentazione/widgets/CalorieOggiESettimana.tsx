@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { StatoErrore, useDati } from "@/core/components/Dati";
 import Link from "next/link";
 import {
   Bar,
@@ -30,12 +30,9 @@ const SIGLE = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
  * insieme e si caricano con una richiesta sola.
  */
 export default function CalorieOggiESettimana() {
-  const [dati, setDati] = useState<RiepilogoSettimana | null>(null);
+  const { dati, errore, riprova } = useDati<RiepilogoSettimana>(() => riepilogoSettimana(GIORNI), []);
 
-  useEffect(() => {
-    riepilogoSettimana(GIORNI).then(setDati);
-  }, []);
-
+  if (errore) return <StatoErrore compatto onRiprova={riprova} />;
   if (dati === null) return <p className="text-sm text-muted-foreground">…</p>;
 
   const { giorni, obiettivi } = dati;

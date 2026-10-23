@@ -91,7 +91,20 @@ export function dataBuild(): string | null {
   return process.env.DATA_BUILD ?? null;
 }
 
-export const NON_RILASCIATO: NonRilasciato | null = null;
+export const NON_RILASCIATO: NonRilasciato | null = {
+  migrazioni: [
+    "0014 — password da cambiare al primo accesso",
+    "0015 — addebito automatico degli abbonamenti",
+  ],
+  modifiche: [
+    { categoria: "sicurezza", testo: "Una password scelta da un amministratore, per un account nuovo o come password temporanea, va cambiata al primo accesso e scade: dopo 24 ore la temporanea, dopo 7 giorni quella di un account nuovo. La password di un amministratore la può reimpostare solo il superadmin." },
+    { categoria: "aggiunto", testo: "Abbonamenti con addebito automatico, attivo di default: le rate si segnano pagate da sole alla scadenza. Nel dettaglio di un abbonamento un pulsante segna pagate tutte insieme le rate arretrate, con Annulla." },
+    { categoria: "corretto", testo: "I carboidrati si contano allo stesso modo ovunque, fibre comprese: nel diario, in Andamento, nei riquadri e nelle risposte della chat collegata. Prima lo stesso giorno aveva due valori diversi." },
+    { categoria: "corretto", testo: "Se il server non risponde, riquadri, elenchi e dettagli lo dicono e offrono «Riprova», invece di restare su «Caricamento…» per sempre." },
+    { categoria: "corretto", testo: "Gli obiettivi aperti dal diario non si possono più salvare vuoti per sbaglio prima che i valori siano arrivati." },
+    { categoria: "corretto", testo: "Finestre e menu si usano anche da tastiera e con i lettori di schermo: il focus entra nella finestra, Esc la chiude e alla chiusura si torna al pulsante da cui si era partiti." },
+  ],
+};
 
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [

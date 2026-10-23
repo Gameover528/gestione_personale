@@ -110,8 +110,8 @@ export function UtentiSettings({
             <p className="text-xs text-muted-foreground">
               Comunicala a voce: non viene salvata in chiaro e non e' piu'
               recuperabile dopo aver chiuso questo avviso. Le sessioni aperte di
-              quell'account sono state chiuse; al primo accesso puo' cambiarla da
-              Impostazioni profilo.
+              quell'account sono state chiuse. Vale 24 ore, e al primo accesso
+              l'app gli chiede di sceglierne una sua.
             </p>
             <button
               onClick={() => setTemporanea(null)}
@@ -277,7 +277,10 @@ export function UtentiSettings({
           <p className="mt-2 text-sm text-destructive">{state.error}</p>
         )}
         {state.ok && (
-          <p className="mt-2 text-sm text-success-testo">Account creato.</p>
+          <p className="mt-2 text-sm text-success-testo">
+            Account creato. La password che hai scelto vale 7 giorni: al primo
+            accesso l&apos;app gli chiede di sceglierne una sua.
+          </p>
         )}
         <p className="mt-2 text-xs text-muted-foreground">
           I nuovi account nascono con ruolo &quot;Utilizzatore&quot;. Solo il

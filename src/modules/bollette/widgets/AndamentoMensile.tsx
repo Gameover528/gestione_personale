@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import {
   BarChart,
   Bar,
@@ -20,6 +21,8 @@ export default function AndamentoMensile() {
   const [data, setData] = useState<{ mese: string; totale: number }[] | null>(
     null
   );
+  const [errore, setErrore] = useState(false);
+  const [giro, setGiro] = useState(0);
 
   useEffect(() => {
     const anno = new Date().getFullYear();
@@ -35,9 +38,20 @@ export default function AndamentoMensile() {
         for (const m of mesi) if (m.anno === anno) totals[m.mese] += quota;
       }
       setData(MESI.map((mese, i) => ({ mese, totale: totals[i] })));
-    });
-  }, []);
+    }).catch(() => setErrore(true));
+  }, [giro]);
 
+  if (errore) {
+    return (
+      <StatoErrore
+        compatto
+        onRiprova={() => {
+          setErrore(false);
+          setGiro((g) => g + 1);
+        }}
+      />
+    );
+  }
   if (data === null) return <p className="text-sm text-muted-foreground">…</p>;
 
   return (

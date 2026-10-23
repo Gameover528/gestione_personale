@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import {
   BarChart,
   Bar,
@@ -40,6 +41,8 @@ type Riga = {
 
 export default function MacroOggi() {
   const [data, setData] = useState<Riga[] | null>(null);
+  const [errore, setErrore] = useState(false);
+  const [giro, setGiro] = useState(0);
 
   useEffect(() => {
     // Una chiamata sola: i totali di oggi li somma gia' il database (e' lo
@@ -62,9 +65,20 @@ export default function MacroOggi() {
         };
       }).filter((r) => r.consumato > 0 || r.obiettivo !== null);
       setData(righe);
-    });
-  }, []);
+    }).catch(() => setErrore(true));
+  }, [giro]);
 
+  if (errore) {
+    return (
+      <StatoErrore
+        compatto
+        onRiprova={() => {
+          setErrore(false);
+          setGiro((g) => g + 1);
+        }}
+      />
+    );
+  }
   if (data === null) return <p className="text-sm text-muted-foreground">…</p>;
   if (data.length === 0)
     return <p className="text-sm text-muted-foreground">Nessun dato per oggi.</p>;

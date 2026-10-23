@@ -19,6 +19,7 @@ import {
   type PastoDiario,
   type PiattoConValori,
   type ValoriNutrizionali,
+  carboidratiConFibre,
 } from "../types";
 import {
   NumberField,
@@ -420,19 +421,13 @@ export function RicercaAggiungi({
         alla pagina: l'inserimento si interrompe qui, e se la domanda restasse
         fuori dallo schermo sembrerebbe che l'aggiunta non abbia funzionato.
       */}
+      {/* Su Modale: prima era una copia a mano senza Esc e senza gestione del focus. */}
       {duplicato && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <button
-            aria-label="Chiudi senza aggiungere"
-            onClick={() => setDuplicato(null)}
-            className="absolute inset-0 bg-black/50"
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Alimento già presente"
-            className="relative w-full max-w-md space-y-3 rounded-lg border border-warning/50 bg-card p-4 shadow-xl"
-          >
+        <Modale
+          titolo="Alimento già presente"
+          larghezza="stretta"
+          onChiudi={() => setDuplicato(null)}
+        >
           <p className="text-sm">
             <strong>{duplicato.alimento.nome}</strong> è già in{" "}
             {PASTI.find((p) => p.value === pasto)?.label.toLowerCase()} del{" "}
@@ -462,8 +457,7 @@ export function RicercaAggiungi({
               Lascia stare
             </button>
           </div>
-          </div>
-        </div>
+        </Modale>
       )}
 
       <TabBar
@@ -731,7 +725,7 @@ export function RicercaAggiungi({
             </span>{" "}
             <span className="text-muted-foreground">
               · {Math.round(grammi)} g · P {(sel.per100.proteine * f).toFixed(1)} g ·
-              C {(sel.per100.carboidrati * f).toFixed(1)} g · G{" "}
+              C {(carboidratiConFibre(sel.per100) * f).toFixed(1)} g · G{" "}
               {(sel.per100.grassi * f).toFixed(1)} g
             </span>
           </div>

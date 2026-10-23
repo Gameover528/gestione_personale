@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { StatoErrore, useDati } from "@/core/components/Dati";
 import Link from "next/link";
 import { riepilogoCosti, type RiepilogoCosti as Dati } from "../queries";
 import { tipoLabel } from "@/modules/bollette/types";
@@ -16,12 +16,9 @@ import { formatCurrency, formatDate, daysUntil } from "@/lib/utils";
  * con una sola richiesta invece di tre.
  */
 export default function RiepilogoCosti() {
-  const [dati, setDati] = useState<Dati | null>(null);
+  const { dati, errore, riprova } = useDati<Dati>(() => riepilogoCosti(), []);
 
-  useEffect(() => {
-    riepilogoCosti().then(setDati);
-  }, []);
-
+  if (errore) return <StatoErrore compatto onRiprova={riprova} />;
   if (dati === null) return <p className="text-sm text-muted-foreground">…</p>;
 
   const { daPagare, giaPagato } = dati;

@@ -20,6 +20,8 @@ export interface Abbonamento {
   data_ripresa: string | null;
   note: string | null;
   created_at: string;
+  /** 1: le rate scadute nascono già pagate (addebito automatico). 0: si segnano a mano. */
+  addebito_automatico: number;
 }
 
 export interface AbbonamentoInput {

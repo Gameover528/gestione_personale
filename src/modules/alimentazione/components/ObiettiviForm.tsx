@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import { useRouter } from "next/navigation";
 import { getDatiCorporei, getObiettivi, saveObiettivi } from "../queries";
 import {
@@ -42,12 +43,31 @@ export function ObiettiviForm({
     datiCorporeiIniziali ?? null
   );
   const [salvando, setSalvando] = useState(false);
+  /*
+    Aperto dal diario il modulo arriva senza dati e li legge da sé. Finché non
+    sono arrivati non si mostra: prima compariva subito vuoto, e un "Salva"
+    premuto in quel momento — o dopo una lettura fallita — cancellava gli
+    obiettivi veri, perché il salvataggio sostituisce tutto.
+  */
+  const [pronto, setPronto] = useState(iniziali !== undefined);
+  const [errore, setErrore] = useState(false);
+  const [giro, setGiro] = useState(0);
 
   useEffect(() => {
-    if (iniziali === undefined) getObiettivi().then((l) => setRighe(righeDaObiettivi(l)));
-    if (datiCorporeiIniziali === undefined) getDatiCorporei().then(setCorpo);
+    if (iniziali === undefined) {
+      setErrore(false);
+      getObiettivi()
+        .then((l) => {
+          setRighe(righeDaObiettivi(l));
+          setPronto(true);
+        })
+        .catch(() => setErrore(true));
+    }
+    // I dati corporei servono solo a precompilare il calcolatore: se non
+    // arrivano, si compila a mano.
+    if (datiCorporeiIniziali === undefined) getDatiCorporei().then(setCorpo).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [giro]);
 
   function set(n: Nutriente, patch: Partial<Riga>) {
     setRighe((prev) => ({ ...prev, [n]: { ...prev[n], ...patch } }));
@@ -90,6 +110,9 @@ export function ObiettiviForm({
       setSalvando(false);
     }
   }
+
+  if (errore) return <StatoErrore onRiprova={() => setGiro((g) => g + 1)} />;
+  if (!pronto) return <p className="text-sm text-muted-foreground">Caricamento…</p>;
 
   return (
     <div className="max-w-xl space-y-4">

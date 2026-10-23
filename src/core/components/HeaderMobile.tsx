@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { ChevronDown, LogOut, SlidersHorizontal, UserCog } from "lucide-react";
@@ -10,6 +10,7 @@ import {
   hrefForMacroArea,
 } from "@/core/modules/registry";
 import { ThemeToggle } from "@/core/theme/ThemeToggle";
+import { useDialogoModale } from "@/core/components/Modale";
 import { vociFuoriBarra } from "@/core/navigazione/barra";
 import type { Ruolo } from "@/lib/auth/roles";
 import { cn, iniziali } from "@/lib/utils";
@@ -188,27 +189,19 @@ function Foglio({
   onChiudi: () => void;
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    function onEsc(e: KeyboardEvent) {
-      if (e.key === "Escape") onChiudi();
-    }
-    document.addEventListener("keydown", onEsc);
-    return () => document.removeEventListener("keydown", onEsc);
-  }, [onChiudi]);
+  // Stessa base delle finestre (Modale.tsx): <dialog> nativo, focus dentro il
+  // foglio, pagina sotto inerte, ritorno del focus al pulsante che l'ha aperto.
+  // Qui il pannello resta ancorato in basso, dove arriva il pollice.
+  const { ref, onClickVelo } = useDialogoModale(onChiudi);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button
-        aria-label="Chiudi"
-        onClick={onChiudi}
-        className="absolute inset-0 bg-black/50"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={titolo ?? "Profilo"}
-        className="relative max-h-[80vh] overflow-y-auto rounded-t-2xl border-t bg-card pb-[env(safe-area-inset-bottom)] pt-3 shadow-xl"
-      >
+    <dialog
+      ref={ref}
+      onClick={onClickVelo}
+      aria-label={titolo ?? "Profilo"}
+      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none flex-col justify-end bg-transparent p-0 text-foreground backdrop:bg-black/50 open:flex"
+    >
+      <div className="relative max-h-[80vh] overflow-y-auto rounded-t-2xl border-t bg-card pb-[env(safe-area-inset-bottom)] pt-3 shadow-xl">
         <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-muted" aria-hidden />
         {titolo && (
           <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -217,6 +210,6 @@ function Foglio({
         )}
         {children}
       </div>
-    </div>
+    </dialog>
   );
 }

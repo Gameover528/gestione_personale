@@ -66,9 +66,20 @@ export async function loginAction(
   }
 
   const user = await getDb()
-    .prepare("select id, password_hash, stato from users where email = ?")
+    .prepare(
+      `select id, password_hash, stato, password_da_cambiare,
+              (password_da_cambiare = 1 and password_temporanea_scade is not null
+                and password_temporanea_scade <= datetime('now')) as temporanea_scaduta
+         from users where email = ?`
+    )
     .bind(email)
-    .first<{ id: string; password_hash: string; stato: string }>();
+    .first<{
+      id: string;
+      password_hash: string;
+      stato: string;
+      password_da_cambiare: number;
+      temporanea_scaduta: number;
+    }>();
 
   // Si verifica sempre una password, anche senza utente (contro l'hash
   // civetta): stesso costo, stesso tempo, nessuna fuga d'informazione.
@@ -92,8 +103,25 @@ export async function loginAction(
     return { error: "Questo account è sospeso. Contatta un amministratore." };
   }
 
+  // Una password scelta da un admin e non cambiata in tempo non apre più:
+  // detto solo ora, a password giusta, come per gli altri stati.
+  if (user.temporanea_scaduta) {
+    return {
+      error:
+        "Questa password temporanea è scaduta. Chiedi a un amministratore di generarne un'altra.",
+    };
+  }
+
   await azzeraLimiteLogin(chiave);
   await createSession(user.id);
+
+  // Prima di tutto il resto, la password nuova: quella con cui è entrato la
+  // conosce anche l'admin che gliel'ha data. La pagina rimanda poi dove
+  // voleva andare.
+  if (user.password_da_cambiare) {
+    const dopo = destinazioneSicura(String(formData.get("next") ?? ""));
+    redirect(dopo ? `/cambia-password?next=${encodeURIComponent(dopo)}` : "/cambia-password");
+  }
 
   // Chi aspetta l'approvazione entra lo stesso, ma nella sua schermata: è il
   // modo di sapere a che punto è senza doverlo chiedere a qualcuno.
@@ -254,11 +282,65 @@ export async function changePasswordAction(
 
   const nuovoHash = await hashPassword(nuova);
   await getDb()
-    .prepare("update users set password_hash = ? where id = ?")
+    .prepare(
+      `update users set password_hash = ?, password_da_cambiare = 0,
+              password_temporanea_scade = null
+        where id = ?`
+    )
     .bind(nuovoHash, user.id)
     .run();
 
   return { ok: true };
+}
+
+/**
+ * La password scelta al primo accesso, quando quella attuale l'ha decisa un
+ * admin (account appena creato o password temporanea).
+ *
+ * Non chiede la password attuale: la persona è appena entrata con quella, e
+ * richiederla di nuovo non proteggerebbe niente. Chiude tutte le altre
+ * sessioni: se qualcun altro era entrato con la password temporanea, da ora
+ * non lo è più.
+ */
+export async function sceltaPasswordAction(
+  _prevState: ImpostazioneResult,
+  formData: FormData
+): Promise<ImpostazioneResult> {
+  const user = await requireSessionUser();
+  const nuova = String(formData.get("passwordNuova") || "");
+  const conferma = String(formData.get("passwordConferma") || "");
+
+  if (nuova.length < 6) {
+    return { error: "La password deve avere almeno 6 caratteri" };
+  }
+  if (nuova !== conferma) {
+    return { error: "Le due password non coincidono" };
+  }
+
+  const db = getDb();
+  const riga = await db
+    .prepare("select password_da_cambiare from users where id = ?")
+    .bind(user.id)
+    .first<{ password_da_cambiare: number }>();
+  // Senza l'obbligo questa scorciatoia (niente password attuale) non vale:
+  // si cambia dal profilo, come sempre.
+  if (!riga?.password_da_cambiare) redirect(DEFAULT_AREA_HREF);
+
+  const sessioneCorrente = await getCurrentSessionId();
+  await db.batch([
+    db
+      .prepare(
+        `update users set password_hash = ?, password_da_cambiare = 0,
+                password_temporanea_scade = null
+          where id = ?`
+      )
+      .bind(await hashPassword(nuova), user.id),
+    db
+      .prepare("delete from sessions where user_id = ? and id != ?")
+      .bind(user.id, sessioneCorrente ?? ""),
+  ]);
+
+  redirect(destinazioneSicura(String(formData.get("next") ?? "")) ?? DEFAULT_AREA_HREF);
 }
 
 /** Disconnette tutte le sessioni dell'utente tranne quella corrente (es. dispositivo smarrito). */

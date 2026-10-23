@@ -23,6 +23,7 @@ import {
   numeroPorzioni,
   valoriPorzione,
   sommaValori,
+  carboidratiConFibre,
 } from "../types";
 import { AvvisoDati } from "./AvvisoDati";
 import { ObiettiviForm } from "./ObiettiviForm";
@@ -569,7 +570,7 @@ export function DiarioGiorno({
                           ) : (
                             <p className="text-xs text-muted-foreground">
                               {fmtQuantita(r)} · {Math.round(v.kcal)} kcal · P{" "}
-                              {v.proteine.toFixed(1)} · C {v.carboidrati.toFixed(1)}{" "}
+                              {v.proteine.toFixed(1)} · C {carboidratiConFibre(v).toFixed(1)}{" "}
                               · G {v.grassi.toFixed(1)}
                             </p>
                           )}

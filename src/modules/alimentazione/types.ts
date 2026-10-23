@@ -153,6 +153,20 @@ export interface Obiettivo {
 }
 
 /**
+ * I carboidrati come li mostra l'app: fibre comprese.
+ *
+ * Nel database i carboidrati sono senza fibre, come nelle etichette UE e su
+ * Open Food Facts, e le fibre stanno a parte. A schermo si mostrano insieme
+ * (scelta del rilascio 2026.09.15, "come fanno le altre app"): questa è
+ * l'unica regola, da usare ovunque compaia un numero di carboidrati. Prima la
+ * riga del diario, la scheda quantità e l'elenco dei piatti mostravano il
+ * valore senza fibre, mentre i totali del diario lo mostravano con.
+ */
+export function carboidratiConFibre(v: { carboidrati: number; fibre: number }): number {
+  return v.carboidrati + v.fibre;
+}
+
+/**
  * Come sta un valore rispetto a un obiettivo. Per un massimo, superarlo è un
  * problema; per un minimo è il traguardo. Il diario lo faceva già, ma i
  * riquadri della dashboard coloravano di rosso qualunque superamento, anche

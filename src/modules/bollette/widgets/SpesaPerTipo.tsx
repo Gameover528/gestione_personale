@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { listBollette } from "../queries";
 import { TIPI, tipoColor, mesiPeriodo, type TipoBolletta } from "../types";
@@ -10,6 +11,8 @@ export default function SpesaPerTipo() {
   const [data, setData] = useState<
     { tipo: TipoBolletta; label: string; value: number }[] | null
   >(null);
+  const [errore, setErrore] = useState(false);
+  const [giro, setGiro] = useState(0);
 
   useEffect(() => {
     const anno = new Date().getFullYear();
@@ -32,9 +35,20 @@ export default function SpesaPerTipo() {
         value: map.get(t.value) ?? 0,
       })).filter((r) => r.value > 0);
       setData(rows);
-    });
-  }, []);
+    }).catch(() => setErrore(true));
+  }, [giro]);
 
+  if (errore) {
+    return (
+      <StatoErrore
+        compatto
+        onRiprova={() => {
+          setErrore(false);
+          setGiro((g) => g + 1);
+        }}
+      />
+    );
+  }
   if (data === null) return <p className="text-sm text-muted-foreground">…</p>;
   if (data.length === 0)
     return (

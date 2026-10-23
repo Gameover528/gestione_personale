@@ -42,13 +42,29 @@ async function generaRateMancanti(abbonamento: Abbonamento): Promise<void> {
 
   if (daCreare.length === 0) return;
 
+  /*
+    Con l'addebito automatico la rata nasce già pagata, alla sua data: è
+    quello che succede davvero con un RID o una carta. Prima ogni rata nasceva
+    "da pagare", e un abbonamento iniziato due anni fa ne portava ventiquattro
+    da spuntare, mentre la dashboard segnalava debiti che non c'erano.
+  */
+  const automatico = abbonamento.addebito_automatico !== 0;
   const stmt = db.prepare(
-    `insert or ignore into abbonamento_rate (id, abbonamento_id, user_id, data_scadenza, importo, stato)
-     values (?, ?, ?, ?, ?, 'da_pagare')`
+    `insert or ignore into abbonamento_rate
+       (id, abbonamento_id, user_id, data_scadenza, importo, stato, data_pagamento)
+     values (?, ?, ?, ?, ?, ?, ?)`
   );
   await db.batch(
     daCreare.map((data) =>
-      stmt.bind(crypto.randomUUID(), abbonamento.id, abbonamento.user_id, data, abbonamento.importo)
+      stmt.bind(
+        crypto.randomUUID(),
+        abbonamento.id,
+        abbonamento.user_id,
+        data,
+        abbonamento.importo,
+        automatico ? "pagata" : "da_pagare",
+        automatico ? data : null
+      )
     )
   );
 }
@@ -105,6 +121,8 @@ export async function creaAbbonamentoAction(
   const frequenza = String(formData.get("frequenza") || "mensile") as AbbonamentoInput["frequenza"];
   const data_inizio = String(formData.get("data_inizio") || "");
   const note = String(formData.get("note") || "").trim() || null;
+  // Una casella: "on" se spuntata, assente se no.
+  const automatico = formData.get("addebito_automatico") === "on" ? 1 : 0;
 
   if (!nome) return { error: "Il nome è obbligatorio" };
   if (!(importo > 0)) return { error: "L'importo deve essere maggiore di 0" };
@@ -113,10 +131,10 @@ export async function creaAbbonamentoAction(
   const id = crypto.randomUUID();
   await getDb()
     .prepare(
-      `insert into abbonamenti (id, user_id, nome, importo, frequenza, data_inizio, stato, note)
-       values (?, ?, ?, ?, ?, ?, 'attivo', ?)`
+      `insert into abbonamenti (id, user_id, nome, importo, frequenza, data_inizio, stato, note, addebito_automatico)
+       values (?, ?, ?, ?, ?, ?, 'attivo', ?, ?)`
     )
-    .bind(id, user.id, nome, importo, frequenza, data_inizio, note)
+    .bind(id, user.id, nome, importo, frequenza, data_inizio, note, automatico)
     .run();
 
   const creato = await getDb()
@@ -138,13 +156,16 @@ export async function aggiornaAbbonamentoAction(
   const nome = String(formData.get("nome") || "").trim();
   const importo = Number(formData.get("importo") || 0);
   const note = String(formData.get("note") || "").trim() || null;
+  const automatico = formData.get("addebito_automatico") === "on" ? 1 : 0;
 
   if (!nome) return { error: "Il nome è obbligatorio" };
   if (!(importo > 0)) return { error: "L'importo deve essere maggiore di 0" };
 
   const res = await getDb()
-    .prepare("update abbonamenti set nome = ?, importo = ?, note = ? where id = ? and user_id = ?")
-    .bind(nome, importo, note, id, user.id)
+    .prepare(
+      "update abbonamenti set nome = ?, importo = ?, note = ?, addebito_automatico = ? where id = ? and user_id = ?"
+    )
+    .bind(nome, importo, note, automatico, id, user.id)
     .run();
   if (res.meta.changes === 0) return { error: "Abbonamento non trovato" };
 
@@ -208,6 +229,45 @@ export async function segnaRataPagataAction(rataId: string): Promise<void> {
     )
     .bind(oggiISO(), rataId, user.id)
     .run();
+}
+
+/**
+ * Segna pagate, alla loro data di scadenza, tutte le rate già scadute e non
+ * ancora pagate di un abbonamento. Serve per quelle nate prima dell'addebito
+ * automatico: spuntarle una a una era il motivo per cui c'era bisogno di
+ * questo pulsante. Restituisce gli id toccati, per l'annulla.
+ */
+export async function segnaArretratePagateAction(abbonamentoId: string): Promise<string[]> {
+  const user = await requireSessionUser();
+  const db = getDb();
+  const { results } = await db
+    .prepare(
+      `select id from abbonamento_rate
+        where abbonamento_id = ? and user_id = ? and stato = 'da_pagare' and data_scadenza <= ?`
+    )
+    .bind(String(abbonamentoId), user.id, oggiISO())
+    .all<{ id: string }>();
+  const ids = (results ?? []).map((r) => r.id);
+  if (ids.length === 0) return [];
+  const stmt = db.prepare(
+    `update abbonamento_rate set stato = 'pagata', data_pagamento = data_scadenza
+      where id = ? and user_id = ? and stato = 'da_pagare'`
+  );
+  // Un'istruzione per rata, non una IN: D1 accetta al massimo 100 parametri.
+  await db.batch(ids.map((id) => stmt.bind(id, user.id)));
+  return ids;
+}
+
+/** L'annulla di segnaArretratePagateAction. */
+export async function rimettiDaPagareAction(rataIds: string[]): Promise<void> {
+  const user = await requireSessionUser();
+  const ids = Array.isArray(rataIds) ? rataIds.map(String).slice(0, 2000) : [];
+  if (ids.length === 0) return;
+  const db = getDb();
+  const stmt = db.prepare(
+    "update abbonamento_rate set stato = 'da_pagare', data_pagamento = null where id = ? and user_id = ?"
+  );
+  await db.batch(ids.map((id) => stmt.bind(id, user.id)));
 }
 
 export async function segnaRataDaPagareAction(rataId: string): Promise<void> {
@@ -342,8 +402,8 @@ export async function ripristinaAbbonamento(
   await db
     .prepare(
       `insert into abbonamenti
-        (id, user_id, nome, importo, frequenza, data_inizio, stato, data_ripresa, note, created_at)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        (id, user_id, nome, importo, frequenza, data_inizio, stato, data_ripresa, note, created_at, addebito_automatico)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       a.id,
@@ -355,7 +415,9 @@ export async function ripristinaAbbonamento(
       a.stato,
       a.data_ripresa,
       a.note,
-      a.created_at
+      a.created_at,
+      // Arriva dal client (è l'annulla di una cancellazione): solo 0 o 1.
+      a.addebito_automatico === 0 ? 0 : 1
     )
     .run();
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, ChevronRight, Play, ClipboardList } from "lucide-react";
@@ -83,14 +84,9 @@ export function SchedeList() {
     }
   }
 
-  if (errore) {
-    return (
-      <p className="text-sm text-destructive">
-        Non sono riuscito a leggere i dati. Riprova; se continua, controlla che le
-        migration del database siano state applicate.
-      </p>
-    );
-  }
+  // Un messaggio per chi usa l'app, non per chi la sviluppa: prima parlava
+  // di "migration del database".
+  if (errore) return <StatoErrore onRiprova={() => { setErrore(false); load(); }} />;
 
   if (items === null) {
     return <p className="text-sm text-muted-foreground">Caricamento…</p>;

@@ -188,9 +188,13 @@ export function ProfiloSettings({
             <button
               onClick={() => {
                 setNome("");
-                salvaNomeAction("").then(() =>
-                  toast({ messaggio: "Tornerai a essere identificato dall'email." })
-                );
+                salvaNomeAction("")
+                  .then(() =>
+                    toast({ messaggio: "Tornerai a essere identificato dall'email." })
+                  )
+                  .catch(() =>
+                    toast({ messaggio: "Non sono riuscito a togliere il nome. Riprova.", tono: "errore" })
+                  );
               }}
               className="text-sm text-muted-foreground hover:underline"
             >

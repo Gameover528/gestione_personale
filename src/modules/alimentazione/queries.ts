@@ -329,11 +329,18 @@ export async function statistichePeriodo(giorni: number): Promise<GiornoValori[]
     .bind(user.id, inizio, fine)
     .all<GiornoValori>();
 
+  /*
+    I carboidrati del giorno comprendono le fibre, come nel diario. Prima il
+    diario sommava le fibre e Andamento e i riquadri della dashboard no: lo
+    stesso giorno aveva due valori, e l'obiettivo risultava rispettato in un
+    posto e sforato nell'altro. Una regola sola, qui alla fonte: chi legge
+    questi totali non deve ricordarsi di aggiungere niente.
+  */
   return (results ?? []).map((g) => ({
     data: g.data,
     kcal: Number(g.kcal),
     proteine: Number(g.proteine),
-    carboidrati: Number(g.carboidrati),
+    carboidrati: Number(g.carboidrati) + Number(g.fibre),
     grassi: Number(g.grassi),
     fibre: Number(g.fibre),
     zuccheri: Number(g.zuccheri),
@@ -566,20 +573,35 @@ async function cercaUSDA(q: string): Promise<EsitoFonte> {
     const data = (await res.json()) as any;
     const foods: any[] = data.foods ?? [];
     const risultati = foods.map((f) => {
-      const by = (num: string) =>
-        n((f.foodNutrients ?? []).find((x: any) => String(x.nutrientNumber) === num)?.value);
-      const sodio = by("1093");
+      /*
+        Per ID del nutriente (1005, 1008...), non per "numero" (205, 208...).
+        Prima si confrontava il numero con l'ID: non combaciava mai, ogni
+        alimento usciva con 0 kcal e veniva scartato, e la fonte USDA non ha
+        mai dato un risultato. Verificato sulla risposta vera dell'API.
+      */
+      const by = (id: number) =>
+        n((f.foodNutrients ?? []).find((x: any) => Number(x.nutrientId) === id)?.value);
+      const sodio = by(1093);
+      const fibre = by(1079);
       return {
         nome: String(f.description ?? "").toLowerCase(),
         marca: f.brandOwner ? String(f.brandOwner) : "",
         fonte: "usda" as const,
         per100: {
-          kcal: by("1008"),
-          proteine: by("1003"),
-          carboidrati: by("1005"),
-          grassi: by("1004"),
-          fibre: by("1079"),
-          zuccheri: by("2000"),
+          // Alcuni alimenti "Foundation" danno l'energia solo con i fattori
+          // di Atwater (2047, 2048) e non nel campo classico.
+          kcal: by(1008) || by(2048) || by(2047),
+          proteine: by(1003),
+          /*
+            USDA dà i carboidrati "by difference", fibre comprese; nell'app i
+            carboidrati sono senza fibre, come in etichetta UE e su Open Food
+            Facts, e le fibre si aggiungono a parte. Senza togliercele qui
+            sarebbero contate due volte.
+          */
+          carboidrati: Math.max(0, by(1005) - fibre),
+          grassi: by(1004),
+          fibre,
+          zuccheri: by(2000),
           sale: (sodio * 2.5) / 1000,
         },
       };

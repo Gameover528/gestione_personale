@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import { statistichePeriodo } from "@/modules/alimentazione/queries";
 import { andamentoAllenamenti } from "@/modules/esercizio/allenamenti";
 import type { GiornoValori, Obiettivo } from "@/modules/alimentazione/types";
@@ -55,13 +56,21 @@ export function AndamentoSalute({
   // Il periodo di partenza arriva già calcolato dal server: si ricarica solo
   // quando l'utente lo cambia.
   const periodoMostrato = useRef(giorniIniziali);
+  const [errore, setErrore] = useState(false);
+  const carica = (g: number) => {
+    setErrore(false);
+    setCibo(null);
+    setAllenamenti(null);
+    // Se una delle due letture fallisce lo si dice, invece di lasciare i
+    // grafici su "Caricamento…" per sempre.
+    statistichePeriodo(g).then(setCibo).catch(() => setErrore(true));
+    andamentoAllenamenti(g).then(setAllenamenti).catch(() => setErrore(true));
+  };
   useEffect(() => {
     if (periodoMostrato.current === giorni) return;
     periodoMostrato.current = giorni;
-    setCibo(null);
-    setAllenamenti(null);
-    statistichePeriodo(giorni).then(setCibo);
-    andamentoAllenamenti(giorni).then(setAllenamenti);
+    carica(giorni);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [giorni]);
 
   return (
@@ -87,7 +96,9 @@ export function AndamentoSalute({
         />
       </div>
 
-      {sezione === "cibo" ? (
+      {errore ? (
+        <StatoErrore onRiprova={() => carica(giorni)} />
+      ) : sezione === "cibo" ? (
         <AndamentoAlimentazione
           giorni={giorni}
           dati={cibo}

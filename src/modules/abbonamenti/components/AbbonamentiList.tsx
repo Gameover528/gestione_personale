@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import Link from "next/link";
 import {
   listAbbonamenti,
@@ -24,10 +25,12 @@ import { Pause, Play, XCircle, Trash2, ChevronRight } from "lucide-react";
 
 export function AbbonamentiList() {
   const [items, setItems] = useState<Abbonamento[] | null>(null);
+  const [errore, setErrore] = useState(false);
   const toast = useToast();
 
   const load = useCallback(() => {
-    listAbbonamenti().then(setItems);
+    setErrore(false);
+    listAbbonamenti().then(setItems).catch(() => setErrore(true));
   }, []);
 
   useEffect(() => {
@@ -97,6 +100,7 @@ export function AbbonamentiList() {
     });
   }
 
+  if (errore && items === null) return <StatoErrore onRiprova={load} />;
   if (items === null) {
     return <p className="text-sm text-muted-foreground">Caricamento…</p>;
   }

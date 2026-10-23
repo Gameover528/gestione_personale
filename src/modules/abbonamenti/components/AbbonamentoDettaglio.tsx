@@ -1,12 +1,15 @@
 "use client";
 
 import { useActionState, useEffect, useState, useCallback } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import { useRouter } from "next/navigation";
 import {
   aggiornaAbbonamentoAction,
   listRate,
   segnaRataPagataAction,
   segnaRataDaPagareAction,
+  segnaArretratePagateAction,
+  rimettiDaPagareAction,
   sospendiAbbonamentoAction,
   riattivaAbbonamentoAction,
   disdiciAbbonamentoAction,
@@ -14,7 +17,7 @@ import {
   ripristinaAbbonamento,
   type AbbonamentoResult,
 } from "../queries";
-import { type Abbonamento, type Rata, frequenzaLabel, LABEL_STATO_ABBONAMENTO } from "../types";
+import { type Abbonamento, type Rata, frequenzaLabel, LABEL_STATO_ABBONAMENTO, oggiISO } from "../types";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardTitle, Badge } from "@/core/components/ui";
 import {
@@ -24,7 +27,7 @@ import {
   inputClass,
 } from "@/core/components/controls";
 import { useToast } from "@/core/components/Toast";
-import { Pause, Play, XCircle, Trash2, Check, Undo2 } from "lucide-react";
+import { Pause, Play, XCircle, Trash2, Check, CheckCheck, Undo2 } from "lucide-react";
 
 const initialState: AbbonamentoResult = {};
 
@@ -34,8 +37,10 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
   const [state, formAction, isPending] = useActionState(aggiornaAbbonamentoAction, initialState);
   const [rate, setRate] = useState<Rata[] | null>(null);
 
+  const [erroreRate, setErroreRate] = useState(false);
   const caricaRate = useCallback(() => {
-    listRate(abbonamento.id).then(setRate);
+    setErroreRate(false);
+    listRate(abbonamento.id).then(setRate).catch(() => setErroreRate(true));
   }, [abbonamento.id]);
 
   useEffect(() => {
@@ -96,6 +101,33 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
     caricaRate();
   }
 
+  // Le rate scadute e non pagate: di solito quelle nate prima che esistesse
+  // l'addebito automatico. Si segnano tutte in un tocco, con l'annulla.
+  const oggi = oggiISO();
+  const arretrate = (rate ?? []).filter((r) => r.stato === "da_pagare" && r.data_scadenza <= oggi);
+  const [segnoArretrate, setSegnoArretrate] = useState(false);
+  async function handleArretrate() {
+    setSegnoArretrate(true);
+    try {
+      const ids = await segnaArretratePagateAction(abbonamento.id);
+      caricaRate();
+      toast({
+        messaggio: `${ids.length} ${ids.length === 1 ? "rata segnata pagata" : "rate segnate pagate"}, alla loro scadenza`,
+        azione: {
+          label: "Annulla",
+          onClick: async () => {
+            await rimettiDaPagareAction(ids);
+            caricaRate();
+          },
+        },
+      });
+    } catch {
+      toast({ messaggio: "Non sono riuscito a segnare le rate. Riprova.", tono: "errore" });
+    } finally {
+      setSegnoArretrate(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -154,6 +186,20 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
               className={inputClass}
             />
           </div>
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="addebito_automatico"
+              defaultChecked={abbonamento.addebito_automatico !== 0}
+              className="mt-0.5 h-5 w-5 shrink-0 accent-[hsl(var(--primary))]"
+            />
+            <span>
+              <span className="font-medium">Addebito automatico</span>
+              <span className="block text-xs text-muted-foreground">
+                Le rate che scadono da ora si segnano pagate da sole.
+              </span>
+            </span>
+          </label>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
           <button
             type="submit"
@@ -209,7 +255,21 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
 
       <Card>
         <CardTitle>Rate</CardTitle>
-        {rate === null ? (
+        {arretrate.length > 1 && (
+          <button
+            onClick={handleArretrate}
+            disabled={segnoArretrate}
+            className={cn(bottoneClass, "mt-3 w-full sm:w-auto")}
+          >
+            <CheckCheck className="h-4 w-4" />
+            {segnoArretrate ? "Segno…" : `Segna pagate le ${arretrate.length} rate arretrate`}
+          </button>
+        )}
+        {erroreRate && rate === null ? (
+          <div className="mt-3">
+            <StatoErrore onRiprova={caricaRate} />
+          </div>
+        ) : rate === null ? (
           <p className="mt-3 text-sm text-muted-foreground">Caricamento…</p>
         ) : rate.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">Nessuna rata generata finora.</p>

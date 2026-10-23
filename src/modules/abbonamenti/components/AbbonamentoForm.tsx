@@ -81,6 +81,22 @@ export function AbbonamentoForm() {
         </p>
       </div>
 
+      <label className="flex items-start gap-3 text-sm">
+        <input
+          type="checkbox"
+          name="addebito_automatico"
+          defaultChecked
+          className="mt-0.5 h-5 w-5 shrink-0 accent-[hsl(var(--primary))]"
+        />
+        <span>
+          <span className="font-medium">Addebito automatico</span>
+          <span className="block text-xs text-muted-foreground">
+            Lo paga la banca o la carta da sola: ogni rata, alla scadenza, si segna
+            pagata. Toglila se le paghi a mano.
+          </span>
+        </span>
+      </label>
+
       <div className="flex flex-col gap-1">
         <label htmlFor="note" className="text-sm font-medium">
           Note (facoltative)

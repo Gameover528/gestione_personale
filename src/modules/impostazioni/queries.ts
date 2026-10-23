@@ -59,8 +59,13 @@ export async function creaUtenteAction(
 
   const id = crypto.randomUUID();
   const hash = await hashPassword(password);
+  // La password l'ha scelta l'admin, quindi la conosce: si cambia al primo
+  // accesso, e se l'account non viene usato entro 7 giorni non apre più.
   await getDb()
-    .prepare("insert into users (id, email, password_hash, ruolo, stato) values (?, ?, ?, 'utilizzatore', 'attivo')")
+    .prepare(
+      `insert into users (id, email, password_hash, ruolo, stato, password_da_cambiare, password_temporanea_scade)
+       values (?, ?, ?, 'utilizzatore', 'attivo', 1, datetime('now', '+7 days'))`
+    )
     .bind(id, email, hash)
     .run();
 
@@ -223,10 +228,23 @@ export async function generaPasswordTemporaneaAction(
   if (!target || !puoModificare(richiedente.ruolo, target.ruolo)) {
     return { error: "Non hai i permessi per questo account." };
   }
+  // Fra pari no: un admin che reimposta la password di un altro admin ne
+  // prende i poteri e i dati, e nessuno se ne accorge. Lo fa solo il
+  // superadmin.
+  if (target.ruolo === "admin" && richiedente.ruolo !== "superadmin") {
+    return { error: "La password di un amministratore la può reimpostare solo il superadmin." };
+  }
 
+  // Valida 24 ore e da cambiare al primo accesso: chi l'ha generata la
+  // conosce, e non deve restare buona più del tempo di comunicarla.
   const password = passwordCasuale();
   await getDb()
-    .prepare("update users set password_hash = ? where id = ?")
+    .prepare(
+      `update users
+          set password_hash = ?, password_da_cambiare = 1,
+              password_temporanea_scade = datetime('now', '+1 day')
+        where id = ?`
+    )
     .bind(await hashPassword(password), targetId)
     .run();
 

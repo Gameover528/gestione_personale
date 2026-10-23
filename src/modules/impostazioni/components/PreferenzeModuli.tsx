@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import {
   getBollettePreferenze,
   saveBollettePreferenze,
@@ -21,13 +22,20 @@ export function PreferenzeModuli() {
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [salvato, setSalvato] = useState(false);
+  // Se la lettura fallisce lo si dice: prima la sezione restava vuota, senza
+  // modulo e senza spiegazione.
+  const [errore, setErrore] = useState(false);
+  const [giro, setGiro] = useState(0);
 
   useEffect(() => {
-    getBollettePreferenze().then((p) => {
-      setPref(p);
-      setLoaded(true);
-    });
-  }, []);
+    setErrore(false);
+    getBollettePreferenze()
+      .then((p) => {
+        setPref(p);
+        setLoaded(true);
+      })
+      .catch(() => setErrore(true));
+  }, [giro]);
 
   async function salva(e: FormEvent) {
     e.preventDefault();
@@ -49,6 +57,11 @@ export function PreferenzeModuli() {
           Valori proposti automaticamente quando crei una nuova bolletta da
           dividere con un&apos;altra famiglia.
         </p>
+        {errore && (
+          <div className="mt-3">
+            <StatoErrore onRiprova={() => setGiro((g) => g + 1)} />
+          </div>
+        )}
         {loaded && (
           <form onSubmit={salva} className="mt-3 flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
@@ -116,13 +129,18 @@ function GiorniAllenamento() {
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [salvato, setSalvato] = useState(false);
+  const [errore, setErrore] = useState(false);
+  const [giro, setGiro] = useState(0);
 
   useEffect(() => {
-    getPreferenzeEsercizio().then((p) => {
-      setGiorni(p.giorniSettimana);
-      setLoaded(true);
-    });
-  }, []);
+    setErrore(false);
+    getPreferenzeEsercizio()
+      .then((p) => {
+        setGiorni(p.giorniSettimana);
+        setLoaded(true);
+      })
+      .catch(() => setErrore(true));
+  }, [giro]);
 
   async function salva(e: FormEvent) {
     e.preventDefault();
@@ -144,6 +162,11 @@ function GiorniAllenamento() {
         questo numero per dirti quanto ti sei avvicinato al programma, invece di
         confrontare i giorni allenati con tutti quelli del calendario.
       </p>
+      {errore && (
+        <div className="mt-3">
+          <StatoErrore onRiprova={() => setGiro((g) => g + 1)} />
+        </div>
+      )}
       {loaded && (
         <form onSubmit={salva} className="mt-3 flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">

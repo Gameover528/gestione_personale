@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { StatoErrore, useDati } from "@/core/components/Dati";
 import Link from "next/link";
 import { Dumbbell, Flame, Timer } from "lucide-react";
 import { riepilogoAllenamento, type RiepilogoAllenamento as Dati } from "../allenamenti";
@@ -12,12 +12,9 @@ import { riepilogoAllenamento, type RiepilogoAllenamento as Dati } from "../alle
  * altri riquadri dopo il lavoro sulle invocazioni del worker.
  */
 export default function RiepilogoAllenamentoWidget() {
-  const [dati, setDati] = useState<Dati | null>(null);
+  const { dati, errore, riprova } = useDati<Dati>(() => riepilogoAllenamento(7), []);
 
-  useEffect(() => {
-    riepilogoAllenamento(7).then(setDati);
-  }, []);
-
+  if (errore) return <StatoErrore compatto onRiprova={riprova} />;
   if (!dati) {
     return <p className="text-sm text-muted-foreground">Caricamento…</p>;
   }

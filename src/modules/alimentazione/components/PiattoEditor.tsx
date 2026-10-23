@@ -18,6 +18,7 @@ import {
   per100Piatto,
   scalaValori,
   valoriPorzione,
+  carboidratiConFibre,
 } from "../types";
 import { useRicercaAlimenti } from "./useRicercaAlimenti";
 import { RicercaFeedback } from "./RicercaFeedback";
@@ -544,7 +545,7 @@ export function PiattoEditor({
       <div className="rounded-md bg-muted/40 p-3 text-sm">
         <span className="font-semibold">{Math.round(per100.kcal)} kcal / 100 g</span>{" "}
         <span className="text-muted-foreground">
-          · P {per100.proteine.toFixed(1)} · C {per100.carboidrati.toFixed(1)} · G{" "}
+          · P {per100.proteine.toFixed(1)} · C {carboidratiConFibre(per100).toFixed(1)} · G{" "}
           {per100.grassi.toFixed(1)}
           {grammiPorzione > 0
             ? ` · 1 ${porzioneNome.trim() || "porzione"} = ${Math.round(

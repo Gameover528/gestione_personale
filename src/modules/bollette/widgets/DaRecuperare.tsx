@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { StatoErrore, useDati } from "@/core/components/Dati";
 import Link from "next/link";
 import { listBollette } from "../queries";
 import { type Bolletta, quotaAltra, tipoLabel } from "../types";
 import { formatCurrency } from "@/lib/utils";
 
 export default function DaRecuperare() {
-  const [items, setItems] = useState<Bolletta[] | null>(null);
+  const { dati: items, errore, riprova } = useDati<Bolletta[]>(() => listBollette({ divisione: "da_dividere" }), []);
 
-  useEffect(() => {
-    listBollette({ divisione: "da_dividere" }).then(setItems);
-  }, []);
-
+  if (errore) return <StatoErrore compatto onRiprova={riprova} />;
   if (items === null)
     return <p className="text-sm text-muted-foreground">…</p>;
 

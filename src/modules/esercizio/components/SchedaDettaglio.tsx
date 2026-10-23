@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Search, X, Play } from "lucide-react";
 import {
@@ -46,6 +47,7 @@ function descriviVoce(e: {
 export function SchedaDettaglio({ id }: { id: string }) {
   const router = useRouter();
   const [dati, setDati] = useState<SchedaConEsercizi | null | "assente">(null);
+  const [errore, setErrore] = useState(false);
   const [esercizi, setEsercizi] = useState<Esercizio[]>([]);
   const [scelto, setScelto] = useState<Esercizio | null>(null);
   const [avvio, setAvvio] = useState(false);
@@ -53,12 +55,16 @@ export function SchedaDettaglio({ id }: { id: string }) {
   const toast = useToast();
 
   const load = useCallback(() => {
-    getScheda(id).then((s) => setDati(s ?? "assente"));
+    setErrore(false);
+    getScheda(id)
+      .then((s) => setDati(s ?? "assente"))
+      .catch(() => setErrore(true));
   }, [id]);
 
   useEffect(() => {
     load();
-    listEsercizi().then(setEsercizi);
+    listEsercizi().then(setEsercizi).catch(() => toast({ messaggio: "Non riesco a caricare l'elenco degli esercizi: riapri la pagina per riprovare.", tono: "errore" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
 
   async function handleElimina(voceId: string, nome: string) {
@@ -77,6 +83,7 @@ export function SchedaDettaglio({ id }: { id: string }) {
     }
   }
 
+  if (errore && dati === null) return <StatoErrore onRiprova={load} />;
   if (dati === null) {
     return <p className="text-sm text-muted-foreground">Caricamento…</p>;
   }

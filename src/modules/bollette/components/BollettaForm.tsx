@@ -93,10 +93,13 @@ export function BollettaForm({ initial }: { initial?: Bolletta }) {
   // impostati in Impostazioni → Preferenze moduli.
   useEffect(() => {
     if (editing) return;
-    getBollettePreferenze().then((p) => {
-      setPersoneTue(String(p.persone_tue));
-      setPersoneAltre(String(p.persone_altre));
-    });
+    // Solo una precompilazione: se non arriva restano i valori di partenza.
+    getBollettePreferenze()
+      .then((p) => {
+        setPersoneTue(String(p.persone_tue));
+        setPersoneAltre(String(p.persone_altre));
+      })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

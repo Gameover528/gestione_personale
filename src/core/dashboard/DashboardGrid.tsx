@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Modale } from "@/core/components/Modale";
 import {
   DndContext,
   closestCenter,
@@ -84,6 +85,11 @@ export function DashboardGrid({
       // Scarta gli id non più esistenti (widget rimossi o uniti) e quelli
       // diventati fissi, che ora vengono mostrati a parte.
       setOrder(base.filter((id) => getWidget(id) && !getWidget(id)!.fisso));
+      setLoaded(true);
+    }).catch(() => {
+      // Senza la disposizione salvata si mostra quella predefinita, invece
+      // di una dashboard vuota: i riquadri ci sono comunque.
+      setOrder(opzionali.map((w) => w.id));
       setLoaded(true);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -290,106 +296,75 @@ function PannelloWidget({
   onRimuovi: (id: string) => void;
   onChiudi: () => void;
 }) {
-  useEffect(() => {
-    function onEsc(e: KeyboardEvent) {
-      if (e.key === "Escape") onChiudi();
-    }
-    document.addEventListener("keydown", onEsc);
-    return () => document.removeEventListener("keydown", onEsc);
-  }, [onChiudi]);
-
+  // Era una delle tre copie scritte a mano della finestra: ora è Modale, con
+  // il focus gestito (vedi Modale.tsx).
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6">
-      <button
-        aria-label="Chiudi"
-        onClick={onChiudi}
-        className="fixed inset-0 bg-black/50"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Aggiungi widget"
-        className="relative my-4 w-full max-w-3xl rounded-lg border bg-card p-4 shadow-xl sm:p-6"
-      >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="inline-flex items-center gap-2 text-lg font-semibold">
-              <LayoutGrid className="h-5 w-5" />
-              Widget disponibili
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Le anteprime usano dati di esempio: servono a far vedere che
-              aspetto avrà il riquadro.
-            </p>
-          </div>
-          <button
-            onClick={onChiudi}
-            aria-label="Chiudi"
-            className="rounded-md p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <Modale
+      titolo="Widget disponibili"
+      icona={LayoutGrid}
+      sottotitolo="Le anteprime usano dati di esempio: servono a far vedere che aspetto avrà il riquadro."
+      larghezza="larga"
+      onChiudi={onChiudi}
+    >
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {opzionali.map((w) => {
-            const presente = attivi.has(w.id);
-            return (
-              <div key={w.id} className="flex flex-col rounded-lg border p-3">
-                <p className="text-sm font-medium">{w.title}</p>
-                {w.descrizione && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {w.descrizione}
-                  </p>
-                )}
-                <div className="mt-3">
-                  <Anteprima spec={w.anteprima} />
-                </div>
-                <div className="mt-3 flex justify-end">
-                  {presente ? (
-                    <button
-                      onClick={() => onRimuovi(w.id)}
-                      className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition hover:bg-accent"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      Rimuovi
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => onAggiungi(w.id)}
-                      className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Aggiungi
-                    </button>
-                  )}
-                </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {opzionali.map((w) => {
+          const presente = attivi.has(w.id);
+          return (
+            <div key={w.id} className="flex flex-col rounded-lg border p-3">
+              <p className="text-sm font-medium">{w.title}</p>
+              {w.descrizione && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {w.descrizione}
+                </p>
+              )}
+              <div className="mt-3">
+                <Anteprima spec={w.anteprima} />
               </div>
-            );
-          })}
-        </div>
-
-        {fissi.length > 0 && (
-          <div className="mt-5 border-t pt-4">
-            <p className="inline-flex items-center gap-1.5 text-sm font-medium">
-              <Pin className="h-4 w-4 text-muted-foreground" />
-              Sempre presenti
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Sono l&apos;informazione principale della sezione: restano in
-              testa alla dashboard e non si possono rimuovere.
-            </p>
-            <ul className="mt-2 space-y-1 text-sm">
-              {fissi.map((w) => (
-                <li key={w.id} className="text-muted-foreground">
-                  · {w.title}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+              <div className="mt-3 flex justify-end">
+                {presente ? (
+                  <button
+                    onClick={() => onRimuovi(w.id)}
+                    className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition hover:bg-accent"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Rimuovi
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onAggiungi(w.id)}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Aggiungi
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </div>
+
+      {fissi.length > 0 && (
+        <div className="mt-5 border-t pt-4">
+          <p className="inline-flex items-center gap-1.5 text-sm font-medium">
+            <Pin className="h-4 w-4 text-muted-foreground" />
+            Sempre presenti
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sono l&apos;informazione principale della sezione: restano in
+            testa alla dashboard e non si possono rimuovere.
+          </p>
+          <ul className="mt-2 space-y-1 text-sm">
+            {fissi.map((w) => (
+              <li key={w.id} className="text-muted-foreground">
+                · {w.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Modale>
   );
 }
 

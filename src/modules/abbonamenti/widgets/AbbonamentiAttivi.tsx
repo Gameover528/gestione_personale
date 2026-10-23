@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { StatoErrore, useDati } from "@/core/components/Dati";
 import Link from "next/link";
 import { riepilogoAbbonamenti, type RiepilogoAbbonamenti } from "../queries";
 import { Badge } from "@/core/components/ui";
@@ -15,11 +15,9 @@ import { formatCurrency, formatDate, daysUntil } from "@/lib/utils";
  * mancava davvero: dice quando esce il prossimo addebito.
  */
 export default function AbbonamentiAttivi() {
-  const [dati, setDati] = useState<RiepilogoAbbonamenti | null>(null);
+  const { dati, errore, riprova } = useDati<RiepilogoAbbonamenti>(() => riepilogoAbbonamenti(), []);
 
-  useEffect(() => {
-    riepilogoAbbonamenti().then(setDati);
-  }, []);
+  if (errore) return <StatoErrore compatto onRiprova={riprova} />;
 
   return (
     <div>

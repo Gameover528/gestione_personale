@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState, useCallback } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import Link from "next/link";
 import { Plus, Trash2, Search, X, Flame, ClipboardList } from "lucide-react";
 import {
@@ -55,19 +56,27 @@ const soloNumero = (v: string) => v.replace(/[^\d.,]/g, "");
 
 export function AllenamentoDettaglio({ id }: { id: string }) {
   const [dati, setDati] = useState<AllenamentoConSerie | null | "assente">(null);
+  const [errore, setErrore] = useState(false);
   const [esercizi, setEsercizi] = useState<Esercizio[]>([]);
   const [schede, setSchede] = useState<SchedaRiepilogo[]>([]);
   const [scelto, setScelto] = useState<Esercizio | null>(null);
   const toast = useToast();
 
   const load = useCallback(() => {
-    getAllenamento(id).then((a) => setDati(a ?? "assente"));
+    setErrore(false);
+    getAllenamento(id)
+      .then((a) => setDati(a ?? "assente"))
+      .catch(() => setErrore(true));
   }, [id]);
 
   useEffect(() => {
     load();
-    listEsercizi().then(setEsercizi);
-    listSchede().then(setSchede);
+    // Il catalogo e le schede servono solo per aggiungere: se non arrivano
+    // l'allenamento resta leggibile, ma lo si dice invece di mostrare una
+    // ricerca vuota che sembra "nessun esercizio trovato".
+    listEsercizi().then(setEsercizi).catch(() => toast({ messaggio: "Non riesco a caricare l'elenco degli esercizi: riapri la pagina per riprovare.", tono: "errore" }));
+    listSchede().then(setSchede).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
 
   async function handleEliminaSerie(s: Serie) {
@@ -89,6 +98,7 @@ export function AllenamentoDettaglio({ id }: { id: string }) {
     });
   }
 
+  if (errore && dati === null) return <StatoErrore onRiprova={load} />;
   if (dati === null) {
     return <p className="text-sm text-muted-foreground">Caricamento…</p>;
   }

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { listPiatti, deletePiatto, getPiatto, ripristinaPiatto } from "../queries";
-import { type PiattoConValori } from "../types";
+import { carboidratiConFibre, type PiattoConValori } from "../types";
 import { AvvisoDati } from "./AvvisoDati";
 import { Badge } from "@/core/components/ui";
 import { IconButton } from "@/core/components/controls";
@@ -115,7 +115,7 @@ export function PiattiList({ iniziali }: { iniziali: PiattoConValori[] }) {
                   <span>{Math.round(p.per100.kcal)} kcal / 100 g</span>
                   <span>
                     P {p.per100.proteine.toFixed(1)} · C{" "}
-                    {p.per100.carboidrati.toFixed(1)} · G{" "}
+                    {carboidratiConFibre(p.per100).toFixed(1)} · G{" "}
                     {p.per100.grassi.toFixed(1)}
                   </span>
                   {p.porzione_g ? (

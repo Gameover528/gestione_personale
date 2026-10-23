@@ -149,6 +149,8 @@ export async function middleware(request: NextRequest) {
   // Tre esiti, non due: nessuna sessione valida, sessione di un account
   // approvato, sessione di uno che aspetta ancora l'approvazione.
   let stato: string | null = null;
+  // La password l'ha scelta un admin e va cambiata prima di usare l'app.
+  let daCambiare = false;
 
   if (sessionId) {
     /*
@@ -161,14 +163,16 @@ export async function middleware(request: NextRequest) {
     try {
       const { env } = await getCloudflareContext({ async: true });
       const row = await env.DB.prepare(
-        `select u.stato as stato from sessions s
-         join users u on u.id = s.user_id
-         where s.id = ? and s.expires_at > datetime('now')
-           and u.stato in ('attivo', 'in_attesa')`
+        `select u.stato as stato, u.password_da_cambiare as da_cambiare
+           from sessions s
+           join users u on u.id = s.user_id
+          where s.id = ? and s.expires_at > datetime('now')
+            and u.stato in ('attivo', 'in_attesa')`
       )
         .bind(sessionId)
-        .first<{ stato: string }>();
+        .first<{ stato: string; da_cambiare: number }>();
       stato = row?.stato ?? null;
+      daCambiare = !!row?.da_cambiare;
     } catch {
       return applicaHeaderSicurezza(servizioNonDisponibile(), csp);
     }
@@ -176,6 +180,30 @@ export async function middleware(request: NextRequest) {
 
   const authenticated = stato === "attivo";
   const inAttesa = stato === "in_attesa";
+
+  /*
+    Chi ha una password scelta da un admin (account appena creato, o password
+    temporanea) la cambia prima di tutto il resto: finché non lo fa, quella
+    password la conosce anche chi gliel'ha data. Si torna poi alla pagina
+    chiesta. La disconnessione resta sempre raggiungibile.
+  */
+  const isCambio = pathname.startsWith("/cambia-password");
+  if (authenticated && daCambiare && !isCambio && !isAuth) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/cambia-password";
+    url.search = "";
+    const next = pathname.startsWith("/api/")
+      ? null
+      : destinazioneSicura(pathname + request.nextUrl.search);
+    if (next) url.searchParams.set("next", next);
+    return applicaHeaderSicurezza(NextResponse.redirect(url), csp);
+  }
+  if (authenticated && !daCambiare && isCambio) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/consumi-costi"; // come sotto: in sync con DEFAULT_AREA_HREF
+    url.search = "";
+    return applicaHeaderSicurezza(NextResponse.redirect(url), csp);
+  }
 
   // Chi aspetta vede la sua schermata e nient'altro: non le pagine dell'app, e
   // nemmeno di nuovo il modulo di registrazione, che lo farebbe registrare due

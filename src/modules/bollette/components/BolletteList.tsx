@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { StatoErrore } from "@/core/components/Dati";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -62,8 +63,10 @@ export function BolletteList({
   const [divisione, setDivisione] = useState(initialDivisione ?? "");
   const [anno, setAnno] = useState<string>("");
   const [filtriAperti, setFiltriAperti] = useState(false);
+  const [errore, setErrore] = useState(false);
 
   const load = useCallback(() => {
+    setErrore(false);
     listBollette({
       tipo: tipo || undefined,
       stato: stato || undefined,
@@ -82,7 +85,7 @@ export function BolletteList({
               )
             )
       );
-    });
+    }).catch(() => setErrore(true));
   }, [tipo, stato, divisione, anno]);
 
   useEffect(() => {
@@ -309,7 +312,9 @@ export function BolletteList({
         </div>
       </div>
 
-      {items === null ? (
+      {errore && items === null ? (
+        <StatoErrore onRiprova={load} />
+      ) : items === null ? (
         <p className="text-sm text-muted-foreground">Caricamento…</p>
       ) : items.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { StatoErrore, useDati } from "@/core/components/Dati";
 import { Flame, Utensils } from "lucide-react";
 import { bilancioEnergetico, type BilancioEnergetico as Dati } from "../queries";
 import { esitoObiettivo } from "@/modules/alimentazione/types";
@@ -13,12 +13,9 @@ import { esitoObiettivo } from "@/modules/alimentazione/types";
  * conta davvero, e l'obiettivo (se impostato) dice se si sta dentro.
  */
 export default function BilancioEnergeticoWidget() {
-  const [dati, setDati] = useState<Dati | null>(null);
+  const { dati, errore, riprova } = useDati<Dati>(() => bilancioEnergetico(), []);
 
-  useEffect(() => {
-    bilancioEnergetico().then(setDati);
-  }, []);
-
+  if (errore) return <StatoErrore compatto onRiprova={riprova} />;
   if (!dati) {
     return <p className="text-sm text-muted-foreground">Caricamento…</p>;
   }

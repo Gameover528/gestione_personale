@@ -93,7 +93,9 @@ const diario: Attrezzo = {
         `select data, pasto, nome_alimento, marca, quantita_g,
                 quantita_g * kcal_100        / 100 as kcal,
                 quantita_g * proteine_100    / 100 as proteine,
-                quantita_g * carboidrati_100 / 100 as carboidrati,
+                -- Fibre comprese, come nel diario e in Andamento: alla chat
+                -- deve arrivare lo stesso numero che la persona vede nell'app.
+                quantita_g * (carboidrati_100 + fibre_100) / 100 as carboidrati,
                 quantita_g * grassi_100      / 100 as grassi
            from diario_pasti
           where user_id = ? and data >= ? and data <= ?
