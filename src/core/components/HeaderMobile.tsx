@@ -201,7 +201,7 @@ function Foglio({
       aria-label={titolo ?? "Profilo"}
       className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none flex-col justify-end bg-transparent p-0 text-foreground backdrop:bg-black/50 open:flex"
     >
-      <div className="relative max-h-[80vh] overflow-y-auto rounded-t-2xl border-t bg-card pb-[env(safe-area-inset-bottom)] pt-3 shadow-xl">
+      <div className="relative max-h-[80vh] overflow-y-auto rounded-t-lg border-t bg-card pb-[env(safe-area-inset-bottom)] pt-3 shadow-xl">
         <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-muted" aria-hidden />
         {titolo && (
           <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

@@ -37,7 +37,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   if (!pronto) {
     // Evita un flash del bottone nello stato sbagliato prima dell'idratazione.
-    return <div className={cn("h-9 w-9", className)} />;
+    return <div className={cn("h-11 w-11 lg:h-9 lg:w-9", className)} />;
   }
 
   return (
@@ -46,7 +46,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={scuro ? "Passa al tema chiaro" : "Passa al tema scuro"}
       title={scuro ? "Passa al tema chiaro" : "Passa al tema scuro"}
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground",
+        "flex h-11 w-11 items-center justify-center rounded-md lg:h-9 lg:w-9 text-muted-foreground transition hover:bg-accent hover:text-foreground",
         className
       )}
     >

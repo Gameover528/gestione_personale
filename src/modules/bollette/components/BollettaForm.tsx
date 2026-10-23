@@ -55,7 +55,7 @@ async function caricaPdf(f: File): Promise<string> {
 
 /** Campo file: alto come gli altri e con il pulsante interno leggibile. */
 const fileClass =
-  "min-h-11 w-full rounded-md border bg-background px-3 py-2 text-sm file:mr-3 file:rounded file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium lg:min-h-0";
+  "min-h-11 w-full rounded-md border bg-background px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium lg:min-h-0";
 
 export function BollettaForm({ initial }: { initial?: Bolletta }) {
   const router = useRouter();

@@ -167,6 +167,7 @@ function VoceToast({ t, onChiudi }: { t: ToastItem; onChiudi: () => void }) {
       <button
         onClick={onChiudi}
         aria-label="Chiudi notifica"
+        title="Chiudi notifica"
         className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-muted-foreground transition hover:bg-accent hover:text-foreground lg:h-7 lg:w-7"
       >
         <X className="h-4 w-4" />

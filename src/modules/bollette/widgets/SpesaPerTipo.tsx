@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { StatoErrore } from "@/core/components/Dati";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { listBollette } from "../queries";
-import { TIPI, tipoColor, mesiPeriodo, type TipoBolletta } from "../types";
+import { TIPI, mesiPeriodo, type TipoBolletta } from "../types";
 import { formatCurrency } from "@/lib/utils";
 
 export default function SpesaPerTipo() {
@@ -58,6 +57,7 @@ export default function SpesaPerTipo() {
     );
 
   const totale = data.reduce((s, d) => s + d.value, 0);
+  const righe = [...data].sort((a, b) => b.value - a.value);
 
   return (
     <div>
@@ -67,27 +67,29 @@ export default function SpesaPerTipo() {
           Totale spese anno corrente (per periodo)
         </p>
       </div>
-      <div className="h-52 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="label"
-              innerRadius={45}
-              outerRadius={80}
-              paddingAngle={2}
-            >
-              {data.map((d) => (
-                <Cell key={d.tipo} fill={tipoColor(d.tipo)} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(v: number, n) => [formatCurrency(v), n as string]}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+      {/*
+        Barre in un colore solo, dalla voce piu' cara. Prima era una ciambella
+        con un colore fisso per tipo: sette colori da riconoscere senza
+        legenda (il nome si leggeva solo passandoci sopra), e il gas in rosso
+        sembrava un errore. Qui nome e importo stanno scritti accanto alla
+        barra, che serve solo a confrontare.
+      */}
+      <ul className="space-y-2">
+        {righe.map((d) => (
+          <li key={d.tipo}>
+            <div className="flex items-baseline justify-between gap-2 text-sm">
+              <span>{d.label}</span>
+              <span className="font-medium">{formatCurrency(d.value)}</span>
+            </div>
+            <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-accent">
+              <div
+                className="h-full rounded-full bg-serie-1"
+                style={{ width: `${(d.value / righe[0].value) * 100}%` }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

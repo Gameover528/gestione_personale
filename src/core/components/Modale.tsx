@@ -133,6 +133,7 @@ export function Modale({
             type="button"
             onClick={onChiudi}
             aria-label="Chiudi"
+            title="Chiudi"
             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground lg:h-9 lg:w-9"
           >
             <X className="h-5 w-5" />

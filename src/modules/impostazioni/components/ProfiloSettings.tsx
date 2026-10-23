@@ -236,11 +236,12 @@ export function ProfiloSettings({
               aria-pressed={colore === c.hex}
               title={c.nome}
               style={{ backgroundColor: c.hex }}
+              // Il colore scelto si riconosce dall'anello, non ingrandendolo:
+              // nell'app non ci sono animazioni di dimensione.
               className={cn(
-                "h-9 w-9 rounded-full border-2 transition",
-                colore === c.hex
-                  ? "border-foreground scale-110"
-                  : "border-transparent hover:scale-105"
+                "h-11 w-11 rounded-full lg:h-9 lg:w-9",
+                colore === c.hex &&
+                  "ring-2 ring-foreground ring-offset-2 ring-offset-card"
               )}
             />
           ))}

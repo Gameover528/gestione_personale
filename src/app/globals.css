@@ -58,7 +58,13 @@
   --primary: 217 91% 60%;
   --primary-foreground: 222 47% 11%;
   --accent: 222 30% 18%;
-  --destructive: 0 63% 55%;
+  /*
+    Piu' chiaro del rosso del tema chiaro perche' qui fa da testo ("Scaduta",
+    gli errori): al 55% dava 3,9:1 sulla card e 3,5:1 dentro il badge tinto.
+    Al 67% arriva a 5,8:1 sulla card e 4,7:1 nel badge. Come pieno serve solo
+    a barre e pallini, senza testo sopra.
+  */
+  --destructive: 0 63% 67%;
   --success: 142 60% 50%;
   --warning: 38 92% 55%;
   /* Sul fondo scuro i colori pieni reggono gia' come testo (oltre 6,7:1). */

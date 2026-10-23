@@ -59,15 +59,26 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
     await riattivaAbbonamentoAction(abbonamento.id);
     router.refresh();
   }
+  /**
+   * Come dall'elenco: si disdice subito e il messaggio offre di tornare
+   * indietro, invece di chiedere conferma prima. Disdire non cancella niente,
+   * quindi annullare vuol dire solo rimettere lo stato di prima.
+   */
   async function handleDisdici() {
-    if (
-      !confirm(
-        `Disdire "${abbonamento.nome}"? Le rate già generate restano, ma non ne verranno create di nuove. L'operazione non è reversibile.`
-      )
-    )
-      return;
+    const statoPrima = abbonamento.stato;
     await disdiciAbbonamentoAction(abbonamento.id);
     router.refresh();
+    toast({
+      messaggio: `"${abbonamento.nome}" disdetto: non verranno create nuove rate`,
+      azione: {
+        label: "Annulla",
+        onClick: async () => {
+          if (statoPrima === "sospeso") await sospendiAbbonamentoAction(abbonamento.id);
+          else await riattivaAbbonamentoAction(abbonamento.id);
+          router.refresh();
+        },
+      },
+    });
   }
   /**
    * Elimina e torna all'elenco, offrendo l'annulla nel messaggio: le rate
@@ -235,18 +246,13 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
             </button>
           )}
           {abbonamento.stato !== "disdetto" && (
-            <button
-              onClick={handleDisdici}
-              className={cn(bottoneClass, "border-destructive/40 text-destructive hover:bg-destructive/10")}
-            >
+            <button onClick={handleDisdici} className={bottoneClass}>
               <XCircle className="h-4 w-4" />
               Disdici
             </button>
           )}
-          <button
-            onClick={handleElimina}
-            className={cn(bottoneClass, "border-destructive/40 text-destructive hover:bg-destructive/10")}
-          >
+          {/* Non rossi: tutti e due si possono annullare dal messaggio che segue. */}
+          <button onClick={handleElimina} className={bottoneClass}>
             <Trash2 className="h-4 w-4" />
             Elimina tutto
           </button>

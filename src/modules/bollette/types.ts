@@ -48,14 +48,14 @@ export interface BollettaInput {
   pagamento_path: string | null;
 }
 
-export const TIPI: { value: TipoBolletta; label: string; color: string }[] = [
-  { value: "luce", label: "Luce", color: "#f59e0b" },
-  { value: "gas", label: "Gas", color: "#ef4444" },
-  { value: "acqua", label: "Acqua", color: "#3b82f6" },
-  { value: "internet", label: "Internet", color: "#8b5cf6" },
-  { value: "telefono", label: "Telefono", color: "#10b981" },
-  { value: "rifiuti", label: "Rifiuti", color: "#84cc16" },
-  { value: "altro", label: "Altro", color: "#6b7280" },
+export const TIPI: { value: TipoBolletta; label: string }[] = [
+  { value: "luce", label: "Luce" },
+  { value: "gas", label: "Gas" },
+  { value: "acqua", label: "Acqua" },
+  { value: "internet", label: "Internet" },
+  { value: "telefono", label: "Telefono" },
+  { value: "rifiuti", label: "Rifiuti" },
+  { value: "altro", label: "Altro" },
 ];
 
 export const DIVISIONI: { value: StatoDivisione; label: string }[] = [
@@ -66,10 +66,6 @@ export const DIVISIONI: { value: StatoDivisione; label: string }[] = [
 
 export function tipoLabel(t: TipoBolletta) {
   return TIPI.find((x) => x.value === t)?.label ?? t;
-}
-
-export function tipoColor(t: TipoBolletta) {
-  return TIPI.find((x) => x.value === t)?.color ?? "#6b7280";
 }
 
 export function divisioneLabel(d: StatoDivisione) {

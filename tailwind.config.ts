@@ -18,6 +18,8 @@ const config: Config = {
         destructive: "hsl(var(--destructive))",
         success: { DEFAULT: "hsl(var(--success))", testo: "hsl(var(--success-testo))" },
         warning: { DEFAULT: "hsl(var(--warning))", testo: "hsl(var(--warning-testo))" },
+        // Le serie dei grafici (vedi globals.css): mai primary né gli stati.
+        serie: { 1: "hsl(var(--serie-1))", 2: "hsl(var(--serie-2))", 3: "hsl(var(--serie-3))" },
       },
       borderRadius: {
         lg: "0.75rem",

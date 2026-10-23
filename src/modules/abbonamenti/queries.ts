@@ -194,7 +194,11 @@ export async function riattivaAbbonamentoAction(id: string): Promise<void> {
   await cambiaStato(id, "attivo", true);
 }
 
-/** Disdice l'abbonamento: le rate già generate restano, ma non ne verranno create di nuove. Definitivo. */
+/**
+ * Disdice l'abbonamento: le rate già generate restano, ma non ne verranno
+ * create di nuove. Non cancella niente: l'annulla del messaggio rimette lo
+ * stato di prima.
+ */
 export async function disdiciAbbonamentoAction(id: string): Promise<void> {
   await cambiaStato(id, "disdetto", false);
 }

@@ -149,7 +149,7 @@ export default function CalorieOggiESettimana() {
               <Bar
                 isAnimationActive={false}
                 dataKey="kcal"
-                fill="hsl(var(--primary))"
+                fill="hsl(var(--serie-1))"
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>

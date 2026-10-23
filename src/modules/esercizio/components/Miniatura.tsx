@@ -26,7 +26,7 @@ export function Miniatura({
     return (
       <span
         aria-hidden
-        className="flex shrink-0 items-center justify-center rounded bg-muted text-xs text-muted-foreground"
+        className="flex shrink-0 items-center justify-center rounded-md bg-muted text-xs text-muted-foreground"
         style={{ width: lato, height: lato }}
       >
         —
@@ -43,7 +43,7 @@ export function Miniatura({
       width={lato}
       height={lato}
       loading="lazy"
-      className="shrink-0 rounded bg-muted object-cover"
+      className="shrink-0 rounded-md bg-muted object-cover"
       style={{ width: lato, height: lato }}
     />
   );

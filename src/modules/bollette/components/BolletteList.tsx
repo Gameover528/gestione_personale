@@ -408,7 +408,7 @@ export function BolletteList({
               </thead>
               <tbody>
                 {items.map((b) => (
-                  <tr key={b.id} className="border-t hover:bg-muted/50">
+                  <tr key={b.id} className="border-t hover:bg-accent">
                     <td className="px-4 py-3 font-medium">{b.fornitore}</td>
                     <td className="px-4 py-3">{tipoLabel(b.tipo)}</td>
                     <td className="px-4 py-3">

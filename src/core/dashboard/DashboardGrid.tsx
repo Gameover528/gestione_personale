@@ -423,28 +423,33 @@ function SortableWidget({
     >
       <Card
         className={cn(
-          "h-full transition-shadow",
+          "h-full",
           editMode && "ring-1 ring-border",
-          // Sollevato: si vede quale riquadro si sta spostando.
-          isDragging && "scale-[1.02] shadow-xl ring-2 ring-primary"
+          // Sollevato: si vede quale riquadro si sta spostando. Ombra e anello,
+          // senza ingrandirlo: nell'app non ci sono animazioni di dimensione.
+          isDragging && "shadow-lg ring-2 ring-primary"
         )}
       >
         <div className="mb-3 flex items-center justify-between">
           <CardTitle>{widget.title}</CardTitle>
           {editMode && (
-            <div className="flex items-center gap-1">
+            <div className="-my-2 flex items-center gap-1">
+              {/* Bersagli da 44 px come ogni IconButton: in modifica si usano
+                  col dito. */}
               <button
                 {...attributes}
                 {...listeners}
-                className="cursor-grab rounded p-1 text-muted-foreground hover:bg-accent active:cursor-grabbing"
+                aria-label={`Trascina ${widget.title} per riordinare`}
                 title="Trascina per riordinare"
+                className="inline-flex h-11 w-11 cursor-grab items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground active:cursor-grabbing lg:h-9 lg:w-9"
               >
                 <GripVertical className="h-4 w-4" />
               </button>
               <button
                 onClick={onRemove}
-                className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-destructive"
-                title="Rimuovi"
+                aria-label={`Togli ${widget.title} dalla dashboard`}
+                title="Togli dalla dashboard"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-destructive lg:h-9 lg:w-9"
               >
                 <X className="h-4 w-4" />
               </button>

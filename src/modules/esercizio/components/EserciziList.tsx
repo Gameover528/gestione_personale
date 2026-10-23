@@ -13,6 +13,7 @@ import {
 } from "../types";
 import { NOME_MUSCOLO } from "../muscoli/tipi";
 import { inputClass } from "@/core/components/controls";
+import { Badge } from "@/core/components/ui";
 
 /**
  * Il catalogo, con la ricerca.
@@ -109,9 +110,7 @@ function VoceEsercizio({ esercizio }: { esercizio: Esercizio }) {
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-medium capitalize">{esercizio.nome}</span>
           {esercizio.fonte === "personale" && (
-            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-xs font-medium">
-              tuo
-            </span>
+            <Badge>Tuo</Badge>
           )}
         </div>
         <p className="mt-0.5 truncate text-sm text-muted-foreground">

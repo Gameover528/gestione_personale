@@ -62,7 +62,7 @@ export default function AndamentoMensile() {
           <XAxis dataKey="mese" fontSize={12} tickLine={false} axisLine={false} />
           <YAxis fontSize={12} tickLine={false} axisLine={false} />
           <Tooltip formatter={(v: number) => formatCurrency(v)} />
-          <Bar dataKey="totale" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="totale" fill="hsl(var(--serie-1))" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

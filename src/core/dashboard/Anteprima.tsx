@@ -75,7 +75,7 @@ export function Anteprima({ spec }: { spec?: AnteprimaWidget }) {
           {spec.valori.map((v, i) => (
             <div
               key={i}
-              className="flex-1 rounded-t bg-primary"
+              className="flex-1 rounded-t bg-serie-1"
               style={{ height: `${Math.max(2, (v / max) * 100)}%` }}
             />
           ))}
@@ -105,7 +105,9 @@ export function Anteprima({ spec }: { spec?: AnteprimaWidget }) {
             <div
               className={cn(
                 "h-full rounded-full",
-                v.ok === false ? "bg-destructive" : "bg-success"
+                // Verde e rosso solo dove c'e' un obiettivo da giudicare;
+                // senza (la spesa per tipo) e' una serie qualunque.
+                v.ok === false ? "bg-destructive" : v.ok ? "bg-success" : "bg-serie-1"
               )}
               style={{ width: `${Math.min(100, Math.max(0, v.perc))}%` }}
             />

@@ -95,6 +95,11 @@ export const NON_RILASCIATO: NonRilasciato | null = {
   migrazioni: [
   ],
   modifiche: [
+    { categoria: "modificato", testo: "I grafici usano gli stessi colori qualunque tinta tu abbia scelto per l'app, e niente più rosso o verde dove non c'è un giudizio." },
+    { categoria: "modificato", testo: "«Spesa per tipo» è un elenco di barre con nome e importo, dalla voce più cara: prima era una ciambella a sette colori che si leggeva solo passandoci sopra." },
+    { categoria: "modificato", testo: "Disdire un abbonamento dal dettaglio non chiede più conferma: lo fa subito e offre «Annulla», come dall'elenco. Un abbonamento sospeso, se annulli, torna sospeso." },
+    { categoria: "corretto", testo: "In modifica della dashboard i pulsanti per spostare e togliere un riquadro, il cambio tema e i colori del Profilo sono abbastanza grandi da toccarli col dito." },
+    { categoria: "corretto", testo: "Le scritte rosse, come «Scaduta», si leggono bene anche con il tema scuro." },
   ],
 };
 

@@ -96,7 +96,7 @@ export default function MacroOggi() {
             isAnimationActive={false}
             dataKey="consumato"
             name="Consumato"
-            fill="#3b82f6"
+            fill="hsl(var(--serie-1))"
             radius={[4, 4, 0, 0]}
           >
             <LabelList
@@ -109,7 +109,7 @@ export default function MacroOggi() {
           <Bar
             dataKey="obiettivo"
             name="Obiettivo (min/max)"
-            fill="#cbd5e1"
+            fill="hsl(var(--serie-2))"
             radius={[4, 4, 0, 0]}
           >
             <LabelList

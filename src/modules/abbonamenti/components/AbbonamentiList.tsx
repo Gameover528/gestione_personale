@@ -61,7 +61,9 @@ export function AbbonamentiList() {
       azione: {
         label: "Annulla",
         onClick: async () => {
-          await riattivaAbbonamentoAction(a.id);
+          // Uno sospeso torna sospeso: riattivarlo farebbe ripartire le rate.
+          if (a.stato === "sospeso") await sospendiAbbonamentoAction(a.id);
+          else await riattivaAbbonamentoAction(a.id);
           load();
         },
       },
