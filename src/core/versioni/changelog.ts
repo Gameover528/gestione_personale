@@ -91,36 +91,39 @@ export function dataBuild(): string | null {
   return process.env.DATA_BUILD ?? null;
 }
 
-export const NON_RILASCIATO: NonRilasciato | null = {
-  modifiche: [
-    { categoria: "aggiunto", testo: "In Impostazioni › Profilo c'è la guida per collegare una chat di Claude, con l'indirizzo e il codice pronti da copiare. Prima la funzione non si vedeva finché non la si era già usata." },
-    { categoria: "corretto", testo: "Su iPhone i campi non fanno più ingrandire la pagina a ogni tocco." },
-    { categoria: "corretto", testo: "L'elenco degli allenamenti non si ferma più ai 30 più recenti: «Mostra allenamenti precedenti» carica quelli prima." },
-    { categoria: "corretto", testo: "Il bilancio energetico confronta l'obiettivo con le calorie mangiate, come il diario. Prima sottraeva anche gli allenamenti, già compresi nell'obiettivo, e chi si allenava sembrava avere più margine di quello vero. Superare un obiettivo minimo non è più segnato in rosso." },
-    { categoria: "modificato", testo: "Il calcolatore degli obiettivi è pensato per adulti: non scende sotto 1200 kcal per le donne e 1500 per gli uomini, con un indice di massa corporea sopra 30 calcola le proteine su un peso di riferimento, e ricorda che non sostituisce il parere di un medico." },
-    { categoria: "modificato", testo: "Le notifiche con «Annulla» restano 10 secondi e si fermano finché ci tieni sopra il dito o il mouse. Gli errori restano finché non li chiudi." },
-    { categoria: "corretto", testo: "Le scritte verdi e gialle, come «Pagata» o «Salvato», si leggono bene anche con il tema chiaro." },
-    { categoria: "sicurezza", testo: "L'app gira su Next.js 16, una versione ancora supportata che riceve le correzioni di sicurezza. Next.js 15 è uscito dal supporto il 21 ottobre." },
-    { categoria: "aggiunto", testo: "Quando esce una nuova versione, l'app aperta lo dice e si aggiorna con un tocco. Prima, dopo un rilascio, i salvataggi fallivano finché non la si chiudeva e riapriva." },
-    { categoria: "corretto", testo: "Da telefono si arriva a Peso, Piatti, Catalogo esercizi e Miei esercizi: il menu in alto («Vai a») elenca le pagine che non stanno nella barra in basso. Prima da telefono non c'era modo di raggiungerle." },
-    { categoria: "corretto", testo: "Con 100 o più allenamenti registrati, Andamento e i riquadri della dashboard Salute andavano in errore." },
-    { categoria: "corretto", testo: "Negli allenamenti e nelle schede un carico scritto con la virgola, come 62,5, veniva salvato vuoto. Ora si accetta, e un valore che non è un numero viene segnato in rosso invece di cancellare quello salvato." },
-    { categoria: "corretto", testo: "Pressa a 45°, hack squat e gli altri esercizi alla pressa chiedono ripetizioni e carico, non minuti e chilometri. Le loro calorie stimate sono più basse, e più realistiche." },
-    { categoria: "sicurezza", testo: "Una chat collegata non può più sostituire una pesata scritta da te: può correggere e togliere soltanto le sue, come promette la pagina del consenso." },
-    { categoria: "corretto", testo: "Dopo il login si torna alla pagina che si voleva aprire. Prima si finiva sempre sulla dashboard, e il collegamento di una chat si interrompeva a metà." },
-    { categoria: "corretto", testo: "Il «+» della barra in basso aggiunge al giorno che stai guardando nel diario, non sempre a oggi." },
-    { categoria: "corretto", testo: "«Rimuovi» sul PDF di una bolletta lo cancella solo quando salvi: con Annulla il documento resta, e prima di salvare si può ripristinare." },
-    { categoria: "corretto", testo: "Si caricano PDF fino a 10 MB: prima il limite era 1 MB, e oltre compariva un errore tecnico. Un file che non è un PDF viene rifiutato con un messaggio chiaro." },
-    { categoria: "corretto", testo: "La ricerca degli alimenti usa il nuovo motore di Open Food Facts, molto più affidabile del vecchio, e non mostra più lo stesso prodotto dieci volte." },
-    { categoria: "corretto", testo: "Errori e pagine inesistenti hanno una pagina in italiano, con un modo per tornare indietro anche dall'app installata." },
-    { categoria: "corretto", testo: "Il backup contiene tutti i tuoi dati: prima mancavano abbonamenti, allenamenti, schede, esercizi personali e pesate, senza che il file lo dicesse. In testa al file c'è quante righe ci sono di ciascuna cosa." },
-    { categoria: "corretto", testo: "La sincronizzazione da produzione copia anche allenamenti, schede, esercizi personali e pesate, e quindi le calorie bruciate: si fermava alle tabelle che esistevano quando era stata scritta. Se su sviluppo manca una migration lo dice, invece di saltare i dati in silenzio." },
-    { categoria: "corretto", testo: "Nel grafico delle calorie le bruciate stanno nella stessa colonna delle mangiate, sopra di loro: prima erano due barre affiancate e il netto della giornata non si leggeva." },
-  ],
-};
+export const NON_RILASCIATO: NonRilasciato | null = null;
 
 /** Dal più recente al più vecchio: l'ordine in cui vengono mostrati. */
 export const RILASCI: Rilascio[] = [
+  {
+    versione: "2026.10.23",
+    data: "2026-10-23",
+    modifiche: [
+      { categoria: "aggiunto", testo: "In Impostazioni › Profilo c'è la guida per collegare una chat di Claude, con l'indirizzo e il codice pronti da copiare. Prima la funzione non si vedeva finché non la si era già usata." },
+      { categoria: "corretto", testo: "Su iPhone i campi non fanno più ingrandire la pagina a ogni tocco." },
+      { categoria: "corretto", testo: "L'elenco degli allenamenti non si ferma più ai 30 più recenti: «Mostra allenamenti precedenti» carica quelli prima." },
+      { categoria: "corretto", testo: "Il bilancio energetico confronta l'obiettivo con le calorie mangiate, come il diario. Prima sottraeva anche gli allenamenti, già compresi nell'obiettivo, e chi si allenava sembrava avere più margine di quello vero. Superare un obiettivo minimo non è più segnato in rosso." },
+      { categoria: "modificato", testo: "Il calcolatore degli obiettivi è pensato per adulti: non scende sotto 1200 kcal per le donne e 1500 per gli uomini, con un indice di massa corporea sopra 30 calcola le proteine su un peso di riferimento, e ricorda che non sostituisce il parere di un medico." },
+      { categoria: "modificato", testo: "Le notifiche con «Annulla» restano 10 secondi e si fermano finché ci tieni sopra il dito o il mouse. Gli errori restano finché non li chiudi." },
+      { categoria: "corretto", testo: "Le scritte verdi e gialle, come «Pagata» o «Salvato», si leggono bene anche con il tema chiaro." },
+      { categoria: "sicurezza", testo: "L'app gira su Next.js 16, una versione ancora supportata che riceve le correzioni di sicurezza. Next.js 15 è uscito dal supporto il 21 ottobre." },
+      { categoria: "aggiunto", testo: "Quando esce una nuova versione, l'app aperta lo dice e si aggiorna con un tocco. Prima, dopo un rilascio, i salvataggi fallivano finché non la si chiudeva e riapriva." },
+      { categoria: "corretto", testo: "Da telefono si arriva a Peso, Piatti, Catalogo esercizi e Miei esercizi: il menu in alto («Vai a») elenca le pagine che non stanno nella barra in basso. Prima da telefono non c'era modo di raggiungerle." },
+      { categoria: "corretto", testo: "Con 100 o più allenamenti registrati, Andamento e i riquadri della dashboard Salute andavano in errore." },
+      { categoria: "corretto", testo: "Negli allenamenti e nelle schede un carico scritto con la virgola, come 62,5, veniva salvato vuoto. Ora si accetta, e un valore che non è un numero viene segnato in rosso invece di cancellare quello salvato." },
+      { categoria: "corretto", testo: "Pressa a 45°, hack squat e gli altri esercizi alla pressa chiedono ripetizioni e carico, non minuti e chilometri. Le loro calorie stimate sono più basse, e più realistiche." },
+      { categoria: "sicurezza", testo: "Una chat collegata non può più sostituire una pesata scritta da te: può correggere e togliere soltanto le sue, come promette la pagina del consenso." },
+      { categoria: "corretto", testo: "Dopo il login si torna alla pagina che si voleva aprire. Prima si finiva sempre sulla dashboard, e il collegamento di una chat si interrompeva a metà." },
+      { categoria: "corretto", testo: "Il «+» della barra in basso aggiunge al giorno che stai guardando nel diario, non sempre a oggi." },
+      { categoria: "corretto", testo: "«Rimuovi» sul PDF di una bolletta lo cancella solo quando salvi: con Annulla il documento resta, e prima di salvare si può ripristinare." },
+      { categoria: "corretto", testo: "Si caricano PDF fino a 10 MB: prima il limite era 1 MB, e oltre compariva un errore tecnico. Un file che non è un PDF viene rifiutato con un messaggio chiaro." },
+      { categoria: "corretto", testo: "La ricerca degli alimenti usa il nuovo motore di Open Food Facts, molto più affidabile del vecchio, e non mostra più lo stesso prodotto dieci volte." },
+      { categoria: "corretto", testo: "Errori e pagine inesistenti hanno una pagina in italiano, con un modo per tornare indietro anche dall'app installata." },
+      { categoria: "corretto", testo: "Il backup contiene tutti i tuoi dati: prima mancavano abbonamenti, allenamenti, schede, esercizi personali e pesate, senza che il file lo dicesse. In testa al file c'è quante righe ci sono di ciascuna cosa." },
+      { categoria: "corretto", testo: "La sincronizzazione da produzione copia anche allenamenti, schede, esercizi personali e pesate, e quindi le calorie bruciate: si fermava alle tabelle che esistevano quando era stata scritta. Se su sviluppo manca una migration lo dice, invece di saltare i dati in silenzio." },
+      { categoria: "corretto", testo: "Nel grafico delle calorie le bruciate stanno nella stessa colonna delle mangiate, sopra di loro: prima erano due barre affiancate e il netto della giornata non si leggeva." },
+    ],
+  },
   {
     versione: "2026.10.12",
     data: "2026-10-12",
