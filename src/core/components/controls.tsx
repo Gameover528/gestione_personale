@@ -14,13 +14,32 @@ import { cn } from "@/lib/utils";
 export const inputClass =
   "min-h-11 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary lg:min-h-0";
 
+/**
+ * Il controllo si stringe appena sotto il dito. Sul telefono non c'e' hover:
+ * senza questo un tocco non dava nessuna risposta finche' la pagina non
+ * cambiava. Il `transition` dei controlli copre gia' la trasformazione.
+ */
+export const premutoClass = "motion-safe:active:scale-[0.97]";
+
 /** Pulsante secondario (bordo). Stessa regola dei campi sull'altezza. */
-export const bottoneClass =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50 lg:min-h-0";
+export const bottoneClass = cn(
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50 lg:min-h-0",
+  premutoClass
+);
 
 /** Pulsante principale (pieno). */
-export const bottonePrimarioClass =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50 lg:min-h-0";
+export const bottonePrimarioClass = cn(
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50 lg:min-h-0",
+  premutoClass
+);
+
+/**
+ * La parte piena di una barra di avanzamento (calorie, macro, spesa): si
+ * riempie da sinistra quando arrivano i dati e scorre se il valore cambia,
+ * per esempio passando a un altro giorno. La larghezza la mette chi la usa.
+ */
+export const barraValoreClass =
+  "h-full rounded-full origin-left motion-safe:animate-riempi motion-safe:transition-[width] motion-safe:duration-200 motion-safe:ease-out";
 
 /**
  * Campo numerico "amichevole": accetta la virgola come separatore decimale
@@ -108,6 +127,7 @@ export function TabBar<T extends string>({
           onClick={() => onChange(t.value)}
           className={cn(
             "rounded-md px-3 py-2 text-sm font-medium transition",
+            premutoClass,
             value === t.value
               ? "bg-primary text-primary-foreground"
               : "border hover:bg-accent"
@@ -137,6 +157,7 @@ export function ToggleChip({
       onClick={onClick}
       className={cn(
         "rounded-md px-3 py-2 text-sm font-medium transition",
+        premutoClass,
         attivo ? "bg-primary text-primary-foreground" : "border hover:bg-accent"
       )}
     >
@@ -171,6 +192,7 @@ export function IconButton({
       title={label}
       className={cn(
         "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent disabled:opacity-50",
+        premutoClass,
         tono === "distruttivo" ? "hover:text-destructive" : "hover:text-foreground"
       )}
     >

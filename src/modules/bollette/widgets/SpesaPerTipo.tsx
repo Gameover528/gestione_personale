@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { StatoErrore } from "@/core/components/Dati";
 import { listBollette } from "../queries";
 import { TIPI, mesiPeriodo, type TipoBolletta } from "../types";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
+import { barraValoreClass } from "@/core/components/controls";
 
 export default function SpesaPerTipo() {
   const [data, setData] = useState<
@@ -83,7 +84,7 @@ export default function SpesaPerTipo() {
             </div>
             <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-accent">
               <div
-                className="h-full rounded-full bg-serie-1"
+                className={cn(barraValoreClass, "bg-serie-1")}
                 style={{ width: `${(d.value / righe[0].value) * 100}%` }}
               />
             </div>

@@ -49,6 +49,8 @@ export function useToast() {
 */
 const DURATA_CON_AZIONE = 10000;
 const DURATA_SEMPLICE = 5000;
+/** Quanto dura l'uscita: la stessa dell'animazione "esce-basso" in tailwind.config.ts. */
+const DURATA_USCITA = 150;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
@@ -102,13 +104,33 @@ function VoceToast({ t, onChiudi }: { t: ToastItem; onChiudi: () => void }) {
   const partito = useRef(0);
   const timer = useRef<number | undefined>(undefined);
   const motivi = useRef(new Set<string>());
+  const [uscita, setUscita] = useState(false);
+  // Anche in un ref: il timer tiene la versione di chiudi della comparsa.
+  const inUscita = useRef(false);
+
+  /*
+    Prima di sparire scivola giù per un attimo: sparendo di colpo, chi aveva
+    lo sguardo altrove non capiva se il toast c'era stato. Con il movimento
+    ridotto si chiude subito, come prima.
+  */
+  const chiudi = useCallback(() => {
+    if (inUscita.current) return;
+    inUscita.current = true;
+    window.clearTimeout(timer.current);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      onChiudi();
+      return;
+    }
+    setUscita(true);
+    window.setTimeout(onChiudi, DURATA_USCITA);
+  }, [onChiudi]);
 
   const avvia = useCallback(() => {
     if (durata === null) return;
     window.clearTimeout(timer.current);
     partito.current = Date.now();
-    timer.current = window.setTimeout(onChiudi, restante.current);
-  }, [durata, onChiudi]);
+    timer.current = window.setTimeout(chiudi, restante.current);
+  }, [durata, chiudi]);
 
   const pausa = (motivo: string) => {
     if (durata === null) return;
@@ -143,6 +165,7 @@ function VoceToast({ t, onChiudi }: { t: ToastItem; onChiudi: () => void }) {
       }}
       className={cn(
         "pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-lg border bg-card px-4 py-3 text-sm shadow-lg",
+        uscita ? "motion-safe:animate-esce-basso" : "motion-safe:animate-entra-basso",
         t.tono === "errore" && "border-destructive/40"
       )}
     >
@@ -155,7 +178,7 @@ function VoceToast({ t, onChiudi }: { t: ToastItem; onChiudi: () => void }) {
       {t.azione && (
         <button
           onClick={async () => {
-            onChiudi();
+            chiudi();
             await t.azione!.onClick();
           }}
           className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border px-3 font-medium transition hover:bg-accent lg:min-h-0 lg:py-1.5"
@@ -165,7 +188,7 @@ function VoceToast({ t, onChiudi }: { t: ToastItem; onChiudi: () => void }) {
         </button>
       )}
       <button
-        onClick={onChiudi}
+        onClick={chiudi}
         aria-label="Chiudi notifica"
         title="Chiudi notifica"
         className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-muted-foreground transition hover:bg-accent hover:text-foreground lg:h-7 lg:w-7"

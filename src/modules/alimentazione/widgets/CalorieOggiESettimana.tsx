@@ -1,6 +1,7 @@
 "use client";
 
 import { StatoErrore, useDati } from "@/core/components/Dati";
+import { barraValoreClass } from "@/core/components/controls";
 import Link from "next/link";
 import {
   Bar,
@@ -104,7 +105,7 @@ export default function CalorieOggiESettimana() {
           <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
             <div
               className={cn(
-                "h-full rounded-full",
+                barraValoreClass,
                 esito === "oltre"
                   ? "bg-destructive"
                   : esito === "ok"

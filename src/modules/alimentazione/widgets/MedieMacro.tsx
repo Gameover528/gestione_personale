@@ -8,6 +8,7 @@ import {
   type Obiettivo,
 } from "../types";
 import { cn } from "@/lib/utils";
+import { barraValoreClass } from "@/core/components/controls";
 
 /** Nutrienti in grammi: le calorie stanno nella parte sinistra del riquadro. */
 const MOSTRATI: Nutriente[] = ["proteine", "carboidrati", "grassi", "fibre"];
@@ -92,7 +93,7 @@ export function MedieMacro({
               <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-accent">
                 <div
                   className={cn(
-                    "h-full rounded-full",
+                    barraValoreClass,
                     target
                       ? rispettato
                         ? "bg-success"

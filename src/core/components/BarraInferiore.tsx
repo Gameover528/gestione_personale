@@ -88,13 +88,15 @@ function Voce({ voce, attiva }: { voce: VoceBarra; attiva: boolean }) {
         spingere la propria etichetta contro il bordo.
       */
       className={cn(
-        "flex h-16 flex-col items-center justify-end gap-1 px-1 pb-2 transition",
+        "group flex h-16 flex-col items-center justify-end gap-1 px-1 pb-2 transition",
         attiva ? "text-primary" : "text-muted-foreground active:bg-accent"
       )}
     >
       <span
         className={cn(
-          "flex items-center justify-center rounded-full transition",
+          // Sotto il dito si stringe l'icona, non tutta la voce: l'etichetta
+          // resta ferma sulla sua linea.
+          "flex items-center justify-center rounded-full transition motion-safe:group-active:scale-90",
           // L'azione principale è un bersaglio pieno e più grande: si trova
           // senza guardare, che è il punto di averla al centro.
           voce.azione

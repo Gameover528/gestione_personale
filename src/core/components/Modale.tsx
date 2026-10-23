@@ -109,11 +109,11 @@ export function Modale({
       ref={ref}
       onClick={onClickVelo}
       aria-label={titolo}
-      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-y-auto bg-transparent p-4 text-foreground backdrop:bg-black/50 sm:p-6"
+      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-y-auto bg-transparent p-4 text-foreground backdrop:bg-black/50 motion-safe:backdrop:animate-velo-entra sm:p-6"
     >
       <div
         className={cn(
-          "relative mx-auto my-4 w-full rounded-lg border bg-card p-4 shadow-xl sm:p-6",
+          "relative mx-auto my-4 w-full rounded-lg border bg-card p-4 shadow-xl motion-safe:animate-modale-entra sm:p-6",
           larghezza === "stretta" && "max-w-md",
           larghezza === "media" && "max-w-xl",
           larghezza === "larga" && "max-w-3xl"
