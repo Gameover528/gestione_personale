@@ -272,7 +272,7 @@ export function ProfiloSettings({
             <span className="rounded-md border px-3 py-1.5 text-sm">Bordo</span>
             <span className="rounded-md bg-muted px-3 py-1.5 text-sm">Sfondo</span>
             <span className="text-sm text-muted-foreground">Testo secondario</span>
-            <span className="text-sm text-success">Conferma</span>
+            <span className="text-sm text-success-testo">Conferma</span>
             <span className="text-sm text-destructive">Errore</span>
           </div>
         </div>
@@ -323,7 +323,7 @@ export function ProfiloSettings({
             />
           </div>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-          {state.ok && <p className="text-sm text-success">Password aggiornata.</p>}
+          {state.ok && <p className="text-sm text-success-testo">Password aggiornata.</p>}
           <button
             type="submit"
             disabled={isPending}

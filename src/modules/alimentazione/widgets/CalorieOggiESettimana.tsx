@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { riepilogoSettimana, type RiepilogoSettimana } from "../queries";
 import { MedieMacro } from "./MedieMacro";
+import { esitoObiettivo } from "../types";
 import { cn, oggiIso, spostaGiorno } from "@/lib/utils";
 
 const GIORNI = 7;
@@ -59,7 +60,9 @@ export default function CalorieOggiESettimana() {
 
   const target = obKcal && obKcal.valore > 0 ? obKcal : null;
   const perc = target ? Math.min(100, (kcalOggi / target.valore) * 100) : 0;
-  const sopra = target ? kcalOggi > target.valore : false;
+  // Rosso solo se si supera un massimo: superare un minimo è il traguardo,
+  // e finché non lo si raggiunge la barra è un avanzamento, non un errore.
+  const esito = target ? esitoObiettivo(kcalOggi, target) : null;
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
@@ -105,7 +108,11 @@ export default function CalorieOggiESettimana() {
             <div
               className={cn(
                 "h-full rounded-full",
-                sopra ? "bg-destructive" : "bg-success"
+                esito === "oltre"
+                  ? "bg-destructive"
+                  : esito === "ok"
+                    ? "bg-success"
+                    : "bg-primary"
               )}
               style={{ width: `${perc}%` }}
             />

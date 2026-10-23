@@ -21,6 +21,8 @@ import {
   bottoneClass,
 } from "@/core/components/controls";
 
+const PAGINA = 30;
+
 export function AllenamentiList() {
   const [items, setItems] = useState<AllenamentoRiepilogo[] | null>(null);
   // Se la lettura fallisce (es. una tabella non ancora migrata) bisogna
@@ -30,9 +32,25 @@ export function AllenamentiList() {
   const [nuovoAperto, setNuovoAperto] = useState(false);
   const toast = useToast();
 
+  /*
+    Quanti allenamenti mostrare, a pagine da PAGINA. Prima l'elenco si fermava
+    ai 30 più recenti senza dirlo: dopo due o tre mesi quelli vecchi non si
+    aprivano più. Se ne chiede uno in più del necessario per sapere se ce ne
+    sono altri, senza una query di conteggio a parte.
+  */
+  const [quanti, setQuanti] = useState(PAGINA);
+  const [altri, setAltri] = useState(false);
+  const [caricoAltri, setCaricoAltri] = useState(false);
+
   const load = useCallback(() => {
-    listAllenamenti().then(setItems).catch(() => setErrore(true));
-  }, []);
+    listAllenamenti(quanti + 1)
+      .then((r) => {
+        setAltri(r.length > quanti);
+        setItems(r.slice(0, quanti));
+      })
+      .catch(() => setErrore(true))
+      .finally(() => setCaricoAltri(false));
+  }, [quanti]);
 
   useEffect(() => {
     load();
@@ -156,6 +174,18 @@ export function AllenamentiList() {
             </li>
           ))}
         </ul>
+      )}
+      {altri && (
+        <button
+          onClick={() => {
+            setCaricoAltri(true);
+            setQuanti((q) => q + PAGINA);
+          }}
+          disabled={caricoAltri}
+          className={`${bottoneClass} mt-3 w-full`}
+        >
+          {caricoAltri ? "Carico…" : "Mostra allenamenti precedenti"}
+        </button>
       )}
     </div>
   );

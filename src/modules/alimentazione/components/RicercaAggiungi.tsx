@@ -403,7 +403,7 @@ export function RicercaAggiungi({
       {aggiunti.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-success/40 bg-success/5 px-3 py-2 text-sm">
           <span className="inline-flex items-center gap-2">
-            <Check className="h-4 w-4 text-success" />
+            <Check className="h-4 w-4 text-success-testo" />
             Aggiunti: {aggiunti.join(", ")}
           </span>
           <Link

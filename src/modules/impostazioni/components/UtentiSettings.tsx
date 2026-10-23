@@ -277,7 +277,7 @@ export function UtentiSettings({
           <p className="mt-2 text-sm text-destructive">{state.error}</p>
         )}
         {state.ok && (
-          <p className="mt-2 text-sm text-success">Account creato.</p>
+          <p className="mt-2 text-sm text-success-testo">Account creato.</p>
         )}
         <p className="mt-2 text-xs text-muted-foreground">
           I nuovi account nascono con ruolo &quot;Utilizzatore&quot;. Solo il

@@ -50,7 +50,7 @@ export function Anteprima({ spec }: { spec?: AnteprimaWidget }) {
               )}
             </span>
             {r.badge && (
-              <span className="shrink-0 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+              <span className="shrink-0 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning-testo">
                 {r.badge}
               </span>
             )}

@@ -93,6 +93,13 @@ export function dataBuild(): string | null {
 
 export const NON_RILASCIATO: NonRilasciato | null = {
   modifiche: [
+    { categoria: "aggiunto", testo: "In Impostazioni › Profilo c'è la guida per collegare una chat di Claude, con l'indirizzo e il codice pronti da copiare. Prima la funzione non si vedeva finché non la si era già usata." },
+    { categoria: "corretto", testo: "Su iPhone i campi non fanno più ingrandire la pagina a ogni tocco." },
+    { categoria: "corretto", testo: "L'elenco degli allenamenti non si ferma più ai 30 più recenti: «Mostra allenamenti precedenti» carica quelli prima." },
+    { categoria: "corretto", testo: "Il bilancio energetico confronta l'obiettivo con le calorie mangiate, come il diario. Prima sottraeva anche gli allenamenti, già compresi nell'obiettivo, e chi si allenava sembrava avere più margine di quello vero. Superare un obiettivo minimo non è più segnato in rosso." },
+    { categoria: "modificato", testo: "Il calcolatore degli obiettivi è pensato per adulti: non scende sotto 1200 kcal per le donne e 1500 per gli uomini, con un indice di massa corporea sopra 30 calcola le proteine su un peso di riferimento, e ricorda che non sostituisce il parere di un medico." },
+    { categoria: "modificato", testo: "Le notifiche con «Annulla» restano 10 secondi e si fermano finché ci tieni sopra il dito o il mouse. Gli errori restano finché non li chiudi." },
+    { categoria: "corretto", testo: "Le scritte verdi e gialle, come «Pagata» o «Salvato», si leggono bene anche con il tema chiaro." },
     { categoria: "sicurezza", testo: "L'app gira su Next.js 16, una versione ancora supportata che riceve le correzioni di sicurezza. Next.js 15 è uscito dal supporto il 21 ottobre." },
     { categoria: "aggiunto", testo: "Quando esce una nuova versione, l'app aperta lo dice e si aggiorna con un tocco. Prima, dopo un rilascio, i salvataggi fallivano finché non la si chiudeva e riapriva." },
     { categoria: "corretto", testo: "Da telefono si arriva a Peso, Piatti, Catalogo esercizi e Miei esercizi: il menu in alto («Vai a») elenca le pagine che non stanno nella barra in basso. Prima da telefono non c'era modo di raggiungerle." },

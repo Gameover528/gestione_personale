@@ -152,6 +152,20 @@ export interface Obiettivo {
   tipo: "min" | "max";
 }
 
+/**
+ * Come sta un valore rispetto a un obiettivo. Per un massimo, superarlo è un
+ * problema; per un minimo è il traguardo. Il diario lo faceva già, ma i
+ * riquadri della dashboard coloravano di rosso qualunque superamento, anche
+ * quello di chi deve mangiare almeno tot per aumentare la massa.
+ */
+export function esitoObiettivo(
+  valore: number,
+  ob: Pick<Obiettivo, "valore" | "tipo">
+): "ok" | "oltre" | "mancante" {
+  if (ob.tipo === "max") return valore <= ob.valore ? "ok" : "oltre";
+  return valore >= ob.valore ? "ok" : "mancante";
+}
+
 export interface ConValori100 extends Valori100 {
   quantita_g: number;
 }
@@ -393,21 +407,71 @@ export function metabolismoBasale(d: DatiCorporei): number {
  * - grassi: 25% delle calorie; carboidrati: quello che resta;
  * - fibre: 14 g ogni 1000 kcal (indicazione OMS/EFSA).
  */
+/**
+ * Gli intervalli entro cui il calcolo ha senso. Le formule (Mifflin-St Jeor,
+ * fattori di attività) sono pensate per adulti: sotto i 18 anni i fabbisogni
+ * sono altri, e un peso o un'altezza fuori scala vuol dire quasi sempre un
+ * errore di battitura, non una persona.
+ */
+export const LIMITI_CORPO = {
+  eta: { min: 18, max: 100, nome: "L'età", unita: "anni" },
+  peso_kg: { min: 30, max: 300, nome: "Il peso", unita: "kg" },
+  altezza_cm: { min: 120, max: 230, nome: "L'altezza", unita: "cm" },
+} as const;
+
+/** Il primo dato fuori dagli intervalli, detto in italiano; null se vanno tutti bene. */
+export function problemaDatiCorporei(d: DatiCorporei): string | null {
+  for (const chiave of ["eta", "peso_kg", "altezza_cm"] as const) {
+    const { min, max, nome, unita } = LIMITI_CORPO[chiave];
+    if (d[chiave] < min || d[chiave] > max) {
+      return chiave === "eta" && d.eta < min
+        ? "Il calcolo è pensato per adulti: sotto i 18 anni i fabbisogni sono diversi, e conviene chiedere a un pediatra o a un dietista."
+        : `${nome} deve stare fra ${min} e ${max} ${unita}.`;
+    }
+  }
+  return null;
+}
+
+/**
+ * Le calorie sotto cui il calcolatore non scende: 1200 per le donne, 1500 per
+ * gli uomini, le soglie comunemente indicate per una dieta senza controllo
+ * medico. Prima non c'era un minimo, e a una donna di 60 anni e 45 kg che
+ * voleva dimagrire venivano proposte circa 950 kcal.
+ */
+export function kcalMinime(d: Pick<DatiCorporei, "sesso">): number {
+  return d.sesso === "uomo" ? 1500 : 1200;
+}
+
 export function obiettiviProposti(d: DatiCorporei): {
   kcal: number;
   proteine: number;
   grassi: number;
   carboidrati: number;
   fibre: number;
+  /** Il calcolo dava meno del minimo, e le calorie sono state alzate. */
+  alMinimo: boolean;
+  /** Le proteine sono calcolate su un peso di riferimento, non su quello attuale. */
+  proteineSuPesoRiferimento: boolean;
 } {
   const mantenimento = metabolismoBasale(d) * d.attivita;
   const fattore =
     d.obiettivo === "perdere" ? 0.85 : d.obiettivo === "aumentare" ? 1.1 : 1;
-  const kcal = Math.round((mantenimento * fattore) / 10) * 10;
+  const calcolate = Math.round((mantenimento * fattore) / 10) * 10;
+  const kcal = Math.max(calcolate, kcalMinime(d));
+
+  /*
+    Le proteine si danno per chilo di massa che le usa, non di peso totale:
+    con un BMI sopra 30, 2 g per kg di peso portavano a 300 g al giorno per
+    150 kg. Si usa il peso che corrisponde a un BMI di 25 per quell'altezza.
+  */
+  const altezzaM = d.altezza_cm / 100;
+  const bmi = d.peso_kg / (altezzaM * altezzaM);
+  const proteineSuPesoRiferimento = bmi > 30;
+  const pesoProteine = proteineSuPesoRiferimento ? 25 * altezzaM * altezzaM : d.peso_kg;
 
   const gPerKg =
     d.obiettivo === "perdere" ? 2 : d.obiettivo === "aumentare" ? 1.8 : 1.6;
-  const proteine = Math.round(d.peso_kg * gPerKg);
+  const proteine = Math.round(pesoProteine * gPerKg);
   const grassi = Math.round((kcal * 0.25) / 9);
   const carboidrati = Math.max(
     0,
@@ -415,7 +479,15 @@ export function obiettiviProposti(d: DatiCorporei): {
   );
   const fibre = Math.round((kcal / 1000) * 14);
 
-  return { kcal, proteine, grassi, carboidrati, fibre };
+  return {
+    kcal,
+    proteine,
+    grassi,
+    carboidrati,
+    fibre,
+    alMinimo: kcal > calcolate,
+    proteineSuPesoRiferimento,
+  };
 }
 
 // ----------------------- Ordinamento dei risultati di ricerca -----------------------

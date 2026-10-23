@@ -71,8 +71,8 @@ export function Badge({
 }) {
   const styles: Record<BadgeVariant, string> = {
     default: "bg-accent text-foreground",
-    success: "bg-success/15 text-success",
-    warning: "bg-warning/15 text-warning",
+    success: "bg-success/15 text-success-testo",
+    warning: "bg-warning/15 text-warning-testo",
     destructive: "bg-destructive/15 text-destructive",
   };
   return (

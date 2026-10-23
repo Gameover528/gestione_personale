@@ -165,7 +165,7 @@ function Migrazioni({ elenco, storico }: { elenco?: string[]; storico?: boolean 
 
   return (
     <div className="flex gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning-testo" />
       <div>
         <p className="font-medium">Richiede interventi sul database</p>
         <ul className="mt-1 space-y-0.5 text-muted-foreground">

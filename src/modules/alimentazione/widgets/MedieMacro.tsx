@@ -76,7 +76,7 @@ export function MedieMacro({
                     <span
                       className={cn(
                         "text-xs",
-                        rispettato ? "text-success" : "text-destructive"
+                        rispettato ? "text-success-testo" : "text-destructive"
                       )}
                     >
                       {target.tipo === "max" ? "max" : "min"}{" "}

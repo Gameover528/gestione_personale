@@ -15,6 +15,14 @@
   --destructive: 0 72% 51%;
   --success: 142 71% 45%;
   --warning: 38 92% 50%;
+  /*
+    Verde e giallo come TESTO. --success e --warning sono fatti per riempire
+    (pallini, sfondi, barre): come testo sul bianco danno 2,3:1 e 2,1:1, e
+    "Pagata" o "Salvato" si leggevano a fatica. Questi arrivano a 6,0:1 e
+    6,7:1 sulla card e restano sopra 5,4:1 sugli sfondi grigi (minimo 4,5).
+  */
+  --success-testo: 142 72% 26%;
+  --warning-testo: 32 95% 28%;
 
   /*
     Colori delle serie nei grafici.
@@ -53,6 +61,9 @@
   --destructive: 0 63% 55%;
   --success: 142 60% 50%;
   --warning: 38 92% 55%;
+  /* Sul fondo scuro i colori pieni reggono gia' come testo (oltre 6,7:1). */
+  --success-testo: 142 60% 50%;
+  --warning-testo: 38 92% 55%;
 
   /* Stesse tre tinte, ma ricalibrate sul fondo scuro: non sono un
      ribaltamento automatico di quelle chiare, sono state verificate come
@@ -71,4 +82,26 @@ body {
   color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/*
+  Sui telefoni i campi scrivono a 16 px almeno.
+
+  Safari su iPhone ingrandisce la pagina a ogni campo con il testo sotto i
+  16 px, e non torna indietro da solo: i campi erano a 14 px (text-sm) e la
+  data del diario a 12, quindi a ogni inserimento bisognava rimettere lo zoom
+  con due dita. Una regola sola invece di una correzione per campo: i campi
+  scritti a mano sono decine, e il prossimo nascerebbe di nuovo piccolo.
+
+  "pointer: coarse" vuol dire dito, non mouse: sul desktop restano come sono.
+  !important perché le classi di Tailwind (text-sm) vincerebbero su un
+  selettore di elemento. Non si usa maximum-scale=1 nel viewport: toglierebbe
+  lo zoom a chi ne ha bisogno per leggere.
+*/
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }

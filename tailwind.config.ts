@@ -16,8 +16,8 @@ const config: Config = {
         "primary-foreground": "hsl(var(--primary-foreground))",
         accent: "hsl(var(--accent))",
         destructive: "hsl(var(--destructive))",
-        success: "hsl(var(--success))",
-        warning: "hsl(var(--warning))",
+        success: { DEFAULT: "hsl(var(--success))", testo: "hsl(var(--success-testo))" },
+        warning: { DEFAULT: "hsl(var(--warning))", testo: "hsl(var(--warning-testo))" },
       },
       borderRadius: {
         lg: "0.75rem",

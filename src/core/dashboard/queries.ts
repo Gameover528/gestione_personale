@@ -51,8 +51,8 @@ export interface BilancioEnergetico {
   mangiate: number;
   /** Calorie bruciate oggi allenandosi (stima). */
   bruciate: number;
-  /** Obiettivo giornaliero di kcal, se impostato. */
-  obiettivo: number | null;
+  /** Obiettivo giornaliero di kcal, se impostato, col suo tipo (minimo o massimo). */
+  obiettivo: { valore: number; tipo: "min" | "max" } | null;
 }
 
 /**
@@ -76,6 +76,9 @@ export async function bilancioEnergetico(): Promise<BilancioEnergetico> {
   return {
     mangiate: Math.round(giorno?.kcal ?? 0),
     bruciate: allenamento.kcalOggi,
-    obiettivo: obiettivoKcal ? Math.round(obiettivoKcal.valore) : null,
+    obiettivo:
+      obiettivoKcal && obiettivoKcal.valore > 0
+        ? { valore: Math.round(obiettivoKcal.valore), tipo: obiettivoKcal.tipo }
+        : null,
   };
 }

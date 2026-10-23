@@ -31,7 +31,7 @@ export function AvvisoDati({
   return (
     <span
       title={messaggio}
-      className={`inline-flex shrink-0 items-center text-warning ${className}`}
+      className={`inline-flex shrink-0 items-center text-warning-testo ${className}`}
     >
       <AlertTriangle className="h-4 w-4" aria-hidden />
       <span className="sr-only">{messaggio}</span>
@@ -50,7 +50,7 @@ export function AvvisoDatiEsteso({ valori }: { valori: ValoriNutrizionali }) {
 
   return (
     <div className="flex gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning-testo" aria-hidden />
       <p>{messaggio}</p>
     </div>
   );

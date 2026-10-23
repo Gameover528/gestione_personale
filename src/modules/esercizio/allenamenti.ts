@@ -121,9 +121,12 @@ async function attributiEsercizi(
   return mappa;
 }
 
-export async function listAllenamenti(limite = 30): Promise<AllenamentoRiepilogo[]> {
+export async function listAllenamenti(limiteRichiesto = 30): Promise<AllenamentoRiepilogo[]> {
   const user = await requireSessionUser();
   const db = getDb();
+  // Il numero arriva dal client (l'elenco ne chiede di più a ogni "Mostra
+  // precedenti"): un intero fra 1 e 1000, qualunque cosa sia stato mandato.
+  const limite = Math.min(Math.max(Math.trunc(Number(limiteRichiesto)) || 30, 1), 1000);
 
   const { results } = await db
     .prepare(

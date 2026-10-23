@@ -383,7 +383,7 @@ export function AndamentoAlimentazione({
                         <span
                           className={cn(
                             "text-xs",
-                            rispettato ? "text-success" : "text-destructive"
+                            rispettato ? "text-success-testo" : "text-destructive"
                           )}
                         >
                           {ob.tipo === "max" ? "max" : "min"}{" "}

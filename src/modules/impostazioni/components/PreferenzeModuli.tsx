@@ -87,7 +87,7 @@ export function PreferenzeModuli() {
             >
               {saving ? "Salvataggio…" : "Salva"}
             </button>
-            {salvato && <span className="text-sm text-success">Salvato</span>}
+            {salvato && <span className="text-sm text-success-testo">Salvato</span>}
           </form>
         )}
       </Card>
@@ -167,7 +167,7 @@ function GiorniAllenamento() {
           >
             {saving ? "Salvataggio…" : "Salva"}
           </button>
-          {salvato && <span className="text-sm text-success">Salvato</span>}
+          {salvato && <span className="text-sm text-success-testo">Salvato</span>}
           <p className="w-full text-xs text-muted-foreground">
             Zero significa nessun obiettivo: l&apos;Andamento si limita a contare
             i giorni in cui ti sei allenato.

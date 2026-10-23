@@ -6,6 +6,8 @@ import {
   ATTIVITA,
   OBIETTIVI_PESO,
   obiettiviProposti,
+  problemaDatiCorporei,
+  kcalMinime,
   type DatiCorporei,
 } from "../types";
 import { NumberField, inputClass } from "@/core/components/controls";
@@ -55,11 +57,14 @@ export function CalcolaObiettivi({
   };
   const completo =
     dati.eta > 0 && dati.peso_kg > 0 && dati.altezza_cm > 0;
-  const proposta = completo ? obiettiviProposti(dati) : null;
+  // Fuori dagli intervalli non si propone niente: un numero calcolato su
+  // un'età di 12 anni o un peso di 500 kg sembrerebbe affidabile e non lo è.
+  const fuoriScala = completo ? problemaDatiCorporei(dati) : null;
+  const proposta = completo && !fuoriScala ? obiettiviProposti(dati) : null;
 
   async function applica() {
     if (!proposta) {
-      setErrore("Compila età, peso e altezza.");
+      setErrore(fuoriScala ?? "Compila età, peso e altezza.");
       return;
     }
     setErrore(null);
@@ -173,10 +178,29 @@ export function CalcolaObiettivi({
             {proposta.carboidrati} g · grassi {proposta.grassi} g · fibre{" "}
             {proposta.fibre} g
           </span>
+          {proposta.alMinimo && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Il calcolo dava meno di {kcalMinime(dati)} kcal: le abbiamo portate
+              a {kcalMinime(dati)}, la soglia sotto cui non scendere senza
+              seguire un medico.
+            </p>
+          )}
+          {proposta.proteineSuPesoRiferimento && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Le proteine sono calcolate sul peso corrispondente a un indice di
+              massa corporea di 25, non sul peso attuale: per chilo di peso
+              totale sarebbero troppe.
+            </p>
+          )}
         </div>
       )}
 
-      {errore && <p className="text-sm text-destructive">{errore}</p>}
+      {fuoriScala && (
+        <p role="alert" className="text-sm text-destructive">
+          {fuoriScala}
+        </p>
+      )}
+      {errore && !fuoriScala && <p className="text-sm text-destructive">{errore}</p>}
 
       <button
         onClick={applica}
@@ -188,6 +212,16 @@ export function CalcolaObiettivi({
       <p className="text-xs text-muted-foreground">
         I valori finiscono nei campi qui sotto: puoi modificarli prima di
         salvare.
+      </p>
+      {/*
+        Fissa, non in fondo a una pagina di termini: è qui che si decide
+        quanto mangiare. Prima nel calcolatore non c'era nessuna avvertenza.
+      */}
+      <p className="rounded-md border border-warning/50 bg-warning/10 p-3 text-xs">
+        Sono stime per adulti in buona salute e non sostituiscono il parere di
+        un medico o di un dietista. Se sei in gravidanza o allatti, hai una
+        malattia, prendi farmaci che influiscono sul peso o hai avuto disturbi
+        alimentari, chiedi a un professionista prima di seguire questi valori.
       </p>
     </div>
   );
