@@ -101,6 +101,7 @@ export const NON_RILASCIATO: NonRilasciato | null = {
     { categoria: "modificato", testo: "Notifiche, finestre e menu dal basso si aprono con un breve movimento, le barre si riempiono quando arrivano i dati e bottoni e schede rispondono al tocco. Se sul telefono hai chiesto meno movimento, l'app resta ferma." },
     { categoria: "corretto", testo: "In modifica della dashboard i pulsanti per spostare e togliere un riquadro, il cambio tema e i colori del Profilo sono abbastanza grandi da toccarli col dito." },
     { categoria: "corretto", testo: "Le scritte rosse, come «Scaduta», si leggono bene anche con il tema scuro." },
+    { categoria: "corretto", testo: "Sui grafici, facendo scorrere il dito a destra e a sinistra si leggono i valori dei giorni, invece di spostare la pagina." },
   ],
 };
 

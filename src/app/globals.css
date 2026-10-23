@@ -111,3 +111,17 @@ body {
     font-size: 16px !important;
   }
 }
+
+/*
+  Sui grafici il dito che va a destra e a sinistra legge i giorni, non sposta
+  la pagina.
+
+  Recharts mostra il valore sotto il dito mentre lo trascini, ma il browser si
+  prendeva il gesto e faceva scorrere la pagina: per vedere i dati di una
+  settimana bisognava toccare le barre una per una. pan-y lascia al browser
+  solo lo scorrimento verticale, così la pagina si scorre ancora passando sopra
+  un grafico. Una regola sola per tutti i grafici, come per i campi qui sopra.
+*/
+.recharts-wrapper {
+  touch-action: pan-y;
+}

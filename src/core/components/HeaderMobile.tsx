@@ -199,7 +199,14 @@ function Foglio({
       ref={ref}
       onClick={onClickVelo}
       aria-label={titolo ?? "Profilo"}
-      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none flex-col justify-end bg-transparent p-0 text-foreground backdrop:bg-black/50 motion-safe:backdrop:animate-velo-entra open:flex"
+      /*
+        overflow-clip: a scorrere è il pannello, non il <dialog>. Mentre il
+        foglio sale parte sotto lo schermo, e il browser scorreva il <dialog>
+        per mostrare il primo pulsante: il foglio saltava in cima e poi
+        ridiscendeva. Non overflow-hidden, che taglia ma si lascia ancora
+        scorrere dal focus.
+      */
+      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none flex-col justify-end overflow-clip bg-transparent p-0 text-foreground backdrop:bg-black/50 motion-safe:backdrop:animate-velo-entra open:flex"
     >
       {/* Sale dal bordo in basso: dice da dove arriva e dove si richiude. */}
       <div className="relative max-h-[80vh] overflow-y-auto rounded-t-lg border-t bg-card pb-[env(safe-area-inset-bottom)] pt-3 shadow-xl motion-safe:animate-foglio-su">
