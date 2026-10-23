@@ -4,6 +4,8 @@
 
 Fatto il 22/10/2026 su `main` @ `63ca41e`.
 
+**Stato al 23/10/2026**, verificato sul codice a `develop` @ `2ab1c50`: 21 voci fatte e spuntate, 15 fatte in parte (◐, con cosa manca), 153 aperte. Ogni voce toccata ha una riga con il commit che l'ha sistemata.
+
 **Come è stato fatto.** Dodici revisori hanno letto il codice da prospettive diverse: accesso, bollette, alimentazione, esercizio, impostazioni, grafica, sicurezza e legale, affidabilità, accessibilità, concorrenti, flussi, commerciale. Hanno prodotto 317 osservazioni. Un verificatore scettico per revisore le ha ricontrollate sul codice: 314 confermate o ridimensionate, 3 smentite. Le voci doppie sono state unite in 177, e un critico ha cercato cosa mancava (11 voci in più). Infine un giro dal vivo da telefono con un utente appena creato, e un controllo a mano di 10 delle voci più pesanti, risultate vere tutte e 10.
 
 Ogni voce ha l'evidenza (file:riga, o la ricerca fatta per dire che qualcosa manca). I percorsi sono relativi a `src/` dove non indicato. Le caselle si spuntano anche in Obsidian.
@@ -37,18 +39,18 @@ Sforzo: S ore · M 1-2 giorni · L una settimana · XL più settimane.
 
 Bug veri, quasi tutti di sforzo S. Alcuni perdono dati in silenzio: il carico con la virgola, l'allegato rimosso, la pesata sovrascritta dalla chat. Uno rompe l'app oltre una soglia che un utente costante raggiunge in un anno: 100 allenamenti.
 
-- [ ] **GRA-01** Peso, Piatti, Catalogo e Miei esercizi non raggiungibili da telefono — sforzo S
-- [ ] **AFF-01** Con 100 o più allenamenti si rompono Andamento e i riquadri della dashboard Salute — sforzo S
-- [ ] **ESE-02** Con la virgola decimale il carico viene salvato vuoto — sforzo S
-- [ ] **CON-02** 'Rimuovi' sull'allegato cancella subito il file, anche se poi si annulla — sforzo S
-- [ ] **CON-01** Gli allegati sopra 1 MB non si caricano — sforzo S
-- [ ] **ALI-26** La ricerca alimenti usa un endpoint di Open Food Facts che risponde 503 circa una volta su tre — sforzo S
-- [ ] **AFF-03** Errori e 404 mostrano le pagine inglesi di Next, senza via d'uscita — sforzo S
-- [ ] **ESE-01** Pressa 45° e hack squat chiedono minuti e km invece di ripetizioni e kg — sforzo S
-- [ ] **IMP-02** Una chat può sovrascrivere una pesata scritta dall'utente, contro quanto promette il consenso — sforzo S
-- [ ] **ACC-01** Dopo il login si perde la pagina richiesta e il collegamento della chat si interrompe — sforzo S
-- [ ] **ALI-01** Il '+' centrale aggiunge sempre a oggi, anche guardando un altro giorno — sforzo S
-- [ ] **AFF-05** Dopo ogni rilascio l'app già aperta sul telefono smette di salvare — sforzo M
+- [x] **GRA-01** Peso, Piatti, Catalogo e Miei esercizi non raggiungibili da telefono — sforzo S
+- [x] **AFF-01** Con 100 o più allenamenti si rompono Andamento e i riquadri della dashboard Salute — sforzo S
+- [x] **ESE-02** Con la virgola decimale il carico viene salvato vuoto — sforzo S
+- [x] **CON-02** 'Rimuovi' sull'allegato cancella subito il file, anche se poi si annulla — sforzo S
+- [x] **CON-01** Gli allegati sopra 1 MB non si caricano — sforzo S
+- [x] **ALI-26** La ricerca alimenti usa un endpoint di Open Food Facts che risponde 503 circa una volta su tre — sforzo S
+- [x] **AFF-03** Errori e 404 mostrano le pagine inglesi di Next, senza via d'uscita — sforzo S
+- [ ] **ESE-01** Pressa 45° e hack squat chiedono minuti e km invece di ripetizioni e kg — sforzo S · ◐ in parte
+- [x] **IMP-02** Una chat può sovrascrivere una pesata scritta dall'utente, contro quanto promette il consenso — sforzo S
+- [x] **ACC-01** Dopo il login si perde la pagina richiesta e il collegamento della chat si interrompe — sforzo S
+- [x] **ALI-01** Il '+' centrale aggiunge sempre a oggi, anche guardando un altro giorno — sforzo S
+- [ ] **AFF-05** Dopo ogni rilascio l'app già aperta sul telefono smette di salvare — sforzo M · ◐ in parte
 
 ### Decisioni da prendere prima di vendere (non sono codice)
 
@@ -108,8 +110,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Grafica e navigazione
 
-- [ ] **GRA-01 · Peso, Piatti, Catalogo e Miei esercizi non raggiungibili da telefono**  
+- [x] **GRA-01 · Peso, Piatti, Catalogo e Miei esercizi non raggiungibili da telefono**  
   🔴 bloccante · sforzo S (ore) · Navigazione mobile / Salute
+
+  > ✅ **Fatta** · commit `46dbc6d`. Su telefono il foglio 'Vai a' elenca le pagine fuori barra (Peso, Piatti, Schede, Catalogo, Miei esercizi), lette dalla configurazione dei moduli; il messaggio sui piatti ora porta alla pagina Piatti.
 
   Le voci fuoriBarra mancano dalla barra in basso, e la sidebar sotto lg è nascosta. Nessuna pagina ha un link a /peso, /alimentazione/piatti, /esercizio/catalogo o /esercizio/miei. Da telefono quindi non si registra il peso, non si correggono o eliminano i piatti e non si creano esercizi personali. Il messaggio 'Creane uno nella sezione Piatti' porta a un vicolo cieco.
 
@@ -132,6 +136,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 - [ ] **SIC-03 · Reset della password da admin: nessun cambio obbligato, nessuna verifica d'identità, nessuna traccia**  
   🟠 alta · sforzo M (1-2 giorni) · Impostazioni › Utenti
+
+  > ◐ **In parte** · commit `e1b6339`. Le password scelte da un admin vanno cambiate al primo accesso e scadono (24 h la temporanea, 7 giorni quella di un account nuovo). La password di un admin la reimposta solo il superadmin. **Manca:** Nessuna azione dell'admin viene registrata (niente tabella di audit, l'utente non vede chi ha reimpostato la password) e non c'è verifica dell'identità di chi chiede il reset; un admin può ancora generare la temporanea di un utente ed entrare nei suoi dati.
 
   Qualsiasi admin può generare una password temporanea per qualunque account non superadmin, altri admin compresi, ed entrare nei suoi dati sanitari. Non c'è verifica di chi chiede il reset. Niente obbliga a cambiare la temporanea o le password scelte dall'admin alla creazione dell'account. Nessuna azione dell'admin viene registrata. Il titolare se ne accorge solo perché le sue sessioni si chiudono.
 
@@ -188,8 +194,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Accesso e account
 
-- [ ] **ACC-01 · Dopo il login si perde la pagina richiesta e il collegamento della chat si interrompe**  
+- [x] **ACC-01 · Dopo il login si perde la pagina richiesta e il collegamento della chat si interrompe**  
   🟠 alta · sforzo S (ore) · Middleware / login / OAuth
+
+  > ✅ **Fatta** · commit `46dbc6d`. Middleware e requireSessionUser rimandano a /login?next=; il login passa la destinazione in un campo nascosto e loginAction ci torna, consenso OAuth compreso, con controllo contro gli open redirect anche dopo la normalizzazione.
 
   Il redirect a /login non conserva la destinazione, e loginAction porta sempre a /consumi-costi. Chi collega Claude da un browser senza sessione, cioè quasi sempre da telefono, fa il login e finisce sulla dashboard: il consenso OAuth si perde. Succede lo stesso con la scorciatoia PWA 'Aggiungi un pasto' a sessione scaduta. Il commento della pagina di consenso dice il contrario.
 
@@ -208,8 +216,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Grafica e navigazione
 
-- [ ] **GRA-02 · Su iPhone ogni campo fa ingrandire la pagina**  
+- [x] **GRA-02 · Su iPhone ogni campo fa ingrandire la pagina**  
   🟠 alta · sforzo S (ore) · Tutti i form (inputClass), data del Diario
+
+  > ✅ **Fatta** · commit `f961163`. Sui dispositivi touch una regola CSS porta a 16 px tutti i campi, compresa la data del Diario, senza usare maximum-scale.
 
   inputClass usa text-sm (14 px) e il selettore della data del Diario text-xs (12 px). Safari su iOS ingrandisce la pagina su ogni campo con testo sotto i 16 px e non torna indietro da solo: a ogni inserimento l'utente deve riportare lo zoom con due dita.
 
@@ -219,8 +229,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Accessibilità
 
-- [ ] **A11Y-01 · I toast con 'Annulla' e gli errori spariscono in 4-8 secondi**  
+- [x] **A11Y-01 · I toast con 'Annulla' e gli errori spariscono in 4-8 secondi**  
   🟠 alta · sforzo S (ore) · Toast
+
+  > ✅ **Fatta** · commit `f961163`. I toast con Annulla restano 10 s e si fermano sotto il dito, il mouse o il focus. Gli errori restano finché non vengono chiusi, in una regione role=alert separata.
 
   I timer sono fissi e non si fermano al tocco o al focus. Il toast è l'unico modo di annullare 12 azioni distruttive, che non chiedono conferma. Gli errori spariscono dopo 4 s e passano dalla stessa regione 'polite' delle conferme (WCAG 2.2.1).
 
@@ -228,8 +240,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: core/components/Toast.tsx:41-42, :56-59, :68; 12 occorrenze di 'label: Annulla'</sub>
 
-- [ ] **A11Y-02 · Verde e giallo usati come testo sono quasi illeggibili in tema chiaro**  
+- [x] **A11Y-02 · Verde e giallo usati come testo sono quasi illeggibili in tema chiaro**  
   🟠 alta · sforzo S (ore) · Badge di stato e conferme
+
+  > ✅ **Fatta** · commit `f961163`. Nuovi token di testo per verde e giallo (contrasto circa 6:1 sul bianco), usati nei Badge e in tutte le conferme al posto di --success e --warning.
 
   --success e --warning servono per colori pieni ma vengono usati come testo, con contrasto 2,30:1 e 2,14:1 sulla card. Le etichette 'Pagata', 'Da dividere', '3g' e 'Salvato' si leggono a fatica.
 
@@ -246,8 +260,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: core/theme/palette.ts:174-191; ProfiloSettings.tsx:220-223; BarraInferiore.tsx:71; HeaderMobile.tsx:81; controls.tsx:15 (focus:ring-primary); 19 occorrenze di text-primary</sub>
 
-- [ ] **A11Y-04 · Le finestre modali non gestiscono il focus**  
+- [x] **A11Y-04 · Le finestre modali non gestiscono il focus**  
   🟠 alta · sforzo M (1-2 giorni) · Modale, Foglio, pannello widget, avviso doppione
+
+  > ✅ **Fatta** · commit `e1b6339`. Modale riscritta su `<dialog>` nativo: focus dentro la finestra, pagina sotto inerte, Esc chiude, il focus torna al pulsante di partenza. Foglio, pannello widget e avviso doppione usano la stessa base.
 
   All'apertura il focus resta sulla pagina sotto, Tab prosegue dietro il velo e alla chiusura il focus non torna al pulsante di partenza. Il primo elemento tabulabile è il velo 'Chiudi'. Il pannello widget e l'avviso doppione sono ancora copie scritte a mano, e l'avviso non si chiude con Esc.
 
@@ -257,8 +273,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Affidabilità e prestazioni
 
-- [ ] **AFF-01 · Con 100 o più allenamenti si rompono Andamento e i riquadri della dashboard Salute**  
+- [x] **AFF-01 · Con 100 o più allenamenti si rompono Andamento e i riquadri della dashboard Salute**  
   🟠 alta · sforzo S (ore) · Esercizio / Andamento / Dashboard Salute
+
+  > ✅ **Fatta** · commit `46dbc6d`. La IN con un parametro per allenamento ora è una sottoquery a parametri fissi, e attributiEsercizi lavora a blocchi da 90.
 
   listAllenamenti costruisce una clausola IN con un segnaposto per ogni allenamento. D1 accetta al massimo 100 parametri, mentre il SQLite locale non ha questo limite, quindi in sviluppo non si vede. riepilogoAllenamento ne usa 101 e andamentoAllenamenti fino a 500. Oltre i 100 allenamenti la pagina Andamento va in errore e i riquadri Bilancio e Riepilogo restano su '…'. attributiEsercizi ha lo stesso schema.
 
@@ -275,8 +293,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: README.md:130; docs/sviluppo.md:16-17; middleware.ts:152-163; alimentazione/queries.ts:276-291; esercizio/queries.ts:104-132; bollette/queries.ts:161-171</sub>
 
-- [ ] **AFF-03 · Errori e 404 mostrano le pagine inglesi di Next, senza via d'uscita**  
+- [x] **AFF-03 · Errori e 404 mostrano le pagine inglesi di Next, senza via d'uscita**  
   🟠 alta · sforzo S (ore) · Tutta l'app (PWA)
+
+  > ✅ **Fatta** · commit `46dbc6d`. Pagine di errore e 404 in italiano dentro l'app, con Riprova, ritorno all'inizio e codice dell'errore. Nel middleware un try/catch risponde 503 con una pagina 'Servizio momentaneamente non disponibile' se D1 non risponde.
 
   Mancano error.tsx, global-error.tsx e not-found.tsx. Un errore del server mostra 'Application error…' in inglese senza menu, e notFound() mostra '404 This page could not be found'. Nell'app installata a schermo intero non c'è nemmeno il tasto indietro del browser. Anche il middleware interroga D1 senza try/catch.
 
@@ -287,6 +307,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 - [ ] **AFF-04 · Riquadri ed elenchi restano su '…' o 'Caricamento…' all'infinito quando il server fallisce**  
   🟠 alta · sforzo M (1-2 giorni) · Dashboard, Bollette, Abbonamenti, Allenamento, Andamento
 
+  > ◐ **In parte** · commit `e1b6339`. Le letture di widget, elenchi, dettagli e Andamento gestiscono l'errore con StatoErrore e Riprova: niente più caricamento infinito e niente messaggi sulle migration. **Manca:** Il salvataggio della disposizione della dashboard non gestisce ancora l'errore: persist usa try/finally senza catch, e 'Salvato' compare durante il salvataggio, anche se poi fallisce.
+
   Nei .tsx ci sono 33 .then() e 9 .catch(). Widget, elenchi bollette e abbonamenti, dettaglio allenamento e Andamento restano bloccati in caricamento se la chiamata fallisce. Il changelog dichiara il problema corretto, ma la correzione copre solo l'Esercizio, dove i messaggi parlano di 'migration del database'. Nemmeno 'Salvato' del layout gestisce l'errore.
 
   **Proposta:** Un hook comune useDati(fn) che restituisca {dati, errore, riprova} e un componente <StatoErrore> ('Non riesco a caricare i dati. Controlla la connessione e riprova'), usati ovunque. Togliere il gergo delle migration. Aggiungere una regola di lint su .then senza catch.
@@ -296,6 +318,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 - [ ] **AFF-05 · Dopo ogni rilascio l'app già aperta sul telefono smette di salvare**  
   🟠 alta · sforzo M (1-2 giorni) · Rilasci / PWA
 
+  > ◐ **In parte** · commit `46dbc6d`. L'app confronta la propria build con /api/versione (al ritorno in primo piano, ogni 5 minuti e dopo un errore di server action o di chunk) e mostra l'avviso 'nuova versione' con Aggiorna. **Manca:** Niente skew protection e nessuna chiave fissa per le server action: dopo un rilascio i salvataggi dal codice vecchio falliscono ancora finché l'utente non tocca 'Aggiorna'.
+
   Gli ID delle server action cambiano a ogni build e ogni push su main va in produzione. La PWA lasciata aperta continua a usare il JS vecchio e riceve 'Failed to find Server Action' o chunk mancanti: i pasti non si salvano finché l'utente non chiude e riapre l'app, e nessuno glielo dice.
 
   **Proposta:** Attivare la skew protection di OpenNext, o almeno fissare NEXT_SERVER_ACTIONS_ENCRYPTION_KEY. Intercettare gli errori di azione o chunk mancante con un avviso 'Nuova versione disponibile: tocca per aggiornare'.
@@ -304,8 +328,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Consumi e Costi
 
-- [ ] **CON-01 · Gli allegati sopra 1 MB non si caricano**  
+- [x] **CON-01 · Gli allegati sopra 1 MB non si caricano**  
   🟠 alta · sforzo S (ore) · Bollette - allegati
+
+  > ✅ **Fatta** · commit `46dbc6d`. Il caricamento passa da una route POST dedicata con limite di 10 MB, controllato su client e server, e messaggi in italiano. I file già caricati vengono cancellati se il salvataggio fallisce.
 
   Il file passa come argomento della server action uploadAllegato, e Next limita il corpo delle server action a 1 MB. Nel progetto il limite non è alzato. Le bollette scansionate e molti PDF dei gestori lo superano, e in quel caso compare un errore generico e tecnico. Manca anche un controllo della dimensione lato client.
 
@@ -313,8 +339,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: BollettaForm.tsx:101-115 e :140-143 (mostra err.message); bollette/queries.ts:161-172; next.config.mjs senza serverActions.bodySizeLimit; ricerca 'bodySizeLimit|file.size' in src: nessun risultato</sub>
 
-- [ ] **CON-02 · 'Rimuovi' sull'allegato cancella subito il file, anche se poi si annulla**  
+- [x] **CON-02 · 'Rimuovi' sull'allegato cancella subito il file, anche se poi si annulla**  
   🟠 alta · sforzo S (ore) · Bollette - modifica
+
+  > ✅ **Fatta** · commit `46dbc6d`. 'Rimuovi' toglie il PDF solo dal modulo, con avviso e 'Ripristina'; il file si cancella da KV solo dopo un salvataggio riuscito, quindi Annulla non perde niente. Mancano i pulsanti Sostituisci e Apri, ma sostituire passando da Rimuovi ora è sicuro.
 
   In modifica, 'Rimuovi' cancella subito il PDF da KV, prima del salvataggio e senza conferma. Se l'utente preme Annulla, la bolletta resta collegata a un file che non esiste più e il documento è perso. Per sostituire un allegato bisogna per forza passare da 'Rimuovi'.
 
@@ -322,8 +350,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: BollettaForm.tsx:149-159 (removeAllegato al clic), :309-349 (nessun input di sostituzione), :362-368 (Annulla = router.back); bollette/queries.ts:181-185</sub>
 
-- [ ] **CON-03 · Abbonamenti senza addebito automatico: ogni rata va spuntata a mano**  
+- [x] **CON-03 · Abbonamenti senza addebito automatico: ogni rata va spuntata a mano**  
   🟠 alta · sforzo S (ore) · Abbonamenti
+
+  > ✅ **Fatta** · commit `e1b6339`. Casella 'Addebito automatico', attiva di default: le rate scadute nascono pagate alla loro data. Nel dettaglio c'è 'Segna pagate le arretrate', con Annulla.
 
   Tutte le rate nascono 'da_pagare', anche quelle addebitate in automatico, che sono la maggior parte. Un abbonamento iniziato due anni fa genera subito circa 24 rate arretrate da spuntare una per una, e intanto la dashboard segnala debiti che non esistono.
 
@@ -333,8 +363,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Alimentazione
 
-- [ ] **ALI-01 · Il '+' centrale aggiunge sempre a oggi, anche guardando un altro giorno**  
+- [x] **ALI-01 · Il '+' centrale aggiunge sempre a oggi, anche guardando un altro giorno**  
   🟠 alta · sforzo S (ore) · Diario (telefono)
+
+  > ✅ **Fatta** · commit `46dbc6d`. Nel diario il '+' della barra porta con sé il ?data= del giorno mostrato.
 
   Su telefono il pulsante Aggiungi del diario, che passa ?data=, è nascosto, e il '+' della barra porta sempre ad /alimentazione/aggiungi senza data. Chi guarda ieri e tocca '+' registra il pasto oggi.
 
@@ -342,8 +374,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: BarraInferiore.tsx:54; alimentazione/module.config.ts:30-34; DiarioGiorno.tsx:300-308 (hidden lg:inline-flex); RicercaAggiungi.tsx:86-89</sub>
 
-- [ ] **ALI-02 · Il calcolatore degli obiettivi non ha limiti di sicurezza né avvertenze sanitarie**  
+- [x] **ALI-02 · Il calcolatore degli obiettivi non ha limiti di sicurezza né avvertenze sanitarie**  
   🟠 alta · sforzo S (ore) · Obiettivi (calcolatore)
+
+  > ✅ **Fatta** · commit `f961163`. Intervalli validati (età 18-100, peso 30-300, altezza 120-230), minimo di 1200/1500 kcal con spiegazione, proteine sul peso di riferimento oltre BMI 30 e un'avvertenza fissa su minori, gravidanza, disturbi alimentari e parere medico.
 
   Il calcolatore accetta qualsiasi età, peso e altezza e non ha un minimo di calorie: a una donna di 60 anni e 45 kg propone circa 950 kcal. Le proteine sono 2 g per kg di peso totale, quindi 300 g a 150 kg. Mancano avvertenze per minori, gravidanza e disturbi alimentari e il 'non sostituisce il parere medico'.
 
@@ -351,8 +385,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: alimentazione/types.ts:381-419; CalcolaObiettivi.tsx:56-58; ricerca 'medic|non sostituisce|gravidanz' in src: nessun risultato</sub>
 
-- [ ] **ALI-03 · Bilancio energetico: l'allenamento conta due volte e gli obiettivi 'minimo' risultano in rosso**  
+- [x] **ALI-03 · Bilancio energetico: l'allenamento conta due volte e gli obiettivi 'minimo' risultano in rosso**  
   🟠 alta · sforzo S (ore) · Bilancio energetico / Calorie / Diario
+
+  > ✅ **Fatta** · commit `f961163`. Come nel diario, l'obiettivo si confronta con le calorie mangiate; il netto, ancora calcolato con il MET lordo, resta solo come informazione. Superare un obiettivo minimo non diventa rosso, e c'è la spiegazione del calcolo.
 
   L'obiettivo calorico include già l'attività (fattore LAF), ma il bilancio sottrae anche le kcal stimate degli allenamenti, calcolate in modo lordo come MET×kg×ore: chi si allena crede di avere più margine di quello reale. Il diario confronta l'obiettivo con le calorie mangiate, la dashboard con il netto, quindi lo stesso giorno dà esiti opposti. Superare un obiettivo di tipo 'minimo' (aumento di massa) viene mostrato in rosso come un errore.
 
@@ -360,8 +396,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: alimentazione/types.ts:363-369, :381-384, :400; BilancioEnergetico.tsx:18, :25-47; CalorieOggiESettimana.tsx:62, :106-109; core/dashboard/queries.ts:74-79; DiarioGiorno.tsx:417-421; esercizio/met.ts:95-101</sub>
 
-- [ ] **ALI-26 · La ricerca alimenti usa un endpoint di Open Food Facts che risponde 503 circa una volta su tre**  
+- [x] **ALI-26 · La ricerca alimenti usa un endpoint di Open Food Facts che risponde 503 circa una volta su tre**  
   🟠 alta · sforzo S (ore) · Alimentazione / Aggiungi
+
+  > ✅ **Fatta** · commit `46dbc6d`. La ricerca usa prima search.openfoodfacts.org e tiene /cgi/search.pl come ripiego, con un timeout per ogni tentativo.
 
   cercaOFF interroga il vecchio /cgi/search.pl. Nel giro dal vivo, un utente nuovo che cercava 'parmigiano' ha visto 'Gli archivi esterni non hanno risposto' e non poteva aggiungere niente se non a mano. È il flusso principale dell'area Salute. Misurato su 9 chiamate: /cgi/search.pl ha dato 503 in 3 casi su 9 (sia it. sia world.), mentre search.openfoodfacts.org (il motore nuovo, 'search-a-licious') ha risposto 3 volte su 3 in circa 200 ms. I 3 tentativi da 400 ms di fetchConRetry non bastano quando il 503 dura qualche secondo.
 
@@ -371,6 +409,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 - [ ] **ALI-04 · La ricerca su Open Food Facts non ha timeout e rischia di superare il limite di richieste**  
   🟠 alta · sforzo M (1-2 giorni) · Aggiungi (ricerca)
+
+  > ◐ **In parte** · commit `46dbc6d`. Timeout di 4 s per tentativo; il motore nuovo, più veloce, va per primo e senza retry, e il ripiego search.pl scende a 2 tentativi. **Manca:** Il User-Agent non ha un contatto, fetchConRetry ritenta anche dopo un 4xx (429 compreso) e niente protegge dal limite di circa 10 ricerche al minuto dagli IP di Cloudflare.
 
   La ricerca usa search.pl, che è lento, con fetch senza timeout e 3 tentativi, anche dopo una risposta 429. Tutte le richieste partono dagli IP di Cloudflare con un User-Agent senza contatto, e OFF limita a circa 10 ricerche al minuto. Con qualche decina di utenti a pranzo, il flusso principale risponde 'archivi non raggiungibili' o resta in attesa a lungo.
 
@@ -387,8 +427,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: Ricerca 'barcode|BarcodeDetector|zxing|getUserMedia' in src: nessun risultato; alimentazione/queries.ts:445; middleware.ts:85-86 (camera=())</sub>
 
-- [ ] **ALI-06 · I carboidrati si contano in tre modi diversi (le fibre USDA due volte)**  
+- [x] **ALI-06 · I carboidrati si contano in tre modi diversi (le fibre USDA due volte)**  
   🟠 alta · sforzo M (1-2 giorni) · Diario, Andamento, Dashboard
+
+  > ✅ **Fatta** · commit `e1b6339`. Una sola convenzione (carboidrati con le fibre) in diario, Andamento, widget e chat; i dati USDA tolgono le fibre dai carboidrati 'by difference', così non si contano due volte.
 
   Il diario somma carboidrati e fibre, mentre Andamento e i widget usano i carboidrati senza fibre: lo stesso giorno ha due valori e l'obiettivo risulta rispettato in un posto e sforato nell'altro. USDA dichiara i carboidrati 'by difference', che includono già le fibre, quindi per quegli alimenti le fibre si contano due volte.
 
@@ -410,14 +452,18 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 - [ ] **ESE-01 · Pressa 45° e hack squat chiedono minuti e km invece di ripetizioni e kg**  
   🟠 alta · sforzo S (ore) · Allenamento / Schede
 
+  > ◐ **In parte** · commit `46dbc6d`. Il cardio ora è un elenco esplicito di macchine invece della regola MET ≥ 7, e il MET di 'sled machine' è sceso a 5: pressa, hack squat ed esercizi con la corda chiedono ripetizioni e kg. **Manca:** Il plank e gli altri esercizi a tempo chiedono ancora ripetizioni e kg, perché non esiste un tipo 'a tempo'. La corda ha ancora MET 8, quindi le calorie dei suoi esercizi (allungamenti compresi) restano gonfiate.
+
   Gli esercizi con MET ≥ 7 vengono trattati come cardio. 'sled machine' ha MET 8, quindi 18 esercizi di forza, tra cui la leg press, chiedono durata e distanza. Lo stesso succede a 10 esercizi su 11 con la corda. Il plank invece chiede ripetizioni e kg. Le calorie di questi esercizi risultano gonfiate.
 
   **Proposta:** Aggiungere al catalogo una colonna tipo (forza / cardio / a tempo), calcolata nello script di generazione con correzioni manuali e modificabile per singolo esercizio. Portare il MET di 'sled machine' a circa 5.
 
   <sub>Evidenza: esercizio/met.ts:34-35; AllenamentoDettaglio.tsx:33-38; SchedaDettaglio.tsx:238-240; d1/seed-esercizi.sql (18 righe 'sled machine' non cardio)</sub>
 
-- [ ] **ESE-02 · Con la virgola decimale il carico viene salvato vuoto**  
+- [x] **ESE-02 · Con la virgola decimale il carico viene salvato vuoto**  
   🟠 alta · sforzo S (ore) · Allenamento / Schede
+
+  > ✅ **Fatta** · commit `46dbc6d`. Carico, distanza e durata delle serie accettano la virgola; un valore non valido resta segnato in rosso, con un messaggio, invece di salvare null.
 
   Carico, distanza e durata usano type=number, letti con Number() e salvati quando si esce dal campo. Se il browser rifiuta '62,5' il valore diventa '', e salva() scrive peso_kg = null senza avviso: il carico sparisce e cambia anche la stima delle calorie.
 
@@ -425,8 +471,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: core/components/controls.tsx:25-30; AllenamentoDettaglio.tsx:199-251, :520-523, :571-614; SchedaDettaglio.tsx:256-260, :286-337</sub>
 
-- [ ] **ESE-03 · L'elenco mostra solo gli ultimi 30 allenamenti**  
+- [x] **ESE-03 · L'elenco mostra solo gli ultimi 30 allenamenti**  
   🟠 alta · sforzo S (ore) · Allenamenti
+
+  > ✅ **Fatta** · commit `f961163`. Elenco a pagine da 30 con 'Mostra allenamenti precedenti' (un elemento in più chiesto per sapere se ce ne sono altri). Il limite lato server è fra 1 e 1000.
 
   listAllenamenti() ha un limite predefinito di 30 e non c'è paginazione. Dopo due o tre mesi gli allenamenti più vecchi non si aprono più, e nessuna scritta avverte che l'elenco è troncato.
 
@@ -463,8 +511,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Impostazioni e chat
 
-- [ ] **IMP-01 · Nell'app non c'è nessuna guida per collegare una chat**  
+- [x] **IMP-01 · Nell'app non c'è nessuna guida per collegare una chat**  
   🟠 alta · sforzo S (ore) · Profilo › Chat collegate
+
+  > ✅ **Fatta** · commit `f961163`. Il riquadro è sempre visibile. Senza chat collegate mostra una guida in 3 passi con l'indirizzo /api/mcp e il Client ID da copiare, le istruzioni per i connettori di claude.ai e cosa può fare la chat.
 
   L'indirizzo /api/mcp e l'identificativo del client compaiono solo in docs/sviluppo.md. Il riquadro 'Chat collegate' resta nascosto finché non c'è un collegamento, quindi l'utente non sa nemmeno che la funzione esiste.
 
@@ -516,6 +566,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 - [ ] **SIC-08 · Upload degli allegati senza controlli lato server su tipo ed estensione**  
   🟡 media · sforzo S (ore) · Bollette - allegati
+
+  > ◐ **In parte** · commit `46dbc6d`. L'upload ora passa da una route POST che controlla sessione, origine, dimensione massima (10 MB) e firma %PDF-. Il file viene salvato sempre come .pdf con content-type application/pdf. La server action che si fidava del client è stata eliminata. **Manca:** La route GET /api/allegati/[...path] restituisce ancora i file senza Content-Disposition e senza una CSP default-src 'none'. Il nosniff arriva solo dal middleware, che salta i percorsi .svg/.png/.jpg. I file caricati prima della correzione vengono serviti con l'estensione e il content-type dichiarati allora.
 
   Il PDF viene verificato solo nel browser. Il server prende estensione e Content-Type da quanto dichiara il client, e la route li restituisce senza Content-Disposition né nosniff. Un .svg sfugge anche al middleware, che lo esclude. Oggi è sfruttabile solo contro sé stessi, ma con qualsiasi condivisione futura diventerebbe un XSS.
 
@@ -669,6 +721,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 - [ ] **GRA-04 · Grafici poco leggibili in tema scuro: tooltip bianco, assi grigi, colori fissi**  
   🟡 media · sforzo S (ore) · Grafici Recharts
 
+  > ◐ **In parte** · commit `2ab1c50`. In MacroOggi i colori fissi #3b82f6 e #cbd5e1 sono stati sostituiti dai token --serie-1 e --serie-2. In tema chiaro l'obiettivo arriva a circa 3,2:1. **Manca:** Il tooltip di Recharts è ancora quello predefinito a sfondo bianco, illeggibile in tema scuro. Nessun asse ha un fill per i tick, quindi restano #666, e non c'è un TooltipGrafico condiviso.
+
   Il tooltip ha sfondo bianco fisso mentre l'etichetta eredita il testo chiaro, quindi è invisibile in tema scuro. I tick #666 hanno contrasto 3,03:1 in scuro. In MacroOggi #3b82f6 e #cbd5e1 sono fissi, e l'obiettivo ha contrasto 1,48:1 in chiaro.
 
   **Proposta:** Un <TooltipGrafico> condiviso con i token card, border e foreground, e una costante tick con fill muted-foreground. In MacroOggi usare --serie-1 e una tinta ≥3:1 per l'obiettivo.
@@ -740,8 +794,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Accessibilità
 
-- [ ] **A11Y-05 · La torta 'Spesa per tipo' non ha legenda né valori, e i colori si confondono**  
+- [x] **A11Y-05 · La torta 'Spesa per tipo' non ha legenda né valori, e i colori si confondono**  
   🟡 media · sforzo S (ore) · Widget SpesaPerTipo
+
+  > ✅ **Fatta** · commit `2ab1c50`. La torta a sette colori è stata sostituita da barre orizzontali di un solo colore, con il nome del tipo e l'importo scritti accanto, come nell'anteprima del widget.
 
   Ci sono solo spicchi colorati, e tipo e importo si vedono con il tooltip, uno spicchio alla volta. Due verdi e la coppia rosso/ambra sono indistinguibili per chi ha un deficit cromatico, e non c'è alternativa testuale. L'anteprima nel pannello widget mostra barre, cioè un grafico diverso.
 
@@ -760,6 +816,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 - [ ] **A11Y-07 · L'esito dell'obiettivo è indicato solo dal colore**  
   🟡 media · sforzo S (ore) · Andamento / Medie macro
+
+  > ◐ **In parte** · commit `f961163`. Il verde dell'esito ora usa il token text-success-testo (circa 6:1) al posto di text-success (2,3:1). **Manca:** L'esito dell'obiettivo è ancora indicato solo dal colore, sia nel testo sia nella barra di MedieMacro. Mancano un'icona e una parola ('rispettato', 'superato', 'non raggiunto').
 
   Il valore dell'obiettivo diventa verde o rosso senza icone né parole (WCAG 1.4.1), e il verde ha contrasto 2,3:1.
 
@@ -796,6 +854,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 - [ ] **A11Y-11 · Gli errori dei moduli non vengono annunciati né collegati al campo**  
   🟡 media · sforzo M (1-2 giorni) · Tutti i form
+
+  > ◐ **In parte** · commit `46dbc6d`, `f961163`, `e1b6339`. Alcuni errori ora hanno role=alert: BollettaForm, CalcolaObiettivi, SchedaDettaglio, AllenamentoDettaglio e cambia-password. Le serie di AllenamentoDettaglio hanno aria-invalid e aria-describedby, e i toast di errore stanno in una regione role=alert. **Manca:** Restano circa 17 paragrafi rossi senza regione live e senza aria-invalid o aria-describedby: login, registrazione, abbonamenti, PiattoEditor, RicercaAggiungi, FormEsercizio, Profilo, Utenti, Peso e altri. Dopo 'Accedi' il lettore di schermo non dice ancora nulla. Mancano anche il componente MessaggioErrore condiviso e il focus sul primo campo errato.
 
   22 paragrafi rossi senza regione live e nessun aria-invalid o aria-describedby. Dopo 'Accedi' il lettore di schermo non dice nulla.
 
@@ -843,6 +903,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 - [ ] **AFF-10 · Allegati orfani, nessuna quota e tabelle tecniche mai ripulite**  
   🟡 media · sforzo M (1-2 giorni) · Allegati KV / manutenzione dati
+
+  > ◐ **In parte** · commit `46dbc6d`. Se il salvataggio fallisce, i PDF appena caricati vengono cancellati subito. Quelli rimossi o sostituiti si cancellano solo dopo un salvataggio riuscito. **Manca:** Il PDF di una bolletta eliminata si cancella ancora con un setTimeout nel browser. Non c'è una quota per utente. Manca un Cron di pulizia per oauth_token, login_attempts, alimenti_cache e chiavi KV orfane, e le chat scadute restano in elenco.
 
   Il PDF di una bolletta eliminata si cancella con un setTimeout nel browser: se l'app si chiude prima, il file resta in KV per sempre, e così quelli caricati prima di un salvataggio fallito. Il conservare oltre lo scopo tocca l'art. 5.1.e. Non c'è quota per utente. Sessioni, oauth_token scaduti, login_attempts e alimenti_cache non hanno una pulizia programmata, e le chat scadute restano in elenco.
 
@@ -1064,6 +1126,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 - [ ] **ALI-10 · Gli obiettivi aperti dal diario mostrano il calcolatore vuoto e rischiano di essere cancellati**  
   🟡 media · sforzo S (ore) · Diario → finestra Obiettivi
 
+  > ◐ **In parte** · commit `e1b6339`. Aperto dal diario, il modulo mostra 'Caricamento…' finché non arrivano gli obiettivi. Se la lettura fallisce mostra StatoErrore con Riprova. Così 'Salva' non può più cancellare gli obiettivi salvando una lista vuota. **Manca:** Il calcolatore può ancora comparire vuoto. Il modulo si mostra appena arrivano gli obiettivi, mentre i dati corporei arrivano con una chiamata separata che può finire dopo. CalcolaObiettivi non ha una key e legge i campi solo al primo render, quindi resta vuoto, anche se il pulsante dice già 'Ricalcola dai miei dati'.
+
   La finestra carica i dati dopo l'apertura, ma CalcolaObiettivi fissa i campi al primo render. Su una rete lenta, 'Salva' prima del caricamento esegue saveObiettivi([]), che cancella tutti gli obiettivi.
 
   **Proposta:** Mostrare uno stato di caricamento con Salva disabilitato, e montare il calcolatore solo dopo la lettura (key legata ai dati) o passare gli iniziali dal server.
@@ -1272,8 +1336,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Impostazioni e chat
 
-- [ ] **IMP-02 · Una chat può sovrascrivere una pesata scritta dall'utente, contro quanto promette il consenso**  
+- [x] **IMP-02 · Una chat può sovrascrivere una pesata scritta dall'utente, contro quanto promette il consenso**  
   🟡 media · sforzo S (ore) · Chat collegate (registra_peso)
+
+  > ✅ **Fatta** · commit `46dbc6d`. registra_peso sostituisce solo le pesate scritte da una chat. Quelle dell'utente non le tocca (peso, nota e fonte restano) e risponde con un messaggio chiaro. Una pesata salvata o ripristinata dall'app diventa dell'utente. annulla_aggiunta ora toglie anche le pesate della chat. Così il consenso in oauth/authorize/page.tsx:120 dice il vero.
 
   Il consenso promette che la chat 'Non potrà toccare quello che hai scritto tu dall'app', ma registra_peso fa un upsert sul giorno: sostituisce la pesata, cambia la fonte, cancella la nota, e annulla_aggiunta non la recupera.
 
@@ -1514,6 +1580,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 - [ ] **A11Y-14 · Riordino dei widget: annunci in inglese e nessuna alternativa al trascinamento**  
   ⚪ bassa · sforzo S (ore) · Dashboard (Personalizza)
 
+  > ◐ **In parte** · commit `2ab1c50`. La maniglia e il pulsante che toglie il widget ora misurano 44 px su telefono e hanno un aria-label con il titolo del widget. **Manca:** Gli annunci di dnd-kit sono ancora in inglese, perché il DndContext non ha la prop accessibility. Su telefono manca ancora un'alternativa al trascinamento, come i pulsanti 'Sposta prima' e 'Sposta dopo'.
+
   dnd-kit usa testi predefiniti in inglese. Su telefono si può solo trascinare (WCAG 2.5.7). Le maniglie misurano 24 px e hanno title generici.
 
   **Proposta:** Passare accessibility in italiano, aggiungere 'Sposta prima' e 'Sposta dopo' da 44 px e aria-label con il titolo del widget.
@@ -1531,6 +1599,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 - [ ] **A11Y-16 · L'impostazione 'Riduci movimento' non viene rispettata**  
   ⚪ bassa · sforzo S (ore) · Tutta l'app
+
+  > ◐ **In parte** · commit `2ab1c50`. Gli ingrandimenti (scale) sul colore scelto e sul widget trascinato sono stati tolti e sostituiti da un anello e un'ombra. In src non resta nessuna classe scale. **Manca:** In src non c'è nessuna media query prefers-reduced-motion. Con 'Riduci movimento' attivo restano le transizioni: quella del body in globals.css:90, le classi transition di 35 componenti e l'animazione di riordino di dnd-kit.
 
   Transizioni e ingrandimenti non si disattivano con prefers-reduced-motion.
 
@@ -1607,6 +1677,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 - [ ] **CON-21 · La disdetta funziona diversamente tra elenco e dettaglio**  
   ⚪ bassa · sforzo S (ore) · Abbonamenti
+
+  > ◐ **In parte** · commit `2ab1c50`. Dal dettaglio la disdetta ora è immediata, con toast e Annulla come nell'elenco, senza confirm() nativo. L'Annulla rimette lo stato precedente. **Manca:** 'Riattiva' compare ancora solo per gli abbonamenti sospesi, non per i disdetti. Non c'è ancora un campo data_fine per indicare quando la disdetta ha effetto.
 
   Dall'elenco la disdetta è immediata con Annulla. Dal dettaglio parte un confirm() nativo che dice 'non è reversibile'. 'Riattiva' compare solo per i sospesi, e non si può indicare una data di effetto.
 
@@ -1784,6 +1856,8 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 - [ ] **IMP-08 · Preferenze: errori silenziosi e campi senza etichetta collegata**  
   ⚪ bassa · sforzo S (ore) · Preferenze moduli / Utenti
+
+  > ◐ **In parte** · commit `e1b6339`. Se la lettura delle preferenze fallisce, ora compare StatoErrore con Riprova al posto di un riquadro vuoto. **Manca:** Un salvataggio fallito non mostra ancora nessun messaggio (try/finally senza catch). Le label 'Persone' non hanno htmlFor e il select del ruolo in UtentiSettings.tsx:159 non ha etichetta. Un campo vuoto si salva ancora come 0, senza minimo 1.
 
   Se il caricamento fallisce il riquadro resta vuoto, e se il salvataggio fallisce non compare nessun messaggio. Le label 'Persone' non hanno htmlFor e il select del ruolo non ha etichetta. Un campo vuoto viene salvato come 0.
 
