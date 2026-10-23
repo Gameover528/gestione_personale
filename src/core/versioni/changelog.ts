@@ -93,8 +93,6 @@ export function dataBuild(): string | null {
 
 export const NON_RILASCIATO: NonRilasciato | null = {
   migrazioni: [
-    "0014 — password da cambiare al primo accesso",
-    "0015 — addebito automatico degli abbonamenti",
   ],
   modifiche: [
   ],
@@ -105,6 +103,10 @@ export const RILASCI: Rilascio[] = [
   {
     versione: "2026.10.23",
     data: "2026-10-23",
+    migrazioni: [
+      "0014 — password da cambiare al primo accesso",
+      "0015 — addebito automatico degli abbonamenti",
+    ],
     modifiche: [
       { categoria: "sicurezza", testo: "Una password scelta da un amministratore, per un account nuovo o come password temporanea, va cambiata al primo accesso e scade: dopo 24 ore la temporanea, dopo 7 giorni quella di un account nuovo. La password di un amministratore la può reimpostare solo il superadmin." },
       { categoria: "aggiunto", testo: "Abbonamenti con addebito automatico, attivo di default: le rate si segnano pagate da sole alla scadenza. Nel dettaglio di un abbonamento un pulsante segna pagate tutte insieme le rate arretrate, con Annulla." },
