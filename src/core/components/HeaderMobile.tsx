@@ -84,7 +84,7 @@ export function HeaderMobile({
                 aria-current={corrente ? "page" : undefined}
                 className={cn(
                   "flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition active:bg-accent",
-                  corrente && "font-semibold text-primary"
+                  corrente && "font-semibold text-primary-testo"
                 )}
               >
                 <Icon className="h-5 w-5" />
@@ -112,7 +112,7 @@ export function HeaderMobile({
                     aria-current={corrente ? "page" : undefined}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 text-sm transition active:bg-accent",
-                      corrente && "font-semibold text-primary"
+                      corrente && "font-semibold text-primary-testo"
                     )}
                   >
                     <Icon className="h-5 w-5" />

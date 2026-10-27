@@ -11,6 +11,14 @@
   --border: 214 32% 91%;
   --primary: 221 83% 53%;
   --primary-foreground: 210 40% 98%;
+  /*
+    L'accento come testo (link, voce attiva della barra) e come anello di
+    focus: stessa tinta, luminosita' spostata finche' regge 4,5:1 su pagina,
+    card, muted e accent (il testo) e 3:1 su pagina e card (l'anello). Con un
+    colore scelto dal Profilo li ricalcola palette.ts.
+  */
+  --primary-testo: 221 83% 52%;
+  --primary-anello: 221 83% 53%;
   --accent: 210 40% 94%;
   --destructive: 0 72% 51%;
   --success: 142 71% 45%;
@@ -57,6 +65,9 @@
   --border: 222 25% 20%;
   --primary: 217 91% 60%;
   --primary-foreground: 222 47% 11%;
+  /* Il primary scuro come testo dava 4,0:1 su accent: qui 4,6. */
+  --primary-testo: 217 91% 64%;
+  --primary-anello: 217 91% 60%;
   --accent: 222 30% 18%;
   /*
     Piu' chiaro del rosso del tema chiaro perche' qui fa da testo ("Scaduta",

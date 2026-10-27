@@ -473,7 +473,7 @@ function AvvisoRimozione({
       <button
         type="button"
         onClick={onRipristina}
-        className="inline-flex min-h-11 items-center px-1 font-medium text-primary hover:underline lg:min-h-0"
+        className="inline-flex min-h-11 items-center px-1 font-medium text-primary-testo hover:underline lg:min-h-0"
       >
         Ripristina
       </button>

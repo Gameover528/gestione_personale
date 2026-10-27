@@ -189,7 +189,10 @@ export async function sospendiAbbonamentoAction(id: string): Promise<void> {
   await cambiaStato(id, "sospeso", false);
 }
 
-/** Riattiva un abbonamento sospeso: la generazione riparte da oggi, senza recuperare le rate saltate. */
+/**
+ * Riattiva un abbonamento sospeso o disdetto: la generazione riparte da oggi,
+ * senza recuperare le rate del periodo in cui era fermo.
+ */
 export async function riattivaAbbonamentoAction(id: string): Promise<void> {
   await cambiaStato(id, "attivo", true);
 }
@@ -364,13 +367,23 @@ export async function riepilogoAbbonamenti(
         arretrata: aperta.data_scadenza <= oggi,
       };
     }
+    /*
+      La prima data del ciclo che generaRateMancanti creerà davvero: non prima
+      di oggi, perché le rate fino a oggi sono già state generate qui sopra, e
+      non prima della ripresa, che quella funzione salta. Prima, per un
+      abbonamento riattivato dopo mesi, si leggeva la rata dopo l'ultima
+      generata, cioè una data passata, col badge "-195g" in cima all'elenco.
+    */
     const ultima = ultimaRata.get(a.id);
+    const soglia = a.data_ripresa && a.data_ripresa > oggi ? a.data_ripresa : oggi;
+    let prossima = ultima ? prossimaData(ultima, a.frequenza) : a.data_inizio;
+    for (let i = 0; prossima < soglia && i < MAX_RATE_PER_GENERAZIONE; i++) {
+      prossima = prossimaData(prossima, a.frequenza);
+    }
     return {
       abbonamento_id: a.id,
       nome: a.nome,
-      data_scadenza: ultima
-        ? prossimaData(ultima, a.frequenza)
-        : a.data_ripresa ?? a.data_inizio,
+      data_scadenza: prossima,
       importo: Number(a.importo),
       arretrata: false,
     };

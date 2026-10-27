@@ -323,7 +323,7 @@ export function BolletteList({
           </p>
           <Link
             href="/bollette/nuova"
-            className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+            className="mt-3 inline-block text-sm font-medium text-primary-testo hover:underline"
           >
             + Aggiungi la prima bolletta
           </Link>

@@ -251,7 +251,7 @@ function RigaSerie({
   }
 
   const campo =
-    "h-9 w-16 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-primary";
+    "h-9 w-16 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-primary-anello";
 
   const segnato = "border-destructive ring-1 ring-destructive";
 

@@ -202,7 +202,7 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
               type="checkbox"
               name="addebito_automatico"
               defaultChecked={abbonamento.addebito_automatico !== 0}
-              className="mt-0.5 h-5 w-5 shrink-0 accent-[hsl(var(--primary))]"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-primary-anello"
             />
             <span>
               <span className="font-medium">Addebito automatico</span>
@@ -236,7 +236,7 @@ export function AbbonamentoDettaglio({ abbonamento }: { abbonamento: Abbonamento
               Sospendi
             </button>
           )}
-          {abbonamento.stato === "sospeso" && (
+          {(abbonamento.stato === "sospeso" || abbonamento.stato === "disdetto") && (
             <button
               onClick={handleRiattiva}
               className={bottoneClass}

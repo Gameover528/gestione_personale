@@ -17,7 +17,7 @@ export default async function InAttesaPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md rounded-lg border bg-card p-8 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary-testo">
           <Hourglass className="h-6 w-6" />
         </div>
         <h1 className="text-xl font-semibold">Richiesta ricevuta</h1>
@@ -43,7 +43,7 @@ export default async function InAttesaPage() {
         <form action="/auth/signout" method="post" className="mt-4">
           <button
             type="submit"
-            className="text-sm text-primary hover:underline"
+            className="text-sm text-primary-testo hover:underline"
           >
             Esci
           </button>

@@ -102,7 +102,7 @@ export function CalcolaObiettivi({
         </div>
         <button
           onClick={() => setAperto(false)}
-          className="text-sm text-primary hover:underline"
+          className="text-sm text-primary-testo hover:underline"
         >
           chiudi
         </button>

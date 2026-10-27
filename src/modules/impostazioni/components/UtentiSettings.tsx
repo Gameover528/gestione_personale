@@ -159,10 +159,11 @@ export function UtentiSettings({
                       <select
                         value={u.ruolo === "admin" ? "admin" : "utilizzatore"}
                         disabled={inCorso}
+                        aria-label={`Ruolo di ${u.email}`}
                         onChange={(e) =>
                           cambiaRuolo(u.id, e.target.value as "admin" | "utilizzatore")
                         }
-                        className="rounded-md border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary"
+                        className="rounded-md border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary-anello"
                       >
                         <option value="utilizzatore">Utilizzatore</option>
                         <option value="admin">Admin</option>
@@ -249,7 +250,7 @@ export function UtentiSettings({
               name="email"
               type="email"
               required
-              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-anello"
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
@@ -262,7 +263,7 @@ export function UtentiSettings({
               type="password"
               required
               minLength={6}
-              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-anello"
             />
           </div>
           <button

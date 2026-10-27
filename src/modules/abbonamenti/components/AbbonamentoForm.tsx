@@ -86,7 +86,7 @@ export function AbbonamentoForm() {
           type="checkbox"
           name="addebito_automatico"
           defaultChecked
-          className="mt-0.5 h-5 w-5 shrink-0 accent-[hsl(var(--primary))]"
+          className="mt-0.5 h-5 w-5 shrink-0 accent-primary-anello"
         />
         <span>
           <span className="font-medium">Addebito automatico</span>

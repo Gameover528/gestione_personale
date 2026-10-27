@@ -5,7 +5,6 @@ import { StatoErrore } from "@/core/components/Dati";
 import {
   getBollettePreferenze,
   saveBollettePreferenze,
-  type BollettePreferenze,
 } from "../queries";
 import { ObiettiviForm } from "@/modules/alimentazione/components/ObiettiviForm";
 import {
@@ -13,12 +12,23 @@ import {
   savePreferenzeEsercizio,
 } from "@/modules/esercizio/queries";
 import { Card, CardTitle } from "@/core/components/ui";
+import { inputClass, bottonePrimarioClass } from "@/core/components/controls";
+import { useToast } from "@/core/components/Toast";
+import { cn } from "@/lib/utils";
+import { PERSONE_MAX } from "@/modules/bollette/types";
+
+/** Un intero dentro l'intervallo, o null: "" e "2,5" non diventano piu' 0 e 2. */
+function intero(testo: string, min: number, max: number): number | null {
+  if (!/^\d+$/.test(testo.trim())) return null;
+  const n = Number(testo);
+  return n >= min && n <= max ? n : null;
+}
 
 export function PreferenzeModuli() {
-  const [pref, setPref] = useState<BollettePreferenze>({
-    persone_tue: 3,
-    persone_altre: 2,
-  });
+  const toast = useToast();
+  // Testo, non numero: un campo svuotato resta vuoto invece di diventare 0.
+  const [pref, setPref] = useState({ persone_tue: "3", persone_altre: "2" });
+  const [invalido, setInvalido] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [salvato, setSalvato] = useState(false);
@@ -31,7 +41,7 @@ export function PreferenzeModuli() {
     setErrore(false);
     getBollettePreferenze()
       .then((p) => {
-        setPref(p);
+        setPref({ persone_tue: String(p.persone_tue), persone_altre: String(p.persone_altre) });
         setLoaded(true);
       })
       .catch(() => setErrore(true));
@@ -39,11 +49,24 @@ export function PreferenzeModuli() {
 
   async function salva(e: FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setSalvato(false);
+    const tue = intero(pref.persone_tue, 1, PERSONE_MAX);
+    const altre = intero(pref.persone_altre, 1, PERSONE_MAX);
+    if (tue === null || altre === null) {
+      setInvalido(true);
+      // Il focus sul campo da correggere fa rileggere l'errore anche al
+      // secondo tentativo, quando l'avviso e' gia' a video e non cambia.
+      document.getElementById(tue === null ? "persone-tue" : "persone-altre")?.focus();
+      return;
+    }
+    setInvalido(false);
+    setSaving(true);
     try {
-      await saveBollettePreferenze(pref);
+      await saveBollettePreferenze({ persone_tue: tue, persone_altre: altre });
       setSalvato(true);
+    } catch {
+      // Prima un salvataggio fallito non diceva niente: sembrava andato.
+      toast({ messaggio: "Non sono riuscito a salvare. Controlla la connessione e riprova.", tono: "errore" });
     } finally {
       setSaving(false);
     }
@@ -65,42 +88,50 @@ export function PreferenzeModuli() {
         {loaded && (
           <form onSubmit={salva} className="mt-3 flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">Persone (voi)</label>
+              <label htmlFor="persone-tue" className="text-sm font-medium">
+                Persone (voi)
+              </label>
               <input
-                type="number"
-                min={0}
+                id="persone-tue"
+                type="text"
+                inputMode="numeric"
                 value={pref.persone_tue}
-                onChange={(e) =>
-                  setPref((p) => ({ ...p, persone_tue: Number(e.target.value) }))
-                }
-                className="w-24 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => setPref((p) => ({ ...p, persone_tue: e.target.value }))}
+                aria-invalid={invalido && intero(pref.persone_tue, 1, PERSONE_MAX) === null}
+                aria-describedby={invalido ? "persone-errore" : undefined}
+                className={cn(inputClass, "w-24")}
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">
+              <label htmlFor="persone-altre" className="text-sm font-medium">
                 Persone (altra famiglia)
               </label>
               <input
-                type="number"
-                min={0}
+                id="persone-altre"
+                type="text"
+                inputMode="numeric"
                 value={pref.persone_altre}
-                onChange={(e) =>
-                  setPref((p) => ({
-                    ...p,
-                    persone_altre: Number(e.target.value),
-                  }))
-                }
-                className="w-24 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => setPref((p) => ({ ...p, persone_altre: e.target.value }))}
+                aria-invalid={invalido && intero(pref.persone_altre, 1, PERSONE_MAX) === null}
+                aria-describedby={invalido ? "persone-errore" : undefined}
+                className={cn(inputClass, "w-24")}
               />
             </div>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+              className={bottonePrimarioClass}
             >
               {saving ? "Salvataggio…" : "Salva"}
             </button>
-            {salvato && <span className="text-sm text-success-testo">Salvato</span>}
+            <span role="status" className="text-sm text-success-testo">
+              {salvato ? "Salvato" : ""}
+            </span>
+            {invalido && (
+              <p id="persone-errore" role="alert" className="w-full text-sm text-destructive">
+                Scrivi un numero intero da 1 a {PERSONE_MAX} in tutti e due i campi.
+              </p>
+            )}
           </form>
         )}
       </Card>
@@ -125,7 +156,9 @@ export function PreferenzeModuli() {
  * il confronto diventa "2 su 17" e ha un senso.
  */
 function GiorniAllenamento() {
-  const [giorni, setGiorni] = useState(0);
+  const toast = useToast();
+  const [giorni, setGiorni] = useState("0");
+  const [invalido, setInvalido] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [salvato, setSalvato] = useState(false);
@@ -136,7 +169,7 @@ function GiorniAllenamento() {
     setErrore(false);
     getPreferenzeEsercizio()
       .then((p) => {
-        setGiorni(p.giorniSettimana);
+        setGiorni(String(p.giorniSettimana));
         setLoaded(true);
       })
       .catch(() => setErrore(true));
@@ -144,11 +177,20 @@ function GiorniAllenamento() {
 
   async function salva(e: FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setSalvato(false);
+    const n = intero(giorni, 0, 7);
+    if (n === null) {
+      setInvalido(true);
+      document.getElementById("giorni-allenamento")?.focus();
+      return;
+    }
+    setInvalido(false);
+    setSaving(true);
     try {
-      await savePreferenzeEsercizio({ giorniSettimana: giorni });
+      await savePreferenzeEsercizio({ giorniSettimana: n });
       setSalvato(true);
+    } catch {
+      toast({ messaggio: "Non sono riuscito a salvare. Controlla la connessione e riprova.", tono: "errore" });
     } finally {
       setSaving(false);
     }
@@ -175,22 +217,30 @@ function GiorniAllenamento() {
             </label>
             <input
               id="giorni-allenamento"
-              type="number"
-              min={0}
-              max={7}
+              type="text"
+              inputMode="numeric"
               value={giorni}
-              onChange={(e) => setGiorni(Number(e.target.value))}
-              className="w-24 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              onChange={(e) => setGiorni(e.target.value)}
+              aria-invalid={invalido}
+              aria-describedby={invalido ? "giorni-errore" : undefined}
+              className={cn(inputClass, "w-24")}
             />
           </div>
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+            className={bottonePrimarioClass}
           >
             {saving ? "Salvataggio…" : "Salva"}
           </button>
-          {salvato && <span className="text-sm text-success-testo">Salvato</span>}
+          <span role="status" className="text-sm text-success-testo">
+            {salvato ? "Salvato" : ""}
+          </span>
+          {invalido && (
+            <p id="giorni-errore" role="alert" className="w-full text-sm text-destructive">
+              Scrivi un numero intero da 0 a 7.
+            </p>
+          )}
           <p className="w-full text-xs text-muted-foreground">
             Zero significa nessun obiettivo: l&apos;Andamento si limita a contare
             i giorni in cui ti sei allenato.

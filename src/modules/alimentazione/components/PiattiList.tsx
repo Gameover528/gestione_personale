@@ -67,7 +67,7 @@ export function PiattiList({ iniziali }: { iniziali: PiattoConValori[] }) {
             aria-label="Filtra i piatti"
             className={cn(
               "w-full rounded-md border bg-background py-2 pl-9 pr-3 text-sm outline-none",
-              "focus:ring-2 focus:ring-primary"
+              "focus:ring-2 focus:ring-primary-anello"
             )}
           />
         </div>

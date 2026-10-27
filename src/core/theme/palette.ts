@@ -120,6 +120,9 @@ const SOGLIA_NEUTRO = 0.1;
  */
 const CONTRASTO_MINIMO = 4.6;
 
+/** Lo stesso per contorni e anelli di focus, che chiedono 3:1. */
+const CONTRASTO_MINIMO_CONTORNI = 3.1;
+
 function hsl(h: number, s: number, l: number): string {
   return `${Math.round(h)} ${Math.round(s)}% ${Math.round(l)}%`;
 }
@@ -135,14 +138,16 @@ function hsl(h: number, s: number, l: number): string {
  */
 function perContrasto(
   colore: Hsl,
-  sfondo: Hsl,
+  sfondo: Hsl | Hsl[],
   verso: "piuScuro" | "piuChiaro",
-  limite: number
+  limite: number,
+  minimo = CONTRASTO_MINIMO
 ): Hsl {
+  const sfondi = Array.isArray(sfondo) ? sfondo : [sfondo];
   const passo = verso === "piuScuro" ? -0.01 : 0.01;
   let corrente = { ...colore };
-  for (let i = 0; i < 60; i++) {
-    if (contrasto(corrente, sfondo) >= CONTRASTO_MINIMO) break;
+  for (let i = 0; i < 80; i++) {
+    if (Math.min(...sfondi.map((s) => contrasto(corrente, s))) >= minimo) break;
     const l = corrente.l + passo;
     if (verso === "piuScuro" ? l < limite : l > limite) break;
     corrente = { ...corrente, l };
@@ -189,6 +194,29 @@ export function variabiliTema(
     suChiaro >= suScuro ? 0.3 : 0.8
   );
 
+  /*
+    L'accento non fa solo da fondo: è anche il colore dei collegamenti, della
+    voce attiva della barra e dell'anello di focus, cioè testo e contorni
+    sopra le superfici della pagina. Il controllo sopra guarda solo il testo
+    SUL primary, e con Verde o Ciano in tema chiaro il primary schiarito come
+    testo arrivava a 1,5:1. Due varianti con la stessa tinta, spostate di
+    luminosità quanto basta:
+    - primary-testo: 4,5:1 su pagina, card, muted e accent (testo normale);
+    - primary-anello: 3:1 su pagina e card (contorni e focus, WCAG 1.4.11).
+  */
+  const superfici: Hsl[] = chiaro
+    ? [sfondo, { h: 0, s: 0, l: 1 }, { h, s: 0.4 * m, l: 0.96 }, { h, s: 0.4 * m, l: 0.94 }]
+    : [sfondo, { h, s: 0.4 * m, l: 0.12 }, { h, s: 0.3 * m, l: 0.16 }, { h, s: 0.3 * m, l: 0.18 }];
+  const versoTesto = chiaro ? "piuScuro" : "piuChiaro";
+  const primaryTesto = perContrasto(primary, superfici, versoTesto, chiaro ? 0.15 : 0.92);
+  const primaryAnello = perContrasto(
+    primary,
+    superfici.slice(0, 2),
+    versoTesto,
+    chiaro ? 0.15 : 0.92,
+    CONTRASTO_MINIMO_CONTORNI
+  );
+
   // Il testo secondario cerca la luminosità che gli garantisce leggibilità.
   const secondario = perContrasto(
     chiaro ? { h, s: 0.16 * m, l: 0.47 } : { h, s: 0.2 * m, l: 0.65 },
@@ -223,6 +251,8 @@ export function variabiliTema(
     primaryForeground.s * 100,
     primaryForeground.l * 100
   );
+  vars["primary-testo"] = hsl(primaryTesto.h, primaryTesto.s * 100, primaryTesto.l * 100);
+  vars["primary-anello"] = hsl(primaryAnello.h, primaryAnello.s * 100, primaryAnello.l * 100);
 
   return vars;
 }

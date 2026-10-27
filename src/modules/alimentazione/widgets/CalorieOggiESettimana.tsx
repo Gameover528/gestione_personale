@@ -158,12 +158,12 @@ export default function CalorieOggiESettimana() {
         </div>
 
         <div className="flex justify-between text-sm">
-          <Link href="/alimentazione" className="text-primary hover:underline">
+          <Link href="/alimentazione" className="text-primary-testo hover:underline">
             Diario di oggi
           </Link>
           <Link
             href="/alimentazione/andamento"
-            className="text-primary hover:underline"
+            className="text-primary-testo hover:underline"
           >
             Andamento completo
           </Link>

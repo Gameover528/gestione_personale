@@ -43,7 +43,7 @@ export default function LoginPage({
               name="email"
               type="email"
               required
-              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-anello"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -56,7 +56,7 @@ export default function LoginPage({
               type="password"
               required
               minLength={6}
-              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-anello"
             />
           </div>
 
@@ -75,7 +75,7 @@ export default function LoginPage({
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Non hai un accesso?{" "}
-          <Link href="/registrati" className="text-primary hover:underline">
+          <Link href="/registrati" className="text-primary-testo hover:underline">
             Chiedilo
           </Link>
         </p>

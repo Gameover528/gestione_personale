@@ -86,7 +86,7 @@ export default async function AutorizzaPage({
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md rounded-lg border bg-card p-8 shadow-sm">
         <div className="mb-5 flex flex-col items-center gap-2 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary-testo">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <h1 className="text-xl font-semibold">Dare accesso a una chat?</h1>

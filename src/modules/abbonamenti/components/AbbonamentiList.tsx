@@ -115,7 +115,7 @@ export function AbbonamentiList() {
         </p>
         <Link
           href="/abbonamenti/nuovo"
-          className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+          className="mt-3 inline-block text-sm font-medium text-primary-testo hover:underline"
         >
           + Aggiungi il primo abbonamento
         </Link>
@@ -171,7 +171,9 @@ export function AbbonamentiList() {
                 <Pause className="h-5 w-5" />
               </IconButton>
             )}
-            {a.stato === "sospeso" && (
+            {/* Anche un disdetto si riattiva: si cambia idea, o si torna
+                allo stesso servizio. Le rate ripartono da oggi. */}
+            {(a.stato === "sospeso" || a.stato === "disdetto") && (
               <IconButton
                 label={`Riattiva ${a.nome}`}
                 onClick={() => handleRiattiva(a)}

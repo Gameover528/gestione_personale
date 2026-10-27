@@ -12,7 +12,13 @@ const config: Config = {
         card: "hsl(var(--card))",
         muted: "hsl(var(--muted))",
         "muted-foreground": "hsl(var(--muted-foreground))",
-        primary: "hsl(var(--primary))",
+        // primary per riempire; come testo (link, voce attiva) primary-testo,
+        // per anelli di focus e contorni di stato primary-anello: vedi palette.ts.
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          testo: "hsl(var(--primary-testo))",
+          anello: "hsl(var(--primary-anello))",
+        },
         "primary-foreground": "hsl(var(--primary-foreground))",
         accent: "hsl(var(--accent))",
         destructive: "hsl(var(--destructive))",

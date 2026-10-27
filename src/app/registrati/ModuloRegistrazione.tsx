@@ -12,7 +12,7 @@ import { Turnstile } from "./Turnstile";
 const initialState: RegistrazioneResult = {};
 
 const campoClass =
-  "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
+  "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-anello";
 
 export function ModuloRegistrazione({
   sitekey,
@@ -116,7 +116,7 @@ export function ModuloRegistrazione({
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Hai già un accesso?{" "}
-          <Link href="/login" className="text-primary hover:underline">
+          <Link href="/login" className="text-primary-testo hover:underline">
             Entra
           </Link>
         </p>

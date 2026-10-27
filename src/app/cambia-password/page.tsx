@@ -8,7 +8,7 @@ import { destinazioneSicura } from "@/lib/auth/destinazione";
 const iniziale: ImpostazioneResult = {};
 
 const campo =
-  "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary";
+  "rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-anello";
 
 /**
  * "Scegli la tua password", al primo accesso con una password decisa da un
@@ -28,7 +28,7 @@ export default function CambiaPasswordPage({
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm rounded-lg border bg-card p-8 shadow-sm">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary-testo">
             <KeyRound className="h-6 w-6" />
           </div>
           <h1 className="text-xl font-semibold">Scegli la tua password</h1>

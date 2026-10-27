@@ -89,7 +89,7 @@ function Voce({ voce, attiva }: { voce: VoceBarra; attiva: boolean }) {
       */
       className={cn(
         "group flex h-16 flex-col items-center justify-end gap-1 px-1 pb-2 transition",
-        attiva ? "text-primary" : "text-muted-foreground active:bg-accent"
+        attiva ? "text-primary-testo" : "text-muted-foreground active:bg-accent"
       )}
     >
       <span

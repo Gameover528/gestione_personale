@@ -72,6 +72,9 @@ export function divisioneLabel(d: StatoDivisione) {
   return DIVISIONI.find((x) => x.value === d)?.label ?? d;
 }
 
+/** Tetto alle persone di una divisione: oltre è certamente un errore di battitura. */
+export const PERSONE_MAX = 20;
+
 /**
  * Importo che l'altra famiglia deve recuperare (paghi sempre tu).
  * Quota altra famiglia = persone_altre / (persone_tue + persone_altre).

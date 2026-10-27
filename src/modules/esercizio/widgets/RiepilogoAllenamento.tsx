@@ -28,7 +28,7 @@ export default function RiepilogoAllenamentoWidget() {
         <Link
           href="/esercizio"
           prefetch={false}
-          className="text-sm font-medium text-primary hover:underline"
+          className="text-sm font-medium text-primary-testo hover:underline"
         >
           Registra un allenamento
         </Link>

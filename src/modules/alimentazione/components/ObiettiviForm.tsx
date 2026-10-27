@@ -50,6 +50,12 @@ export function ObiettiviForm({
     obiettivi veri, perché il salvataggio sostituisce tutto.
   */
   const [pronto, setPronto] = useState(iniziali !== undefined);
+  /*
+    Si aspettano anche i dati corporei: il calcolatore legge i suoi campi solo
+    quando compare, e se compariva prima del loro arrivo restava vuoto per
+    sempre, col pulsante che diceva già "Ricalcola dai miei dati".
+  */
+  const [corpoPronto, setCorpoPronto] = useState(datiCorporeiIniziali !== undefined);
   const [errore, setErrore] = useState(false);
   const [giro, setGiro] = useState(0);
 
@@ -65,7 +71,15 @@ export function ObiettiviForm({
     }
     // I dati corporei servono solo a precompilare il calcolatore: se non
     // arrivano, si compila a mano.
-    if (datiCorporeiIniziali === undefined) getDatiCorporei().then(setCorpo).catch(() => {});
+    if (datiCorporeiIniziali === undefined) {
+      // Anche al "Riprova": se restasse pronto dal giro fallito, il
+      // calcolatore comparirebbe di nuovo prima dei dati.
+      setCorpoPronto(false);
+      getDatiCorporei()
+        .then(setCorpo)
+        .catch(() => {})
+        .finally(() => setCorpoPronto(true));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [giro]);
 
@@ -112,7 +126,7 @@ export function ObiettiviForm({
   }
 
   if (errore) return <StatoErrore onRiprova={() => setGiro((g) => g + 1)} />;
-  if (!pronto) return <p className="text-sm text-muted-foreground">Caricamento…</p>;
+  if (!pronto || !corpoPronto) return <p className="text-sm text-muted-foreground">Caricamento…</p>;
 
   return (
     <div className="max-w-xl space-y-4">

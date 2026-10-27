@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Modale } from "@/core/components/Modale";
 import {
   DndContext,
@@ -35,6 +35,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/core/components/Toast";
 
 function spanClass(span?: 1 | 2 | 3) {
   if (span === 3) return "lg:col-span-3";
@@ -53,7 +54,20 @@ export function DashboardGrid({
   const [loaded, setLoaded] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [salvato, setSalvato] = useState(false);
   const [pannello, setPannello] = useState(false);
+  const toast = useToast();
+  // L'ultima disposizione salvata davvero e il numero dell'ultimo salvataggio
+  // partito: vedi persist().
+  const confermato = useRef<string[]>([]);
+  const ultimoSalvataggio = useRef(0);
+
+  // "Salvato" è una conferma, non uno stato: dopo un paio di secondi sparisce.
+  useEffect(() => {
+    if (!salvato) return;
+    const t = setTimeout(() => setSalvato(false), 2000);
+    return () => clearTimeout(t);
+  }, [salvato]);
 
   /**
    * Un sensore per ogni modo di puntare, invece del PointerSensor unico.
@@ -84,12 +98,15 @@ export function DashboardGrid({
       const base = saved ?? opzionali.map((w) => w.id);
       // Scarta gli id non più esistenti (widget rimossi o uniti) e quelli
       // diventati fissi, che ora vengono mostrati a parte.
-      setOrder(base.filter((id) => getWidget(id) && !getWidget(id)!.fisso));
+      const iniziale = base.filter((id) => getWidget(id) && !getWidget(id)!.fisso);
+      confermato.current = iniziale;
+      setOrder(iniziale);
       setLoaded(true);
     }).catch(() => {
       // Senza la disposizione salvata si mostra quella predefinita, invece
       // di una dashboard vuota: i riquadri ci sono comunque.
-      setOrder(opzionali.map((w) => w.id));
+      confermato.current = opzionali.map((w) => w.id);
+      setOrder(confermato.current);
       setLoaded(true);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,13 +147,40 @@ export function DashboardGrid({
     }
   }
 
+  /*
+    La griglia cambia subito e il salvataggio segue. Se non riesce si torna
+    all'ultima disposizione salvata davvero e lo si dice: prima "Salvato"
+    compariva mentre salvava, anche quando poi falliva, e al giro dopo i
+    riquadri tornavano dov'erano senza spiegazione.
+
+    Ogni salvataggio manda la disposizione intera, quindi conta solo l'ultimo
+    partito: se ne fallisce uno vecchio mentre uno più recente è ancora in
+    corso, decide quello recente. Tornare alla "prima" di ciascuno lasciava a
+    video, con due errori di fila, un ordine che il server non aveva.
+  */
   async function persist(next: string[]) {
+    const numero = ++ultimoSalvataggio.current;
     setOrder(next);
     setSaving(true);
+    setSalvato(false);
+    let riuscito = false;
     try {
       await saveDashboardLayout(macroAreaId, next);
+      confermato.current = next;
+      riuscito = true;
+    } catch {
+      if (numero === ultimoSalvataggio.current) {
+        setOrder(confermato.current);
+        toast({
+          messaggio: "Non sono riuscito a salvare la disposizione. Controlla la connessione e riprova.",
+          tono: "errore",
+        });
+      }
     } finally {
-      setSaving(false);
+      if (numero === ultimoSalvataggio.current) {
+        setSaving(false);
+        setSalvato(riuscito);
+      }
     }
   }
 
@@ -165,7 +209,9 @@ export function DashboardGrid({
       )}
 
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        {saving && <span className="text-xs text-muted-foreground">Salvato</span>}
+        <span role="status" className="text-xs text-muted-foreground">
+          {saving ? "Salvataggio…" : salvato ? "Salvato" : ""}
+        </span>
         <button
           onClick={() => setPannello(true)}
           className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition hover:bg-accent"
@@ -427,7 +473,7 @@ function SortableWidget({
           editMode && "ring-1 ring-border",
           // Sollevato: si vede quale riquadro si sta spostando. Ombra e anello,
           // senza ingrandirlo: nell'app non ci sono animazioni di dimensione.
-          isDragging && "shadow-lg ring-2 ring-primary"
+          isDragging && "shadow-lg ring-2 ring-primary-anello"
         )}
       >
         <div className="mb-3 flex items-center justify-between">

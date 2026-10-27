@@ -4,6 +4,7 @@ import { getDb } from "@/lib/cf";
 import { requireSessionUser, requireAdminUser } from "@/lib/auth/session";
 import { hashPassword } from "@/lib/auth/password";
 import { puoModificare, type Ruolo, type StatoAccount } from "@/lib/auth/roles";
+import { PERSONE_MAX } from "@/modules/bollette/types";
 
 export interface UtenteInfo {
   id: string;
@@ -173,13 +174,25 @@ export async function saveBollettePreferenze(
   preferenze: BollettePreferenze
 ): Promise<void> {
   const user = await requireSessionUser();
+  // L'argomento arriva dal client: si salvano solo i due campi, interi fra 1
+  // e PERSONE_MAX. Prima finiva nel database l'oggetto intero, chiavi
+  // comprese, e uno 0 rendeva la divisione senza senso.
+  const valido = (n: unknown) =>
+    Number.isInteger(n) && (n as number) >= 1 && (n as number) <= PERSONE_MAX;
+  if (!valido(preferenze?.persone_tue) || !valido(preferenze?.persone_altre)) {
+    throw new Error("Persone non valide");
+  }
+  const pulite: BollettePreferenze = {
+    persone_tue: preferenze.persone_tue,
+    persone_altre: preferenze.persone_altre,
+  };
   await getDb()
     .prepare(
       `insert into user_preferences (user_id, key, value, updated_at)
        values (?, ?, ?, datetime('now'))
        on conflict (user_id, key) do update set value = excluded.value, updated_at = excluded.updated_at`
     )
-    .bind(user.id, CHIAVE_PREFERENZE_BOLLETTE, JSON.stringify(preferenze))
+    .bind(user.id, CHIAVE_PREFERENZE_BOLLETTE, JSON.stringify(pulite))
     .run();
 }
 

@@ -15,7 +15,7 @@ export default async function EsitoPage() {
           quelli ammessi, quindi non è stato concesso niente.
         </p>
         <p className="mt-4 text-sm">
-          <a href="/" className="text-primary hover:underline">
+          <a href="/" className="text-primary-testo hover:underline">
             Torna all&apos;app
           </a>
         </p>

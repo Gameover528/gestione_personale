@@ -253,7 +253,7 @@ export function DiarioGiorno({
               value={giorno}
               onChange={(e) => vaiAlGiorno(e.target.value || oggi)}
               aria-label="Scegli il giorno"
-              className="rounded-md border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-md border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary-anello"
             />
           </div>
           <IconButton
@@ -326,12 +326,12 @@ export function DiarioGiorno({
                   type="date"
                   value={copiaDa}
                   onChange={(e) => setCopiaDa(e.target.value)}
-                  className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-anello"
                 />
               </label>
               <button
                 onClick={() => setCopiaDa(spostaGiorno(giorno, -1))}
-                className="mt-6 text-sm text-primary hover:underline"
+                className="mt-6 text-sm text-primary-testo hover:underline"
               >
                 il giorno prima
               </button>
@@ -558,7 +558,7 @@ export function DiarioGiorno({
                                   setEditPasto(e.target.value as Pasto)
                                 }
                                 aria-label="Pasto"
-                                className="rounded-md border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary"
+                                className="rounded-md border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary-anello"
                               >
                                 {PASTI.map((pp) => (
                                   <option key={pp.value} value={pp.value}>

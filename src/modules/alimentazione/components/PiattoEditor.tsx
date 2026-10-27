@@ -535,7 +535,7 @@ export function PiattoEditor({
         {tipo === "composto" && peso > 0 && (
           <button
             onClick={() => setPorzioneG(String(Math.round(peso)))}
-            className="text-sm text-primary hover:underline"
+            className="text-sm text-primary-testo hover:underline"
           >
             Usa il peso totale degli ingredienti ({Math.round(peso)} g)
           </button>

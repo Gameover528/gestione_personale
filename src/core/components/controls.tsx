@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * quei pixel rende tutto piu' leggibile in una schermata.
  */
 export const inputClass =
-  "min-h-11 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary lg:min-h-0";
+  "min-h-11 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-anello lg:min-h-0";
 
 /**
  * Il controllo si stringe appena sotto il dito. Sul telefono non c'e' hover:

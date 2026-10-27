@@ -102,6 +102,11 @@ export const NON_RILASCIATO: NonRilasciato | null = {
     { categoria: "corretto", testo: "In modifica della dashboard i pulsanti per spostare e togliere un riquadro, il cambio tema e i colori del Profilo sono abbastanza grandi da toccarli col dito." },
     { categoria: "corretto", testo: "Le scritte rosse, come «Scaduta», si leggono bene anche con il tema scuro." },
     { categoria: "corretto", testo: "Sui grafici, facendo scorrere il dito a destra e a sinistra si leggono i valori dei giorni, invece di spostare la pagina." },
+    { categoria: "corretto", testo: "Con qualunque colore scelto nel Profilo, collegamenti, voce attiva della barra e contorno del campo selezionato si leggono bene: prima con Verde, Verde acqua o Ciano nel tema chiaro quasi sparivano." },
+    { categoria: "aggiunto", testo: "Un abbonamento disdetto si può riattivare, dall'elenco o dal dettaglio: le rate ripartono da oggi. Dopo una riattivazione la dashboard indica la vera prossima rata, non più una data già passata." },
+    { categoria: "corretto", testo: "Se riordinare la dashboard non riesce a salvare, i riquadri tornano come prima e l'app lo dice. Prima «Salvato» compariva anche quando il salvataggio falliva." },
+    { categoria: "corretto", testo: "Nelle Preferenze un salvataggio fallito viene segnalato, e un campo lasciato vuoto non diventa più 0: le persone della divisione vanno da 1 a 20." },
+    { categoria: "corretto", testo: "Aperti dal diario, gli obiettivi mostrano il calcolatore già compilato con i tuoi dati, invece che vuoto." },
   ],
 };
 

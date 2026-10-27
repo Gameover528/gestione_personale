@@ -368,7 +368,7 @@ export function RicercaAggiungi({
     <div className="max-w-2xl space-y-5">
       <Link
         href={hrefDiario}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-testo hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
         Torna al diario
@@ -409,7 +409,7 @@ export function RicercaAggiungi({
           </span>
           <Link
             href={hrefDiario}
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-primary-testo hover:underline"
           >
             Vai al diario
           </Link>
@@ -578,7 +578,7 @@ export function RicercaAggiungi({
             <p className="text-sm text-muted-foreground">
               Nessun piatto salvato. Puoi crearne uno col <strong>+</strong> accanto
               alla ricerca, oppure dalla pagina{" "}
-              <Link href="/alimentazione/piatti" className="text-primary hover:underline">
+              <Link href="/alimentazione/piatti" className="text-primary-testo hover:underline">
                 Piatti
               </Link>
               .
@@ -683,7 +683,7 @@ export function RicercaAggiungi({
             </div>
             <button
               onClick={() => setSel(null)}
-              className="mt-1 text-sm text-primary hover:underline"
+              className="mt-1 text-sm text-primary-testo hover:underline"
             >
               ← Indietro
             </button>

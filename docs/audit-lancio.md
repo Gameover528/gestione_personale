@@ -4,7 +4,7 @@
 
 Fatto il 22/10/2026 su `main` @ `63ca41e`.
 
-**Stato al 23/10/2026**, verificato sul codice a `develop` @ `2ab1c50`: 21 voci fatte e spuntate, 15 fatte in parte (◐, con cosa manca), 153 aperte. Ogni voce toccata ha una riga con il commit che l'ha sistemata.
+**Stato al 27/10/2026**, verificato sul codice a `develop` @ `2ab1c50` più il quarto giro: 25 voci fatte e spuntate, 12 fatte in parte (◐, con cosa manca), 152 aperte. Ogni voce toccata ha una riga con il commit che l'ha sistemata.
 
 **Come è stato fatto.** Dodici revisori hanno letto il codice da prospettive diverse: accesso, bollette, alimentazione, esercizio, impostazioni, grafica, sicurezza e legale, affidabilità, accessibilità, concorrenti, flussi, commerciale. Hanno prodotto 317 osservazioni. Un verificatore scettico per revisore le ha ricontrollate sul codice: 314 confermate o ridimensionate, 3 smentite. Le voci doppie sono state unite in 177, e un critico ha cercato cosa mancava (11 voci in più). Infine un giro dal vivo da telefono con un utente appena creato, e un controllo a mano di 10 delle voci più pesanti, risultate vere tutte e 10.
 
@@ -251,8 +251,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: core/components/ui.tsx:74-75; globals.css:16-17; BolletteList.tsx:351-488; PreferenzeModuli.tsx:90,170; ProfiloSettings.tsx:275,326</sub>
 
-- [ ] **A11Y-03 · Il colore d'accento scelto dall'utente rende illeggibili link, voce attiva e anello di focus**  
+- [x] **A11Y-03 · Il colore d'accento scelto dall'utente rende illeggibili link, voce attiva e anello di focus**  
   🟠 alta · sforzo M (1-2 giorni) · Tema (tutta l'app)
+
+  > ✅ **Fatta** · quarto giro, 27/10/2026. Due varianti calcolate dal colore scelto: primary-testo (almeno 4,5:1 su pagina, card, muted e accent) per link e voce attiva, primary-anello (almeno 3:1) per focus, riquadro trascinato e caselle. Verificate su tutti i colori del Profilo nei due temi.
 
   La palette controlla solo il contrasto del testo sopra --primary, ma --primary è usato anche come colore del testo e come anello di focus. In tema chiaro il contrasto è 1,54:1 con Verde, 1,46 con Verde acqua, 2,01 con Ciano; in scuro 2,99 con Indaco. La schermata promette invece testi 'sempre leggibili'.
 
@@ -304,10 +306,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: find src/app error.tsx/not-found.tsx/global-error.tsx: nessun file; abbonamenti/[id]/page.tsx:13; catalogo/[id]/page.tsx:17; manifest.ts:19 (standalone); middleware.ts:152-163</sub>
 
-- [ ] **AFF-04 · Riquadri ed elenchi restano su '…' o 'Caricamento…' all'infinito quando il server fallisce**  
+- [x] **AFF-04 · Riquadri ed elenchi restano su '…' o 'Caricamento…' all'infinito quando il server fallisce**  
   🟠 alta · sforzo M (1-2 giorni) · Dashboard, Bollette, Abbonamenti, Allenamento, Andamento
 
-  > ◐ **In parte** · commit `e1b6339`. Le letture di widget, elenchi, dettagli e Andamento gestiscono l'errore con StatoErrore e Riprova: niente più caricamento infinito e niente messaggi sulle migration. **Manca:** Il salvataggio della disposizione della dashboard non gestisce ancora l'errore: persist usa try/finally senza catch, e 'Salvato' compare durante il salvataggio, anche se poi fallisce.
+  > ✅ **Fatta** · quarto giro, 27/10/2026. Le letture mostrano StatoErrore con Riprova (terzo giro); il riordino della dashboard, se non riesce a salvare, torna all'ultima disposizione salvata e lo dice, e «Salvato» compare solo a salvataggio riuscito (quarto giro).
 
   Nei .tsx ci sono 33 .then() e 9 .catch(). Widget, elenchi bollette e abbonamenti, dettaglio allenamento e Andamento restano bloccati in caricamento se la chiamata fallisce. Il changelog dichiara il problema corretto, ma la correzione copre solo l'Esercizio, dove i messaggi parlano di 'migration del database'. Nemmeno 'Salvato' del layout gestisce l'errore.
 
@@ -1123,10 +1125,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
   <sub>Evidenza: alimentazione/queries.ts:911-950; peso/queries.ts:84-91; CalcolaObiettivi.tsx:59-74</sub>
 
-- [ ] **ALI-10 · Gli obiettivi aperti dal diario mostrano il calcolatore vuoto e rischiano di essere cancellati**  
+- [x] **ALI-10 · Gli obiettivi aperti dal diario mostrano il calcolatore vuoto e rischiano di essere cancellati**  
   🟡 media · sforzo S (ore) · Diario → finestra Obiettivi
 
-  > ◐ **In parte** · commit `e1b6339`. Aperto dal diario, il modulo mostra 'Caricamento…' finché non arrivano gli obiettivi. Se la lettura fallisce mostra StatoErrore con Riprova. Così 'Salva' non può più cancellare gli obiettivi salvando una lista vuota. **Manca:** Il calcolatore può ancora comparire vuoto. Il modulo si mostra appena arrivano gli obiettivi, mentre i dati corporei arrivano con una chiamata separata che può finire dopo. CalcolaObiettivi non ha una key e legge i campi solo al primo render, quindi resta vuoto, anche se il pulsante dice già 'Ricalcola dai miei dati'.
+  > ✅ **Fatta** · quarto giro, 27/10/2026. Il modulo aspetta obiettivi e dati corporei prima di mostrarsi, anche dopo «Riprova»: il calcolatore compare già compilato e «Salva» non può cancellare gli obiettivi.
 
   La finestra carica i dati dopo l'apertura, ma CalcolaObiettivi fissa i campi al primo render. Su una rete lenta, 'Salva' prima del caricamento esegue saveObiettivi([]), che cancella tutti gli obiettivi.
 
@@ -1678,7 +1680,7 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 - [ ] **CON-21 · La disdetta funziona diversamente tra elenco e dettaglio**  
   ⚪ bassa · sforzo S (ore) · Abbonamenti
 
-  > ◐ **In parte** · commit `2ab1c50`. Dal dettaglio la disdetta ora è immediata, con toast e Annulla come nell'elenco, senza confirm() nativo. L'Annulla rimette lo stato precedente. **Manca:** 'Riattiva' compare ancora solo per gli abbonamenti sospesi, non per i disdetti. Non c'è ancora un campo data_fine per indicare quando la disdetta ha effetto.
+  > ◐ **In parte** · commit `2ab1c50` e quarto giro. Disdetta immediata con Annulla sia dall'elenco sia dal dettaglio, e «Riattiva» anche per i disdetti. **Manca:** un campo data_fine per indicare quando la disdetta ha effetto (serve una migration).
 
   Dall'elenco la disdetta è immediata con Annulla. Dal dettaglio parte un confirm() nativo che dice 'non è reversibile'. 'Riattiva' compare solo per i sospesi, e non si può indicare una data di effetto.
 
@@ -1854,10 +1856,10 @@ Questi punti chiedono un consulente, un contratto o una scelta di prodotto prima
 
 ### Impostazioni e chat
 
-- [ ] **IMP-08 · Preferenze: errori silenziosi e campi senza etichetta collegata**  
+- [x] **IMP-08 · Preferenze: errori silenziosi e campi senza etichetta collegata**  
   ⚪ bassa · sforzo S (ore) · Preferenze moduli / Utenti
 
-  > ◐ **In parte** · commit `e1b6339`. Se la lettura delle preferenze fallisce, ora compare StatoErrore con Riprova al posto di un riquadro vuoto. **Manca:** Un salvataggio fallito non mostra ancora nessun messaggio (try/finally senza catch). Le label 'Persone' non hanno htmlFor e il select del ruolo in UtentiSettings.tsx:159 non ha etichetta. Un campo vuoto si salva ancora come 0, senza minimo 1.
+  > ✅ **Fatta** · quarto giro, 27/10/2026. Preferenze: un salvataggio fallito apre un avviso d'errore, i campi hanno l'etichetta collegata, un campo vuoto non diventa 0 (persone da 1 a 20, controllate anche sul server) e l'errore viene annunciato; il select del ruolo ha un'etichetta.
 
   Se il caricamento fallisce il riquadro resta vuoto, e se il salvataggio fallisce non compare nessun messaggio. Le label 'Persone' non hanno htmlFor e il select del ruolo non ha etichetta. Un campo vuoto viene salvato come 0.
 
